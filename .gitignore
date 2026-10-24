@@ -14,7 +14,7 @@ env/
 !.env.example
 
 # Generated datasets
-dino_data.csv
+*.csv
 *.jsonl
 
 # Trained models
