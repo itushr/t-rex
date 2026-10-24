@@ -1,85 +1,87 @@
-script = """
-        (() => {
-            if (window.__pythonGameHooksInstalled) {
-                return "Game hooks already installed";
-            }
+script = r"""
+(() => {
+    if (window.__pythonGameHooksInstalled) {
+        return "Game hooks already installed";
+    }
 
-            const runner = Runner.getInstance();
+    const runner = Runner.getInstance();
+    const trex = runner.tRex;
 
-            const hooks = {
-                start: "startGame",
-                restart: "restart",
-                over: "gameOver",
-                pause: "stop",
-                resume: "play"
-            };
+    function emit(type, data = {}) {
+        window.pythonSend(JSON.stringify({ type, data }));
+    }
 
-            const emit = (type) => {
-                const data = {};
+    function getSnapshot() {
+        const obstacles = runner.horizon?.obstacles ?? [];
 
-                if (type === "jump" || type === "over") {
-                    data.currentSpeed = runner.currentSpeed;
+        return {
+            obstacle_x: obstacles
+                .map(obstacle => obstacle.xPos)
+                .filter(Number.isFinite)
+                .sort((a, b) => a - b),
 
-                    data.obstacles = runner.horizon.obstacles
-                        .filter(obstacle =>
-                            obstacle.typeConfig.type === "cactusSmall" ||
-                            obstacle.typeConfig.type === "cactusLarge"
-                        )
-                        .map(obstacle => ({
-                            xPos: obstacle.xPos,
-                            type: obstacle.typeConfig.type
-                        }));
-                }
+            speed: Number(runner.currentSpeed) || 0
+        };
+    }
 
-                window.pythonSend(JSON.stringify({
-                    type,
-                    data
-                }));
-            };
+    function emitAction(action) {
+        emit("action", {
+            action,
+            ...getSnapshot()
+        });
+    }
 
-            for (const [event, method] of Object.entries(hooks)) {
-                const original = runner[method];
+    function hook(target, method, callback) {
+        const original = target[method];
 
-                if (typeof original !== "function") {
-                    console.warn("Method not found:", method);
-                    continue;
-                }
+        if (typeof original !== "function") {
+            console.warn("DINO >> method not found:", method);
+            return false;
+        }
 
-                runner[method] = function (...args) {
-                    const result = original.apply(this, args);
-                    emit(event);
-                    return result;
-                };
-            }
+        target[method] = function (...args) {
+            const result = original.apply(this, args);
+            callback.apply(this, args);
+            return result;
+        };
 
-            const trex = runner.tRex;
+        return true;
+    }
 
-            for (const [method, event] of [
-                ["startJump", "jump"],
-                ["setDuck", "duck"]
-            ]) {
-                const original = trex[method];
+    // Record each actual jump.
+    hook(trex, "startJump", function () {
+        emitAction("jump");
+    });
 
-                if (typeof original !== "function") {
-                    console.warn("T-Rex method not found:", method);
-                    continue;
-                }
+    // Record only changes in ducking state.
+    let isDucking = false;
 
-                trex[method] = function (...args) {
-                    const result = original.apply(this, args);
+    hook(trex, "setDuck", function (ducking) {
+        ducking = Boolean(ducking);
 
-                    if (method === "setDuck") {
-                        emit(args[0] ? "bend" : "unbend");
-                    } else {
-                        emit(event);
-                    }
+        if (ducking === isDucking) {
+            return;
+        }
 
-                    return result;
-                };
-            }
+        isDucking = ducking;
+        emitAction(ducking ? "duck" : "unduck");
+    });
 
-            window.__pythonGameHooksInstalled = true;
+    // Run lifecycle events manage the success labels in Python.
+    hook(runner, "startGame", function () {
+        emit("run_started");
+    });
 
-            return "Game hooks installed";
-        })();
-    """
+    hook(runner, "restart", function () {
+        emit("run_started");
+    });
+
+    hook(runner, "gameOver", function () {
+        emit("game_over");
+    });
+
+    window.__pythonGameHooksInstalled = true;
+
+    return "Game hooks installed";
+})();
+"""
