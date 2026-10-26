@@ -1,31 +1,29 @@
+from pathlib import Path
+
 import joblib
 import pandas as pd
-
-from pathlib import Path
+from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import classification_report, accuracy_score
-
 
 BASE_DIR = Path(__file__).resolve().parent
-
 DATA_PATH = BASE_DIR / "dino_training_data.csv"
 MODEL_PATH = BASE_DIR / "dino_model.pkl"
 
-FEATURES = [
-    "obstacle1_x",
-    "obstacle2_x",
-    "speed",
+NUMERIC_FEATURES = [
+    "obstacle1_x", "obstacle1_y", "obstacle1_size",
+    "obstacle2_x", "obstacle2_y", "obstacle2_size", "speed",
 ]
-
+TYPE_FEATURES = ["obstacle1_type", "obstacle2_type"]
+FEATURES = NUMERIC_FEATURES + TYPE_FEATURES
 TARGET = "action"
-
-VALID_ACTIONS = {"none", "jump", "duck"}
+VALID_ACTIONS = {"none", "jump"}
+OBSTACLE_TYPES = {"none", "cactusSmall", "cactusLarge", "pterodactyl", "collectable"}
 
 
 def create_model():
     return DecisionTreeClassifier(
-        max_depth=6,
+        max_depth=8,
         min_samples_leaf=5,
         class_weight="balanced",
         random_state=42,
@@ -35,91 +33,74 @@ def create_model():
 def main():
     if not DATA_PATH.exists():
         raise FileNotFoundError(
-            f"Training data not found: {DATA_PATH}\n"
-            "Run collect_training_data.py first."
+            f"Training data not found: {DATA_PATH}. Run collect_training_data.py first."
         )
 
     df = pd.read_csv(DATA_PATH)
-
-    required = FEATURES + [TARGET]
-    missing = set(required) - set(df.columns)
-
+    missing = set(FEATURES + [TARGET]) - set(df.columns)
     if missing:
-        raise ValueError(
-            f"Dataset is missing columns: {sorted(missing)}"
-        )
+        raise ValueError(f"Dataset is missing columns: {sorted(missing)}")
 
-    df = df.dropna(subset=required).copy()
+    for column in NUMERIC_FEATURES:
+        df[column] = pd.to_numeric(df[column], errors="coerce")
+    df = df.dropna(subset=NUMERIC_FEATURES).copy()
 
-    for column in FEATURES:
-        df[column] = pd.to_numeric(
-            df[column],
-            errors="coerce",
-        )
-
-    df = df.dropna(subset=FEATURES)
+    for column in TYPE_FEATURES:
+        df[column] = df[column].astype(str).str.strip()
+        df.loc[~df[column].isin(OBSTACLE_TYPES), column] = "none"
 
     df[TARGET] = df[TARGET].astype(str).str.strip().str.lower()
-    df = df[df[TARGET].isin(VALID_ACTIONS)]
-
+    df = df[df[TARGET].isin(VALID_ACTIONS)].copy()
     if df.empty:
         raise ValueError("No valid training samples found.")
 
-    X = df[FEATURES]
+    categories = {
+        "obstacle1_type": sorted(OBSTACLE_TYPES),
+        "obstacle2_type": sorted(OBSTACLE_TYPES),
+    }
+    X = pd.get_dummies(df[FEATURES], columns=TYPE_FEATURES, dtype=int)
+    encoded_columns = NUMERIC_FEATURES + [
+        f"{column}_{category}"
+        for column in TYPE_FEATURES
+        for category in categories[column]
+    ]
+    X = X.reindex(columns=encoded_columns, fill_value=0)
     y = df[TARGET]
 
     print(f"DINO >> total samples: {len(df)}")
     print("\nDINO >> action distribution:")
     print(y.value_counts().to_string())
-
     if y.nunique() < 2:
-        raise ValueError(
-            "The dataset contains only one action class. "
-            "Collect samples for multiple actions."
-        )
+        raise ValueError("Dataset needs examples of both 'none' and 'jump'.")
 
-    # Evaluate on held-out samples if each class has enough examples.
-    counts = y.value_counts()
-
-    if len(df) >= 30 and counts.min() >= 2:
+    if len(df) >= 30 and y.value_counts().min() >= 2:
         X_train, X_test, y_train, y_test = train_test_split(
-            X,
-            y,
-            test_size=0.2,
-            random_state=42,
-            stratify=y,
+            X, y, test_size=0.2, random_state=42, stratify=y
         )
-
         evaluation_model = create_model()
         evaluation_model.fit(X_train, y_train)
-
         predictions = evaluation_model.predict(X_test)
-
-        print("\nDINO >> held-out accuracy:")
-        print(f"{accuracy_score(y_test, predictions):.2%}")
-
+        print(f"\nDINO >> held-out accuracy: {accuracy_score(y_test, predictions):.2%}")
         print("\nDINO >> classification report:")
-        print(
-            classification_report(
-                y_test,
-                predictions,
-                zero_division=0,
-            )
-        )
+        print(classification_report(y_test, predictions, zero_division=0))
     else:
-        print(
-            "\nDINO >> warning: not enough samples per class "
-            "for a reliable held-out evaluation."
-        )
+        print("DINO >> warning: insufficient samples for reliable held-out evaluation.")
 
-    # Train the final model on all available samples.
     model = create_model()
     model.fit(X, y)
-
-    joblib.dump(model, MODEL_PATH)
-
+    joblib.dump(
+        {
+            "model": model,
+            "features": list(X.columns),
+            "numeric_features": NUMERIC_FEATURES,
+            "type_features": TYPE_FEATURES,
+            "categories": categories,
+        },
+        MODEL_PATH,
+    )
     print(f"\nDINO >> model saved: {MODEL_PATH}")
-    print(f"DINO >> model classes: {list(model.classes_)}")
+    print(f"DINO >> classes: {list(model.classes_)}")
+    print(f"DINO >> input features: {X.shape[1]}")
     print("DINO >> training complete")
 
 
