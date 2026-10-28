@@ -6,8 +6,8 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
-from instance import get_debug_tabs, get_dino_tabs
-from browser_gateway import connect, disconnect
+from src.instance import get_debug_tabs, get_dino_tabs
+from src.browser_gateway import connect, disconnect
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -379,7 +379,7 @@ def predict_action(saved, state):
     return action, first, second
 
 
-def main():
+def play():
     try:
         saved = load_model()
 
@@ -568,4 +568,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    play()

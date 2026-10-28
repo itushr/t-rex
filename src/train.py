@@ -37,7 +37,7 @@ def create_model():
     )
 
 
-def main():
+def train():
     if not DATA_PATH.exists():
         raise FileNotFoundError(f"Training data not found: {DATA_PATH}")
 
@@ -127,4 +127,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    train()

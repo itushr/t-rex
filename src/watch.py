@@ -5,9 +5,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from instance import get_debug_tabs, get_dino_tabs
-from browser_gateway import connect, disconnect
-
+from src.instance import get_debug_tabs, get_dino_tabs
+from src.browser_gateway import connect, disconnect
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CSV_PATH = BASE_DIR / "gameplay.csv"
@@ -244,7 +243,7 @@ def prepare_csv():
         writer.writeheader()
 
 
-def main():
+def watch():
     tabs = get_debug_tabs()
 
     if not tabs:
@@ -358,4 +357,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    watch()
