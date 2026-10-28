@@ -7,8 +7,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_PATH = BASE_DIR / "gameplay.csv"
-MODEL_PATH = BASE_DIR / "model.pkl"
 
 NUMERIC_FEATURES = [
     "obstacle1_x",
@@ -37,7 +35,10 @@ def create_model():
     )
 
 
-def train():
+def train(gameplay):
+    DATA_PATH = BASE_DIR / "gameplay" / f"{gameplay}.csv"
+    MODEL_PATH = BASE_DIR / "models" / f"{gameplay}.pkl"
+    
     if not DATA_PATH.exists():
         raise FileNotFoundError(f"Training data not found: {DATA_PATH}")
 

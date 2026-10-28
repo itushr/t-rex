@@ -1,6 +1,10 @@
-from src.watch import watch
+from pathlib import Path
+
+from src.watch.main import watch
 from src.train import train
 from src.play import play
+
+from src.fs import list_gameplays, list_models
 
 
 INTRO = """-------------------------------------------------
@@ -36,9 +40,29 @@ while True:
     if choice == 1:
         watch()
     elif choice == 2:
-        train()
+        print(">>> Choose a gameplay to train model")
+        gameplays = list_gameplays()
+        for i in range(len(gameplays)):
+            print(f"    [{i+1}]", gameplays[i])
+        gameplay = 0
+        try:
+            gameplay = int(input(f">>> [1-{len(gameplays)}]: "))
+        except:
+            print(">>> INVALID INPUT, BYE!")
+            break
+        train(Path(gameplays[gameplay-1]).stem)
     elif choice == 3:
-        play()
+        print(">>> Choose a model to autoplay")
+        models = list_models()
+        for i in range(len(models)):
+            print(f"    [{i}]", models[i])
+        model = 0
+        try:
+            model = int(input(f">>> [1-{len(models)}]: "))
+        except:
+            print(">>> INVALID INPUT, BYE!")
+            break
+        play(Path(models[model-1]).stem)
     else:
         print(">>> INVALID INPUT, BYE!")
         break

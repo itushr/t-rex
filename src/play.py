@@ -11,7 +11,6 @@ from src.browser_gateway import connect, disconnect
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-MODEL_PATH = BASE_DIR / "model.pkl"
 
 POLL_INTERVAL = 0.01
 LOG_INTERVAL = 0.5
@@ -267,7 +266,9 @@ BRIDGE_SCRIPT = r"""
 """
 
 
-def load_model():
+def load_model(model):
+    MODEL_PATH = BASE_DIR / "models" / f"{model}.pkl"
+    
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
             f"Model not found: {MODEL_PATH}. Run train.py first."
@@ -379,9 +380,9 @@ def predict_action(saved, state):
     return action, first, second
 
 
-def play():
+def play(model):
     try:
-        saved = load_model()
+        saved = load_model(model)
 
     except Exception as error:
         log("ERROR", str(error))
