@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 NUMERIC_FEATURES = [
     "obstacle1_x",
@@ -24,7 +24,6 @@ FEATURES = NUMERIC_FEATURES + TYPE_FEATURES
 TARGET = "action"
 VALID_ACTIONS = {"none", "jump", "duck"}
 OBSTACLE_TYPES = {"none", "cactusSmall", "cactusLarge", "pterodactyl", "collectable"}
-
 
 def create_model():
     return DecisionTreeClassifier(
@@ -47,7 +46,6 @@ def train(gameplay):
     if missing:
         raise ValueError(
             f"Dataset is missing columns: {sorted(missing)}. "
-            "Use the updated record.py to collect the new format."
         )
 
     for column in NUMERIC_FEATURES:
@@ -80,9 +78,9 @@ def train(gameplay):
     X = X.reindex(columns=encoded_columns, fill_value=0)
     y = df[TARGET]
 
-    print(f"DINO >> total samples: {len(df)}")
-    print("\nDINO >> action distribution:")
-    print(y.value_counts().to_string())
+    print(f">>> [TRAIN] total samples: {len(df)}")
+    print("\n>>> [TRAIN] action distribution:")
+    print("   ", y.value_counts().to_string())
 
     # Random split keeps every action eligible for the evaluation split.
     # Frames from one gameplay are correlated, so this score is only a rough check.
@@ -99,14 +97,14 @@ def train(gameplay):
     evaluation_model.fit(X_train, y_train)
     predictions = evaluation_model.predict(X_test)
 
-    print("\nDINO >> held-out evaluation:")
-    print(f"Accuracy: {accuracy_score(y_test, predictions):.4f}")
-    print("\nClassification report:")
+    print("\n>>> [TRAIN] held-out evaluation:")
+    print(f"    Accuracy: {accuracy_score(y_test, predictions):.4f}")
+    print("\n    Classification report:")
     print(classification_report(y_test, predictions, zero_division=0))
     labels = sorted(set(y_test) | set(predictions))
-    print("Confusion matrix (actual rows, predicted columns):")
-    print(f"Labels: {labels}")
-    print(confusion_matrix(y_test, predictions, labels=labels))
+    print("    Confusion matrix (actual rows, predicted columns):")
+    print(f"    Labels: {labels}")
+    print("   ", confusion_matrix(y_test, predictions, labels=labels))
 
     model = create_model()
     model.fit(X, y)
@@ -122,9 +120,9 @@ def train(gameplay):
         },
         MODEL_PATH,
     )
-    print(f"\nDINO >> model saved: {MODEL_PATH}")
-    print(f"DINO >> input features: {X.shape[1]}")
-    print("DINO >> training complete")
+    print(f"\n>>> [TRAIN] model saved: {MODEL_PATH}")
+    print(f">>> [TRAIN] input features: {X.shape[1]}")
+    print(">>> [TRAIN] training complete")
 
 
 if __name__ == "__main__":

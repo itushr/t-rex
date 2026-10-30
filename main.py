@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from src.watch.main import watch
-from src.train import train
-from src.play import play
+from src.train.main import train
+from src.play.main import play
 
 from src.fs import list_gameplays, list_models
 
@@ -40,8 +40,18 @@ while True:
     if choice == 1:
         watch()
     elif choice == 2:
-        print(">>> Choose a gameplay to train model")
         gameplays = list_gameplays()
+        
+        if len(gameplays) == 0:
+            print(">>> No gameplay found!")
+            print(">>> Record your gameplay first")
+            if input("\n\n>>> PRESS ENTER TO CONTINUE (q to quit) ") != "":
+                    print(">>> EXIT SIGNAL DETECTED, BYE!")
+                    exit(0)
+            continue
+        
+        print(">>> Choose a gameplay to train model")
+        
         for i in range(len(gameplays)):
             print(f"    [{i+1}]", gameplays[i])
         gameplay = 0
@@ -52,8 +62,17 @@ while True:
             break
         train(Path(gameplays[gameplay-1]).stem)
     elif choice == 3:
-        print(">>> Choose a model to autoplay")
         models = list_models()
+        
+        if len(models) == 0:
+            print(">>> No models found!")
+            print(">>> Train a model first")
+            if input("\n\n>>> PRESS ENTER TO CONTINUE (q to quit) ") != "":
+                    print(">>> EXIT SIGNAL DETECTED, BYE!")
+                    exit(0)
+            continue
+        
+        print(">>> Choose a model to autoplay")
         for i in range(len(models)):
             print(f"    [{i}]", models[i])
         model = 0
@@ -67,6 +86,6 @@ while True:
         print(">>> INVALID INPUT, BYE!")
         break
     
-    if input(">>> PRESS ENTER TO CONTINUE (q to quit) ") != "":
+    if input("\n\n>>> PRESS ENTER TO CONTINUE (q to quit) ") != "":
         print(">>> EXIT SIGNAL DETECTED, BYE!")
         exit(0)

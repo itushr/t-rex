@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from src.instance import get_debug_tabs, get_dino_tabs
+from src.instance import open_dino_debug_tab
 from src.browser_gateway import connect, disconnect
 from src.watch.script import RECORDER_SCRIPT
 
@@ -30,8 +30,8 @@ COLUMNS = [
 ]
 
 
-def log(level, message):
-    print(f">>>[WATCH] [{level}] {message}", flush=True)
+def log(lebel, message):
+    print(f"    [{lebel}] {message}", flush=True)
 
 
 class CDP:
@@ -88,22 +88,9 @@ def prepare_csv():
 
 
 def watch():
-    tabs = get_debug_tabs()
+    dino_debug_tab = open_dino_debug_tab()
 
-    if not tabs:
-        log("ERROR", "Chrome debug tabs not detected")
-        return
-
-    dino_tabs = get_dino_tabs(tabs)
-
-    if len(dino_tabs) != 1:
-        log(
-            "ERROR",
-            f"Expected one Dino tab, found {len(dino_tabs)}",
-        )
-        return
-
-    connection = connect(dino_tabs[0])
+    connection = connect(dino_debug_tab)
 
     if not connection:
         log("ERROR", "WebSocket connection failed")
