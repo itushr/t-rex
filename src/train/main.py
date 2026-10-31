@@ -6,6 +6,8 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
+from src.logger import Logger
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 NUMERIC_FEATURES = [
@@ -33,24 +35,32 @@ def create_model():
         random_state=42,
     )
 
-    
-def log(message):
-    print(f"    {message}")
-
 
 def train(gameplay):
+    Logger.log(
+        blanckline=True,
+        indent=0,
+        message=f"Starting Training..."
+    )
+    
     DATA_PATH = BASE_DIR / "gameplay" / f"{gameplay}.csv"
     MODEL_PATH = BASE_DIR / "models" / f"{gameplay}.pkl"
     
     if not DATA_PATH.exists():
-        raise FileNotFoundError(f"Training data not found: {DATA_PATH}")
+        Logger.error(
+            indent=1,
+            message=f"Training data not found: {DATA_PATH}",
+        )
+        return
 
     df = pd.read_csv(DATA_PATH)
     missing = set(FEATURES + [TARGET]) - set(df.columns)
     if missing:
-        raise ValueError(
-            f"Dataset is missing columns: {sorted(missing)}. "
+        Logger.error(
+            indent=1,
+            message=f"Dataset is missing columns: {sorted(missing)}",
         )
+        return
 
     for column in NUMERIC_FEATURES:
         df[column] = pd.to_numeric(df[column], errors="coerce")
@@ -64,13 +74,19 @@ def train(gameplay):
         df.loc[~df[column].isin(OBSTACLE_TYPES), column] = "none"
 
     if df.empty:
-        raise ValueError("No valid training samples found.")
+        Logger.error(
+            indent=1,
+            message=f"No valid training samples found",
+        )
+        return
 
     present_actions = sorted(df[TARGET].unique())
     if len(present_actions) < 2:
-        raise ValueError(
-            f"Need at least two action classes to train; found {present_actions}"
+        Logger.error(
+            indent=1,
+            message=f"Need at least two action classes to train; found {present_actions}"
         )
+        return
 
     categories = {column: sorted(OBSTACLE_TYPES) for column in TYPE_FEATURES}
     X = pd.get_dummies(df[FEATURES], columns=TYPE_FEATURES, dtype=int)
@@ -82,14 +98,11 @@ def train(gameplay):
     X = X.reindex(columns=encoded_columns, fill_value=0)
     y = df[TARGET]
 
-    print()
-    print(">>> MODE: TRAIN")
-    log(f"total samples: {len(df)}")
-    #print("\n>>> [TRAIN] action distribution:")
-    #print("   ", y.value_counts().to_string())
+    Logger.log(
+        indent=1,
+        message=f"Total Samples: {len(df)}"
+    )
 
-    # Random split keeps every action eligible for the evaluation split.
-    # Frames from one gameplay are correlated, so this score is only a rough check.
     can_stratify = y.value_counts().min() >= 2
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -103,15 +116,10 @@ def train(gameplay):
     evaluation_model.fit(X_train, y_train)
     predictions = evaluation_model.predict(X_test)
 
-    #print("\n>>> [TRAIN] held-out evaluation:")
-    #print(f"    Accuracy: {accuracy_score(y_test, predictions):.4f}")
-    log(f"Accuracy: {(accuracy_score(y_test, predictions)*100):.2f}%")
-    #print("\n    Classification report:")
-    #print(classification_report(y_test, predictions, zero_division=0))
-    #labels = sorted(set(y_test) | set(predictions))
-    #print("    Confusion matrix (actual rows, predicted columns):")
-    #print(f"    Labels: {labels}")
-    #print("   ", confusion_matrix(y_test, predictions, labels=labels))
+    Logger.log(
+        indent=1, 
+        message=f"Accuracy: {(accuracy_score(y_test, predictions)*100):.2f}%"
+    )
 
     model = create_model()
     model.fit(X, y)
@@ -127,10 +135,15 @@ def train(gameplay):
         },
         MODEL_PATH,
     )
-    log(f"model saved: {MODEL_PATH}")
-    #log(f"input features: {X.shape[1]}")
-    log(f"training complete")
-
+    
+    Logger.log(
+        indent=1,
+        message=f"Model Saved: {MODEL_PATH}"
+    )
+    Logger.log(
+        indent=1,
+        message=f"Training Complete"
+    )
 
 if __name__ == "__main__":
     train()

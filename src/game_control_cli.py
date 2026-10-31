@@ -1,5 +1,5 @@
-from instance import get_debug_tabs, get_dino_tabs
-from browser_gateway import connect, disconnect, command
+from src.browser_instance import open_dino_debug_tab
+from src.browser_gateway import connect, disconnect, command
 
 
 script = """
@@ -61,13 +61,7 @@ script = """
 
 
 def main():
-    debug_tabs = get_debug_tabs()
-
-    if not debug_tabs:
-        print("DINO >> error: debug tabs not detected")
-        return
-
-    dino_tabs = get_dino_tabs(debug_tabs)
+    dino_tabs = open_dino_debug_tab()
 
     if len(dino_tabs) != 1:
         print(

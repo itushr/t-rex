@@ -4,9 +4,11 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from src.instance import open_dino_debug_tab
-from src.browser_gateway import connect, disconnect
-from src.watch.script import RECORDER_SCRIPT
+from src.browser_instance import open_dino_debug_tab
+from src.browser_gateway import connect, disconnect, CDP
+from src.watch.script import SCRIPT
+
+from src.logger import Logger
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 BASE_DIR = Path(__file__).resolve().parent.parent.parent / "gameplay"
@@ -29,58 +31,6 @@ COLUMNS = [
     "action",
 ]
 
-
-def log(lebel, message):
-    print(f"    [{lebel}] {message}", flush=True)
-
-
-class CDP:
-    def __init__(self, connection):
-        self.connection = connection
-        self.command_id = 0
-
-    def evaluate(self, expression):
-        self.command_id += 1
-        command_id = self.command_id
-
-        self.connection.send(json.dumps({
-            "id": command_id,
-            "method": "Runtime.evaluate",
-            "params": {
-                "expression": expression,
-                "returnByValue": True,
-            },
-        }))
-
-        while True:
-            message = json.loads(self.connection.recv())
-
-            if message.get("id") != command_id:
-                continue
-
-            if "error" in message:
-                raise RuntimeError(str(message["error"]))
-
-            result = message.get("result", {})
-
-            if result.get("exceptionDetails"):
-                raise RuntimeError(
-                    str(result["exceptionDetails"])
-                )
-
-            remote = result.get("result", {})
-
-            if "value" in remote:
-                return remote["value"]
-
-            if remote.get("subtype") == "error":
-                raise RuntimeError(
-                    remote.get("description", "JavaScript error")
-                )
-
-            return None
-
-
 def prepare_csv():
     with CSV_PATH.open("w", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=COLUMNS)
@@ -88,44 +38,68 @@ def prepare_csv():
 
 
 def watch():
-    print(">>> MODE: WATCH")
+    Logger.log(
+        blanckline=True,
+        indent=0,
+        message="Opening Game Window..."
+    )
     
     try:
-        dino_debug_tab = open_dino_debug_tab()
-    except Exception as err:
-        log("ERROR", err)
+        dino_debug_tab = int("fdj")
+    except Exception as error:
+        Logger.error(
+            indent=1,
+            message=error
+        )
+        return
+    try:
+        connection = connect(dino_debug_tab)
+    except Exception as error:
+        Logger.log(
+            indent=1,
+            message=error
+        )
+        return
         
-    if(not dino_debug_tab):
-        log("ERROR", "Could not open game")
-        
-    
-    connection = connect(dino_debug_tab)
-
     if not connection:
-        log("ERROR", "WebSocket connection failed")
+        Logger.error(
+            indent=1,
+            message="Websocket connection failed"
+        )
         return
 
-    time.sleep(2)
+    time.sleep(2) #waiting to establish connection
     
     cdp = CDP(connection)
 
     try:
         cdp.evaluate("void 0")
 
-        result = cdp.evaluate(RECORDER_SCRIPT)
+        result = cdp.evaluate(SCRIPT)
 
         if not isinstance(result, dict) or not result.get("ok"):
-            raise RuntimeError(
-                f"Recorder installation failed: {result!r}"
+            Logger.error(
+                indent=1,
+                message="Could not embed tracker in browser"
             )
+            return
 
         prepare_csv()
 
-        print(f"    Saving data to {CSV_PATH}")
-        print(f"    Sampling interval: {SAMPLE_INTERVAL * 1000:.0f} ms")
-        print(f"    Press Ctrl+C when finished.")
+        Logger.log(
+            indent=1,
+            message=f"Savig data to {CSV_PATH}"
+        )
         
-        print()
+        Logger.log(
+            indent=1,
+            message=f"Start playing, System Watching (Ctrl+C to exit)"
+        )
+        
+        Logger.log(
+            indent=1,
+            message=""
+        )
 
         with CSV_PATH.open("a", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=COLUMNS)
@@ -144,9 +118,10 @@ def watch():
                         row["action"] == "jump"
                         and int(row["jumping"]) != 0
                     ):
-                        log(
-                            "WARN",
-                            "Discarded: Jump while jumping"
+                        Logger.log(
+                            indent=1,
+                            label="WARN",
+                            message="Action Discarded: Jump while jumping"
                         )
                     else:
                         writer.writerow({
@@ -157,27 +132,34 @@ def watch():
                         file.flush()
 
                         if row["action"] == "jump":
-                            log(
-                                "ACTION",
-                                f"JUMP, nearest obstacle @{row['obstacle1_x']}"
+                            Logger.log(
+                                indent=1,
+                                label="ACTION",
+                                message=f"JUMP, nearest obstacle @{row['obstacle1_x']}"
                             )
                         if row["action"] == "duck":
-                            log(
-                                "ACTION",
-                                f"DUCK, nearest obstacle @{row['obstacle1_x']}"
+                            Logger.log(
+                                indent=1,
+                                label="ACTION",
+                                message=f"DUCK, nearest obstacle @{row['obstacle1_x']}"
                             )
 
                 time.sleep(SAMPLE_INTERVAL)
 
     except KeyboardInterrupt:
-        log("INFO", "Recording stopped")
+        Logger.log(
+            indent=1,
+            message="Saved your gameplay, train model with [2] in main menu"
+        )
 
     except Exception as error:
-        log("ERROR", f"Recording failed: {error}")
+        Logger.error(
+            indent=1,
+            message=f"{error}"
+        )
 
     finally:
         disconnect(connection)
-        log("INFO", "Disconnected from Dino tab")
 
 
 if __name__ == "__main__":

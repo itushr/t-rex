@@ -6,9 +6,11 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
-from src.instance import open_dino_debug_tab
-from src.browser_gateway import connect, disconnect
-from src.play.script import BRIDGE_SCRIPT
+from src.browser_instance import open_dino_debug_tab
+from src.browser_gateway import connect, disconnect, CDP
+from src.play.script import SCRIPT
+
+from src.logger import Logger
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -26,61 +28,6 @@ OBSTACLE_TYPES = {
     "pterodactyl",
     "collectable",
 }
-
-
-def log(lebel, message):
-    print(f"    [{lebel}] {message}", flush=True)
-
-
-class CDP:
-    def __init__(self, connection):
-        self.connection = connection
-        self.command_id = 0
-
-    def evaluate(self, expression):
-        self.command_id += 1
-        command_id = self.command_id
-
-        self.connection.send(json.dumps({
-            "id": command_id,
-            "method": "Runtime.evaluate",
-            "params": {
-                "expression": expression,
-                "returnByValue": True,
-                "awaitPromise": True,
-            },
-        }))
-
-        while True:
-            message = json.loads(self.connection.recv())
-
-            if message.get("id") != command_id:
-                continue
-
-            if "error" in message:
-                raise RuntimeError(
-                    f"CDP error: {message['error']}"
-                )
-
-            result = message.get("result", {})
-
-            if result.get("exceptionDetails"):
-                raise RuntimeError(
-                    f"JavaScript exception: "
-                    f"{result['exceptionDetails']}"
-                )
-
-            remote = result.get("result", {})
-
-            if "value" in remote:
-                return remote["value"]
-
-            if remote.get("subtype") == "error":
-                raise RuntimeError(
-                    remote.get("description", "JavaScript error")
-                )
-
-            return None
 
 
 def load_model(model):    
@@ -122,10 +69,6 @@ def load_model(model):
         raise ValueError(
             "Loaded model does not support prediction."
         )
-
-    #print(f"    Loaded classifier: {MODEL_PATH.name}")
-    #print(f"    Input features: {len(saved['features'])}")
-    #print(f"    Actions: {saved['actions']}")
 
     return saved
 
@@ -198,13 +141,18 @@ def predict_action(saved, state):
 
 
 def play(model):
-    print(">>> MODE: PLAY")
+    Logger.log(
+        indent=0,
+        message="Opening Game Window..."
+    )
     
     try:
         saved = load_model(model)
-
     except Exception as error:
-        log("ERROR", str(error))
+        Logger.error(
+            indent=1,
+            message=error
+        )
         return
 
     dino_debug_tab = open_dino_debug_tab()
@@ -212,7 +160,10 @@ def play(model):
     connection = connect(dino_debug_tab)
 
     if not connection:
-        log("ERROR", "WebSocket connection failed")
+        Logger.error(
+            indent=1,
+            message="Websocket connection failed"
+        )
         return
 
     time.sleep(2)
@@ -220,23 +171,35 @@ def play(model):
     cdp = CDP(connection)
 
     last_jump_at = 0.0
-    last_log = 0.0
     restart_at = None
     jump_latched = False
 
     try:
         cdp.evaluate("void 0")
 
-        bridge = cdp.evaluate(BRIDGE_SCRIPT)
+        bridge = cdp.evaluate(SCRIPT)
 
         if not isinstance(bridge, dict) or not bridge.get("ok"):
-            raise RuntimeError(
-                f"Bridge installation failed: {bridge!r}"
+            Logger.error(
+                indent=1,
+                message="Could not embed controller in browser"
             )
-
-        print(f"    Waiting for Dino to start.")
-        print(f"    Press Ctrl+C to stop autoplay.")
-        print()
+            return
+        
+        Logger.log(
+            indent=1,
+            message=f"Waiting for you to start the Game"
+        )
+        
+        Logger.log(
+            indent=1,
+            message=f"System Playing (Ctrl+C to exit)"
+        )
+        
+        Logger.log(
+            indent=1,
+            message=""
+        )
 
         while True:
             now = time.monotonic()
@@ -249,18 +212,14 @@ def play(model):
                 time.sleep(POLL_INTERVAL)
                 continue
 
-            # Automatically restart after a collision.
             if state.get("crashed"):
                 if restart_at is None:
-                    log("STATUS", "Game over")
+                    Logger.log(
+                        indent=1,
+                        label="STATUS",
+                        message="Game Over"
+                    )
                     return
-
-                time.sleep(POLL_INTERVAL)
-                continue
-
-            if restart_at is not None:
-                restart_at = None
-                jump_latched = False
 
             if state.get("paused") or not state.get("activated"):
                 time.sleep(POLL_INTERVAL)
@@ -277,20 +236,14 @@ def play(model):
 
             action_to_execute = predicted_action
 
-            # Re-arm when the model stops requesting a jump.
             if predicted_action != "jump":
                 jump_latched = False
 
-            # Execute a jump only once during a continuous run
-            # of jump predictions. Do not require an obstacle
-            # distance threshold to permit the first jump.
             if predicted_action == "jump":
                 if jump_latched or currently_jumping:
                     action_to_execute = "none"
 
                 elif now - last_jump_at < JUMP_COOLDOWN:
-                    # Do not latch here. If the model continues
-                    # predicting jump, retry after the cooldown.
                     action_to_execute = "none"
 
             result = cdp.evaluate(
@@ -300,65 +253,49 @@ def play(model):
             )
 
             if not isinstance(result, dict) or not result.get("ok"):
-                log("WARN", f"Action failed: {result}")
+                Logger.log(
+                    indent=1,
+                    label="WARN",
+                    message=f"Action failed: {result}"
+                )
 
             elif action_to_execute == "jump":
                 jump_latched = True
                 last_jump_at = now
 
-                log(
-                    "ACTION",
-                    f"JUMP, obstacle @{current_x:.1f}"
+                Logger.log(
+                    indent=1,
+                    label="ACTION",
+                    message=f"JUMP, obstacle @{current_x:.1f}"
                 )
 
             elif (
                 action_to_execute == "duck"
                 and not state.get("ducking")
             ):
-                log(
-                    "ACTION",
-                    f"DUCK, obstacle @{current_x:.1f}"
+                Logger.log(
+                    indent=1,
+                    label="ACTION",
+                    message=f"DUCK, obstacle @{current_x:.1f}"
                 )
-
-            # Print regular state diagnostics.
-            #if now - last_log >= LOG_INTERVAL:
-            #    obstacle_text = (
-            #        f"{first['type']}"
-            #        f"(x={first['x']:.0f},y={first['y']:.0f})"
-            #    )
-            #
-            #    if second["x"] >= 0:
-            #        obstacle_text += (
-            #            f", {second['type']}"
-            #            f"(x={second['x']:.0f},"
-            #            f"y={second['y']:.0f})"
-            #        )
-            #
-            #    log(
-            #        "STATE",
-            #        f"predicted={predicted_action} "
-            #        f"executed={action_to_execute} "
-            #        f"speed={speed:.2f} "
-            #        f"obstacles=[{obstacle_text}] "
-            #        f"jump_latched={jump_latched} "
-            #        f"jumping={state.get('jumping')} "
-            #        f"ducking={state.get('ducking')}",
-            #    )
-            #
-            #    last_log = now
 
             time.sleep(POLL_INTERVAL)
 
     except KeyboardInterrupt:
-        log("INFO", "Stopping autoplay")
+        Logger.log(
+            indent=1,
+            message="Autoplay Stopped! Hope you like"
+        )
 
     except Exception as error:
-        log("ERROR", f"Autoplay stopped: {error}")
+        Logger.error(
+            indent=1,
+            message=f"{error}"
+        )
 
     finally:
         disconnect(connection)
-        log("INFO", "Disconnected from Dino tab")
-
+        
 
 if __name__ == "__main__":
     play()

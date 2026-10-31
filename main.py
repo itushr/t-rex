@@ -3,19 +3,21 @@ from pathlib import Path
 from src.watch.main import watch
 from src.train.main import train
 from src.play.main import play
+from src.list_files import list_gameplays, list_models
 
-from src.fs import list_gameplays, list_models
 
-
-INTRO = """-------------------------------------------------
-
-▐▓▓▓▓▓▌      ▐▓▓▓▓▌▐▓▓▓▓▌▐▓▌ ▐▓▌
-  ▐▓▌        ▐▓▌▐▓▌▐▓▌    ▐▓▐▓▌ 
-  ▐▓▌  ▐▓▓▓▓▌▐▓▓▓▓▌▐▓▓▓▌   ▐▓▌  
-  ▐▓▌        ▐▓▐▓▌ ▐▓▌    ▐▓▐▓▌ 
-  ▐▓▌        ▐▓▌▐▓▌▐▓▓▓▓▌▐▓▌ ▐▓▌
-  
--------------------------------------------------
+INTRO = """
+-------------------------------------------------------------                                                                                         
+                                                                                                               
+    ░██████████        ░█████████  ░██████████ ░██    ░██ 
+        ░██            ░██     ░██ ░██          ░██  ░██  
+        ░██            ░██     ░██ ░██           ░██░██   
+        ░██    ░██████ ░█████████  ░█████████     ░███    
+        ░██            ░██   ░██   ░██           ░██░██   
+        ░██            ░██    ░██  ░██          ░██  ░██  
+        ░██            ░██     ░██ ░██████████ ░██    ░██ 
+                                                          
+-------------------------------------------------------------
 """
 
 MENU = """>>> MENU
@@ -88,5 +90,5 @@ while True:
         break
     
     if input("\n>>> PRESS ENTER TO CONTINUE (q to quit) ") in ["q", "Q"]:
-        print(">>> EXIT SIGNAL DETECTED, BYE!")
+        print(">>> EXIT SIGNAL DETECTED, BYE!\n")
         exit(0)

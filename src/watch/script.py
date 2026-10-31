@@ -1,4 +1,4 @@
-RECORDER_SCRIPT = r"""
+SCRIPT = r"""
 (() => {
     const runner = Runner.getInstance();
 
