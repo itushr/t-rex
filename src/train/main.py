@@ -33,6 +33,10 @@ def create_model():
         random_state=42,
     )
 
+    
+def log(message):
+    print(f"    {message}")
+
 
 def train(gameplay):
     DATA_PATH = BASE_DIR / "gameplay" / f"{gameplay}.csv"
@@ -78,9 +82,11 @@ def train(gameplay):
     X = X.reindex(columns=encoded_columns, fill_value=0)
     y = df[TARGET]
 
-    print(f">>> [TRAIN] total samples: {len(df)}")
-    print("\n>>> [TRAIN] action distribution:")
-    print("   ", y.value_counts().to_string())
+    print()
+    print(">>> MODE: TRAIN")
+    log(f"total samples: {len(df)}")
+    #print("\n>>> [TRAIN] action distribution:")
+    #print("   ", y.value_counts().to_string())
 
     # Random split keeps every action eligible for the evaluation split.
     # Frames from one gameplay are correlated, so this score is only a rough check.
@@ -97,14 +103,15 @@ def train(gameplay):
     evaluation_model.fit(X_train, y_train)
     predictions = evaluation_model.predict(X_test)
 
-    print("\n>>> [TRAIN] held-out evaluation:")
-    print(f"    Accuracy: {accuracy_score(y_test, predictions):.4f}")
-    print("\n    Classification report:")
-    print(classification_report(y_test, predictions, zero_division=0))
-    labels = sorted(set(y_test) | set(predictions))
-    print("    Confusion matrix (actual rows, predicted columns):")
-    print(f"    Labels: {labels}")
-    print("   ", confusion_matrix(y_test, predictions, labels=labels))
+    #print("\n>>> [TRAIN] held-out evaluation:")
+    #print(f"    Accuracy: {accuracy_score(y_test, predictions):.4f}")
+    log(f"Accuracy: {(accuracy_score(y_test, predictions)*100):.2f}%")
+    #print("\n    Classification report:")
+    #print(classification_report(y_test, predictions, zero_division=0))
+    #labels = sorted(set(y_test) | set(predictions))
+    #print("    Confusion matrix (actual rows, predicted columns):")
+    #print(f"    Labels: {labels}")
+    #print("   ", confusion_matrix(y_test, predictions, labels=labels))
 
     model = create_model()
     model.fit(X, y)
@@ -120,9 +127,9 @@ def train(gameplay):
         },
         MODEL_PATH,
     )
-    print(f"\n>>> [TRAIN] model saved: {MODEL_PATH}")
-    print(f">>> [TRAIN] input features: {X.shape[1]}")
-    print(">>> [TRAIN] training complete")
+    log(f"model saved: {MODEL_PATH}")
+    #log(f"input features: {X.shape[1]}")
+    log(f"training complete")
 
 
 if __name__ == "__main__":

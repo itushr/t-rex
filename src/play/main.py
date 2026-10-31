@@ -28,9 +28,8 @@ OBSTACLE_TYPES = {
 }
 
 
-def log(level, message):
-    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    print(f"[{timestamp}] [{level}] {message}", flush=True)
+def log(lebel, message):
+    print(f"    [{lebel}] {message}", flush=True)
 
 
 class CDP:
@@ -84,7 +83,7 @@ class CDP:
             return None
 
 
-def load_model(model):
+def load_model(model):    
     MODEL_PATH = BASE_DIR / "models" / f"{model}.pkl"
     
     if not MODEL_PATH.exists():
@@ -124,9 +123,9 @@ def load_model(model):
             "Loaded model does not support prediction."
         )
 
-    log("INFO", f"Loaded classifier: {MODEL_PATH.name}")
-    log("INFO", f"Input features: {len(saved['features'])}")
-    log("INFO", f"Actions: {saved['actions']}")
+    #print(f"    Loaded classifier: {MODEL_PATH.name}")
+    #print(f"    Input features: {len(saved['features'])}")
+    #print(f"    Actions: {saved['actions']}")
 
     return saved
 
@@ -199,6 +198,8 @@ def predict_action(saved, state):
 
 
 def play(model):
+    print(">>> MODE: PLAY")
+    
     try:
         saved = load_model(model)
 
@@ -214,14 +215,13 @@ def play(model):
         log("ERROR", "WebSocket connection failed")
         return
 
+    time.sleep(2)
+
     cdp = CDP(connection)
 
     last_jump_at = 0.0
     last_log = 0.0
     restart_at = None
-
-    # Prevent repeated jumps while the classifier continuously
-    # predicts jump for the same stretch of frames.
     jump_latched = False
 
     try:
@@ -234,9 +234,9 @@ def play(model):
                 f"Bridge installation failed: {bridge!r}"
             )
 
-        log("INFO", bridge["message"])
-        log("INFO", "Waiting for Dino to start.")
-        log("INFO", "Press Ctrl+C to stop autoplay.")
+        print(f"    Waiting for Dino to start.")
+        print(f"    Press Ctrl+C to stop autoplay.")
+        print()
 
         while True:
             now = time.monotonic()
@@ -252,19 +252,8 @@ def play(model):
             # Automatically restart after a collision.
             if state.get("crashed"):
                 if restart_at is None:
-                    log("WARN", "Game over")
-                    restart_at = now + RESTART_DELAY
-
-                elif now >= restart_at:
-                    result = cdp.evaluate(
-                        "window.__pythonDino.restart()"
-                    )
-
-                    log("INFO", f"Restart: {result}")
-
-                    restart_at = None
-                    last_jump_at = 0.0
-                    jump_latched = False
+                    log("STATUS", "Game over")
+                    return
 
                 time.sleep(POLL_INTERVAL)
                 continue
@@ -319,9 +308,7 @@ def play(model):
 
                 log(
                     "ACTION",
-                    f"JUMP requested | "
-                    f"x={current_x:.1f} speed={speed:.2f} "
-                    f"bridge={result}",
+                    f"JUMP, obstacle @{current_x:.1f}"
                 )
 
             elif (
@@ -330,35 +317,35 @@ def play(model):
             ):
                 log(
                     "ACTION",
-                    f"DUCK | x={current_x:.1f} speed={speed:.2f}",
+                    f"DUCK, obstacle @{current_x:.1f}"
                 )
 
             # Print regular state diagnostics.
-            if now - last_log >= LOG_INTERVAL:
-                obstacle_text = (
-                    f"{first['type']}"
-                    f"(x={first['x']:.0f},y={first['y']:.0f})"
-                )
-
-                if second["x"] >= 0:
-                    obstacle_text += (
-                        f", {second['type']}"
-                        f"(x={second['x']:.0f},"
-                        f"y={second['y']:.0f})"
-                    )
-
-                log(
-                    "STATE",
-                    f"predicted={predicted_action} "
-                    f"executed={action_to_execute} "
-                    f"speed={speed:.2f} "
-                    f"obstacles=[{obstacle_text}] "
-                    f"jump_latched={jump_latched} "
-                    f"jumping={state.get('jumping')} "
-                    f"ducking={state.get('ducking')}",
-                )
-
-                last_log = now
+            #if now - last_log >= LOG_INTERVAL:
+            #    obstacle_text = (
+            #        f"{first['type']}"
+            #        f"(x={first['x']:.0f},y={first['y']:.0f})"
+            #    )
+            #
+            #    if second["x"] >= 0:
+            #        obstacle_text += (
+            #            f", {second['type']}"
+            #            f"(x={second['x']:.0f},"
+            #            f"y={second['y']:.0f})"
+            #        )
+            #
+            #    log(
+            #        "STATE",
+            #        f"predicted={predicted_action} "
+            #        f"executed={action_to_execute} "
+            #        f"speed={speed:.2f} "
+            #        f"obstacles=[{obstacle_text}] "
+            #        f"jump_latched={jump_latched} "
+            #        f"jumping={state.get('jumping')} "
+            #        f"ducking={state.get('ducking')}",
+            #    )
+            #
+            #    last_log = now
 
             time.sleep(POLL_INTERVAL)
 

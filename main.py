@@ -22,8 +22,7 @@ MENU = """>>> MENU
     [1] [WATCH] You play while bot watches
     [2] [TRAIN] Train model based on your gameplay
     [3] [PLAY]  Bot play based on training
-    [q] [EXIT]  Get out of the program
-"""
+    [q] [EXIT]  Get out of the program"""
 
 print(INTRO)
 
@@ -37,6 +36,8 @@ while True:
         print(">>> INVALID INPUT, BYE!")
         break
     
+    print()
+    
     if choice == 1:
         watch()
     elif choice == 2:
@@ -45,9 +46,9 @@ while True:
         if len(gameplays) == 0:
             print(">>> No gameplay found!")
             print(">>> Record your gameplay first")
-            if input("\n\n>>> PRESS ENTER TO CONTINUE (q to quit) ") != "":
-                    print(">>> EXIT SIGNAL DETECTED, BYE!")
-                    exit(0)
+            if input("\n>>> PRESS ENTER TO CONTINUE (q to quit) ") in ["q", "Q"]:
+                print(">>> EXIT SIGNAL DETECTED, BYE!")
+                exit(0)
             continue
         
         print(">>> Choose a gameplay to train model")
@@ -74,7 +75,7 @@ while True:
         
         print(">>> Choose a model to autoplay")
         for i in range(len(models)):
-            print(f"    [{i}]", models[i])
+            print(f"    [{i+1}]", models[i])
         model = 0
         try:
             model = int(input(f">>> [1-{len(models)}]: "))
@@ -86,6 +87,6 @@ while True:
         print(">>> INVALID INPUT, BYE!")
         break
     
-    if input("\n\n>>> PRESS ENTER TO CONTINUE (q to quit) ") != "":
+    if input("\n>>> PRESS ENTER TO CONTINUE (q to quit) ") in ["q", "Q"]:
         print(">>> EXIT SIGNAL DETECTED, BYE!")
         exit(0)

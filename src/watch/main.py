@@ -88,14 +88,25 @@ def prepare_csv():
 
 
 def watch():
-    dino_debug_tab = open_dino_debug_tab()
-
+    print(">>> MODE: WATCH")
+    
+    try:
+        dino_debug_tab = open_dino_debug_tab()
+    except Exception as err:
+        log("ERROR", err)
+        
+    if(not dino_debug_tab):
+        log("ERROR", "Could not open game")
+        
+    
     connection = connect(dino_debug_tab)
 
     if not connection:
         log("ERROR", "WebSocket connection failed")
         return
 
+    time.sleep(2)
+    
     cdp = CDP(connection)
 
     try:
@@ -110,15 +121,11 @@ def watch():
 
         prepare_csv()
 
-        log("INFO", result["message"])
-        log("INFO", f"Saving data to {CSV_PATH}")
-        log("INFO", f"Sampling interval: {SAMPLE_INTERVAL * 1000:.0f} ms")
-        log("INFO", "Start the game and play normally.")
-        log("INFO", "Press Ctrl+C when finished.")
-
-        total_rows = 0
-        jump_rows = 0
-        last_report = time.monotonic()
+        print(f"    Saving data to {CSV_PATH}")
+        print(f"    Sampling interval: {SAMPLE_INTERVAL * 1000:.0f} ms")
+        print(f"    Press Ctrl+C when finished.")
+        
+        print()
 
         with CSV_PATH.open("a", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=COLUMNS)
@@ -133,16 +140,13 @@ def watch():
                         time.sleep(SAMPLE_INTERVAL)
                         continue
 
-                    # Critical safety check: a jump row must represent
-                    # the state before the jump starts.
                     if (
                         row["action"] == "jump"
                         and int(row["jumping"]) != 0
                     ):
                         log(
                             "WARN",
-                            "Discarded invalid jump row: "
-                            "jumping was already true",
+                            "Discarded: Jump while jumping"
                         )
                     else:
                         writer.writerow({
@@ -151,28 +155,17 @@ def watch():
                         })
 
                         file.flush()
-                        total_rows += 1
 
                         if row["action"] == "jump":
-                            jump_rows += 1
-
                             log(
-                                "JUMP",
-                                f"Recorded pre-jump state | "
-                                f"x={row['obstacle1_x']:.1f} "
-                                f"speed={row['speed']:.2f} "
-                                f"jumping={row['jumping']}",
+                                "ACTION",
+                                f"JUMP, nearest obstacle @{row['obstacle1_x']}"
                             )
-
-                now = time.monotonic()
-
-                if now - last_report >= 2:
-                    log(
-                        "DATA",
-                        f"rows={total_rows} "
-                        f"jump_samples={jump_rows}",
-                    )
-                    last_report = now
+                        if row["action"] == "duck":
+                            log(
+                                "ACTION",
+                                f"DUCK, nearest obstacle @{row['obstacle1_x']}"
+                            )
 
                 time.sleep(SAMPLE_INTERVAL)
 
