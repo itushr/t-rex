@@ -14,7 +14,8 @@ def open_debug_tab():
                 "--user-data-dir=/tmp/dino-ai-chrome",
             ],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
         )
         return [True]
     except Exception as error:
