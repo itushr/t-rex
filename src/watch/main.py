@@ -45,7 +45,7 @@ def watch():
     )
     
     try:
-        dino_debug_tab = int("fdj")
+        dino_debug_tab = open_dino_debug_tab()
     except Exception as error:
         Logger.error(
             indent=1,
