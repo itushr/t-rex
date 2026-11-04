@@ -110,7 +110,7 @@ def watch():
                 )
 
                 if row is not None:
-                    if row.get("action") not in {"none", "jump"}:
+                    if row.get("action") not in {"none", "jump", "duck"}:
                         time.sleep(SAMPLE_INTERVAL)
                         continue
 
@@ -122,6 +122,15 @@ def watch():
                             indent=1,
                             label="WARN",
                             message="Action Discarded: Jump while jumping"
+                        )
+                    elif (
+                        row["action"] == "duck"
+                        and int(row["ducking"]) != 0
+                    ):
+                        Logger.log(
+                            indent=1,
+                            label="WARN",
+                            message="Action Discarded: Duck while ducking"
                         )
                     else:
                         writer.writerow({
@@ -137,7 +146,7 @@ def watch():
                                 label="ACTION",
                                 message=f"JUMP, nearest obstacle @{row['obstacle1_x']}"
                             )
-                        if row["action"] == "duck":
+                        elif row["action"] == "duck":
                             Logger.log(
                                 indent=1,
                                 label="ACTION",
