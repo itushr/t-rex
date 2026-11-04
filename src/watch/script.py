@@ -61,8 +61,7 @@ SCRIPT = r"""
 
             speed: Number(r.currentSpeed) || 0,
 
-            // Capture the state BEFORE the game's key handler
-            // processes the keydown event.
+            // Capture the state BEFORE the game's key handler.
             jumping: Number(Boolean(r.tRex.jumping)),
             ducking: Number(Boolean(r.tRex.ducking)),
 
@@ -75,9 +74,11 @@ SCRIPT = r"""
             return;
         }
 
+        // Detect jump and duck key presses.
         if (
             event.code !== "ArrowUp" &&
-            event.code !== "Space"
+            event.code !== "Space" &&
+            event.code !== "ArrowDown"
         ) {
             return;
         }
@@ -92,25 +93,43 @@ SCRIPT = r"""
             return;
         }
 
-        // Do not label a held/in-progress jump as a new jump.
-        if (r.tRex.jumping) {
-            return;
+        let action;
+
+        if (
+            event.code === "ArrowUp" ||
+            event.code === "Space"
+        ) {
+            // Ignore jump if Dino is already jumping.
+            if (r.tRex.jumping) {
+                return;
+            }
+
+            action = "jump";
         }
 
-        // Window capture runs before the usual game key handler.
-        const row = snapshot("jump");
+        if (event.code === "ArrowDown") {
+            // Ignore duck if Dino is already ducking.
+            if (r.tRex.ducking) {
+                return;
+            }
 
-        if (row && row.jumping === 0) {
+            action = "duck";
+        }
+
+        // Capture the state before the game processes the key.
+        const row = snapshot(action);
+
+        if (row) {
             queue.push(row);
         }
     }
 
-    // Capture phase: record the pre-jump state.
+    // Capture phase: record state before game input processing.
     window.addEventListener("keydown", onKeyDown, true);
 
     window.__pythonDinoRecorder = {
         nextSample() {
-            // Preserve the exact state associated with a jump keydown.
+            // Return recorded jump/duck action first.
             if (queue.length > 0) {
                 return queue.shift();
             }
@@ -120,6 +139,7 @@ SCRIPT = r"""
             if (
                 !r ||
                 !r.tRex ||
+                !r.horizon ||
                 r.crashed ||
                 r.paused ||
                 !r.activated
@@ -127,7 +147,7 @@ SCRIPT = r"""
                 return null;
             }
 
-            // No new command was issued during this sample.
+            // No new jump/duck command was recorded.
             return snapshot("none");
         },
 
@@ -138,7 +158,7 @@ SCRIPT = r"""
 
     return {
         ok: true,
-        message: "Recorder installed: pre-jump state capture enabled"
+        message: "Recorder installed: jump and duck capture enabled"
     };
 })()
 """
