@@ -1,5 +1,5 @@
-from src.browser_instance import open_dino_debug_tab
-from src.browser_gateway import connect, disconnect, command
+from browser_instance import open_dino_debug_tab
+from browser_gateway import connect, disconnect, command
 
 
 script = """
@@ -61,15 +61,9 @@ script = """
 
 
 def main():
-    dino_tabs = open_dino_debug_tab()
+    dino_tab = open_dino_debug_tab()
 
-    if len(dino_tabs) != 1:
-        print(
-            f"DINO >> error: expected one Dino tab, found {len(dino_tabs)}"
-        )
-        return
-
-    connection = connect(dino_tabs[0])
+    connection = connect(dino_tab)
 
     if not connection:
         print("DINO >> error: websocket connection failed")
