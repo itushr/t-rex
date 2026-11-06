@@ -6,8 +6,8 @@ SCRIPT = r"""
         throw new Error("Dino game is not ready");
     }
 
-    const JUMP_COOLDOWN_MS = 120;
-    const JUMP_HOLD_MS = 260;
+    const JUMP_COOLDOWN_MS = 250;
+    const JUMP_HOLD_MS = 100;
     const MAX_OBSTACLES = 2;
     const OBSTACLE_TYPES = new Set([
         "none", "cactusSmall", "cactusLarge", "pterodactyl", "collectable"
@@ -80,13 +80,6 @@ SCRIPT = r"""
                 };
             }
             
-            // Release ducking before every non-duck action.
-            if (action !== "duck" && r.tRex.ducking) {
-                if (typeof r.tRex.setDuck === "function") {
-                    r.tRex.setDuck(false);
-                }
-            }
-
             if (action === "none") {
                 control.jumpLatched = false;
 
@@ -123,6 +116,14 @@ SCRIPT = r"""
                     }
 
                     if (suppressed) action = "none";
+                }
+
+                // Release ducking before every non-duck action.
+                if (action !== "duck" && r.tRex.ducking) {
+                    if (typeof r.tRex.setDuck !== "function") {
+                        return { ok: false, error: "T-Rex setDuck() unavailable" };
+                    }
+                    r.tRex.setDuck(false);
                 }
 
                 if (action === "duck") {

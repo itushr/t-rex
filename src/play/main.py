@@ -69,17 +69,14 @@ def predict_action(saved, state):
         "ducking": int(bool(state.get("ducking", False))),
     }
 
-    model = saved["model"]
-    if hasattr(model, "predict_state"):
-        action = str(model.predict_state(raw_features)).lower()
-    else:
-        frame = pd.get_dummies(
-            pd.DataFrame([raw_features]),
-            columns=saved["type_features"],
-            dtype=int,
-        )
-        frame = frame.reindex(columns=saved["features"], fill_value=0)
-        action = str(model.predict(frame)[0]).lower()
+    frame = pd.get_dummies(
+        pd.DataFrame([raw_features]),
+        columns=saved["type_features"],
+        dtype=int,
+    )
+    frame = frame.reindex(columns=saved["features"], fill_value=0)
+
+    action = str(saved["model"].predict(frame)[0]).lower()
 
     return action if action in VALID_ACTIONS else "none", first
 

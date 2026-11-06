@@ -14,8 +14,6 @@ SCRIPT = r"""
 
     const queue = [];
     let duckHeld = false;
-    let lastEventTime = 0;
-    let lastEventKey = "";
 
     // Same keys the game itself uses (keyCode 38/32 = jump, 40 = duck).
     // Checks keyCode, key and code, so it works whichever one the
@@ -86,12 +84,6 @@ SCRIPT = r"""
     }
 
     function onKeyDown(event) {
-        if (event.timeStamp && event.timeStamp === lastEventTime && event.key === lastEventKey) {
-            return;
-        }
-        lastEventTime = event.timeStamp;
-        lastEventKey = event.key;
-
         const kind = classifyKey(event);
         if (!kind) {
             return;
