@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crash Analysis - gameplay_20261106_170526</title>
+<style>
+  :root {
+    --bg: #0b0f19;
+    --card-bg: #151d30;
+    --card-border: #23314d;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --jump: #10b981;
+    --duck: #f59e0b;
+    --none: #6366f1;
+    --crash: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: #111827;
+    border-bottom: 1px solid #1f2937;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 20;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: #38bdf8;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-crash {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    animation: pulse 2s infinite;
+  }
+  .badge-model {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .btn {
+    background: #1f2937;
+    border: 1px solid #374151;
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .btn:hover {
+    background: #374151;
+    border-color: #4b5563;
+  }
+  .btn-primary {
+    background: #2563eb;
+    border-color: #3b82f6;
+  }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-crash {
+    background: #dc2626;
+    border-color: #ef4444;
+  }
+  .btn-crash:hover { background: #b91c1c; }
+
+  #crash-banner {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(15, 23, 42, 0.95));
+    border-bottom: 2px solid #ef4444;
+    padding: 14px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 15;
+  }
+  .crash-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f87171;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .crash-desc {
+    font-size: 13.5px;
+    color: #f1f5f9;
+    line-height: 1.4;
+  }
+  .crash-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12px;
+  }
+  .metric-item {
+    background: rgba(30, 41, 59, 0.8);
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid #334155;
+  }
+  .metric-item span {
+    color: #94a3b8;
+  }
+  .metric-item strong {
+    color: #38bdf8;
+  }
+
+  #canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+    background: radial-gradient(circle at center, #111a2e 0%, #070a12 100%);
+  }
+  #canvas-container:active {
+    cursor: grabbing;
+  }
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+  .link {
+    fill: none;
+    stroke: #334155;
+    stroke-width: 1.5px;
+    transition: stroke 0.3s, stroke-width 0.3s;
+  }
+  .link-crash {
+    stroke: #ef4444 !important;
+    stroke-width: 3.5px !important;
+    stroke-dasharray: 6 3;
+    animation: dash 1s linear infinite;
+  }
+  @keyframes dash {
+    to { stroke-dashoffset: -18; }
+  }
+  .link-label {
+    font-size: 10px;
+    fill: #64748b;
+    font-weight: 600;
+    text-anchor: middle;
+  }
+  .link-label-crash {
+    fill: #fca5a5 !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+  }
+
+  .node-group {
+    cursor: pointer;
+  }
+  .node-box {
+    rx: 8px;
+    ry: 8px;
+    fill: #151d30;
+    stroke: #2b3b5c;
+    stroke-width: 1.5px;
+    transition: all 0.2s;
+  }
+  .node-group:hover .node-box {
+    stroke: var(--accent);
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+  }
+  .node-crash .node-box {
+    stroke: #ef4444 !important;
+    stroke-width: 3px !important;
+    filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.6));
+  }
+  .node-leaf-jump .node-box { border-left: 4px solid var(--jump); }
+  .node-leaf-duck .node-box { border-left: 4px solid var(--duck); }
+  .node-leaf-none .node-box { border-left: 4px solid var(--none); }
+
+  .node-id {
+    font-size: 10px;
+    fill: #64748b;
+    font-family: monospace;
+  }
+  .node-condition {
+    font-size: 12px;
+    font-weight: 600;
+    fill: #f8fafc;
+  }
+  .node-crash-badge {
+    font-size: 10px;
+    font-weight: 700;
+    fill: #fca5a5;
+  }
+  .node-samples {
+    font-size: 10px;
+    fill: #94a3b8;
+  }
+  .node-action-pill {
+    rx: 4px;
+    ry: 4px;
+  }
+  .node-action-pill-jump { fill: rgba(16, 185, 129, 0.25); stroke: var(--jump); }
+  .node-action-pill-duck { fill: rgba(245, 158, 11, 0.25); stroke: var(--duck); }
+  .node-action-pill-none { fill: rgba(99, 102, 241, 0.25); stroke: var(--none); }
+  .node-action-text {
+    font-size: 10px;
+    font-weight: 700;
+    text-anchor: middle;
+  }
+  .action-text-jump { fill: var(--jump); }
+  .action-text-duck { fill: var(--duck); }
+  .action-text-none { fill: var(--none); }
+
+  /* Legend & Info Drawer */
+  #legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid #334155;
+    padding: 10px 14px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11px;
+    z-index: 10;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+
+  #details-drawer {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    max-height: calc(100% - 140px);
+    overflow-y: auto;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 16px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 10;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  }
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 8px;
+  }
+  .drawer-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #38bdf8;
+  }
+  .drawer-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  .drawer-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .drawer-row span { color: #94a3b8; }
+  .drawer-row strong { color: #f8fafc; }
+
+  .dist-bar {
+    height: 6px;
+    border-radius: 3px;
+    display: flex;
+    overflow: hidden;
+    background: #334155;
+    margin-top: 4px;
+  }
+  .dist-segment {
+    height: 100%;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">T-REX AI // DECISION GRAPH</div>
+    <div class="badge badge-crash">Crash Diagnosis Mode</div>
+  </div>
+  <div class="controls">
+    <button class="btn" onclick="resetZoom()">Fit View</button>
+    <button class="btn" onclick="zoomIn()">Zoom +</button>
+    <button class="btn" onclick="zoomOut()">Zoom -</button>
+    <button class="btn btn-crash" onclick="focusCrashPath()">Focus Crash Path</button>
+  </div>
+</header>
+
+<div id="crash-banner"><div class="crash-title"><span>&#9888; Collision Root Cause Analysis</span></div><div class="crash-desc">Collision with pterodactyl (y=50.0) at distance 49.0px. Decision tree chose 'NONE'.</div><div class="crash-metrics"><div class="metric-item"><span>Obstacle:</span> <strong>pterodactyl</strong></div><div class="metric-item"><span>Distance:</span> <strong>49.0 px</strong></div><div class="metric-item"><span>Speed:</span> <strong>9.2</strong></div><div class="metric-item"><span>Dino State:</span> <strong>Jumping</strong></div><div class="metric-item"><span>Decision Path:</span> <strong>4 nodes traversed</strong></div><div class="metric-item"><span>Leaf Action:</span> <strong>NONE</strong></div></div></div>
+
+<div id="canvas-container">
+  <svg id="tree-svg">
+    <g id="viewport">
+      <g id="links-layer"></g>
+      <g id="nodes-layer"></g>
+    </g>
+  </svg>
+
+  <div id="legend">
+    <div style="font-weight:700;margin-bottom:2px;color:#94a3b8;">ACTION CLASSES</div>
+    <div class="legend-item"><div class="legend-color" style="background:var(--jump)"></div> JUMP</div>
+    <div class="legend-item"><div class="legend-color" style="background:var(--duck)"></div> DUCK</div>
+    <div class="legend-item"><div class="legend-color" style="background:var(--none)"></div> NONE</div>
+    <div class="legend-item"><div class="legend-color" style="background:var(--crash)"></div> CRASH DECISION PATH</div>
+  </div>
+
+  <div id="details-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title" id="drawer-node-title">Node Details</div>
+      <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+    </div>
+    <div id="drawer-content"></div>
+  </div>
+</div>
+
+<script>
+const rawTree = {"id": 0, "depth": 0, "is_leaf": false, "samples": 1491, "impurity": 0.5, "prediction": "none", "distribution": {"jump": 50.0, "duck": 0.0, "none": 50.0}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "obstacle1_x", "threshold": 144.5, "condition": "obstacle1_x <= 144.50", "left": {"id": 1, "depth": 1, "is_leaf": false, "samples": 709, "impurity": 0.434, "prediction": "jump", "distribution": {"jump": 68.1, "duck": 0.0, "none": 31.9}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "obstacle1_x", "threshold": 105.0, "condition": "obstacle1_x <= 105.00", "left": {"id": 2, "depth": 2, "is_leaf": false, "samples": 618, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": "obstacle2_type_cactusLarge", "threshold": 0.5, "condition": "obstacle2_type_cactusLarge <= 0.50", "left": {"id": 3, "depth": 3, "is_leaf": true, "samples": 587, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": null, "threshold": null, "condition": "Action: NONE", "left": null, "right": null}, "right": {"id": 4, "depth": 3, "is_leaf": true, "samples": 31, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": null, "threshold": null, "condition": "Action: NONE", "left": null, "right": null}}, "right": {"id": 5, "depth": 2, "is_leaf": false, "samples": 91, "impurity": 0.086, "prediction": "jump", "distribution": {"jump": 95.5, "duck": 0.0, "none": 4.5}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "jumping", "threshold": 0.5, "condition": "jumping <= 0.50", "left": {"id": 6, "depth": 3, "is_leaf": false, "samples": 73, "impurity": 0.065, "prediction": "jump", "distribution": {"jump": 96.6, "duck": 0.0, "none": 3.4}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "obstacle1_x", "threshold": 131.0, "condition": "obstacle1_x <= 131.00", "left": {"id": 7, "depth": 4, "is_leaf": false, "samples": 46, "impurity": 0.037, "prediction": "jump", "distribution": {"jump": 98.1, "duck": 0.0, "none": 1.9}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "obstacle1_x", "threshold": 112.5, "condition": "obstacle1_x <= 112.50", "left": {"id": 8, "depth": 5, "is_leaf": true, "samples": 9, "impurity": 0.004, "prediction": "jump", "distribution": {"jump": 99.8, "duck": 0.0, "none": 0.2}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": null, "threshold": null, "condition": "Action: JUMP", "left": null, "right": null}, "right": {"id": 9, "depth": 5, "is_leaf": false, "samples": 37, "impurity": 0.059, "prediction": "jump", "distribution": {"jump": 97.0, "duck": 0.0, "none": 3.0}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "speed", "threshold": 7.05, "condition": "speed <= 7.05", "left": {"id": 10, "depth": 6, "is_leaf": true, "samples": 6, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": null, "threshold": null, "condition": "Action: NONE", "left": null, "right": null}, "right": {"id": 11, "depth": 6, "is_leaf": false, "samples": 31, "impurity": 0.045, "prediction": "jump", "distribution": {"jump": 97.7, "duck": 0.0, "none": 2.3}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "obstacle1_type_cactusSmall", "threshold": 0.5, "condition": "obstacle1_type_cactusSmall <= 0.50", "left": {"id": 12, "depth": 7, "is_leaf": false, "samples": 12, "impurity": 0.015, "prediction": "jump", "distribution": {"jump": 99.3, "duck": 0.0, "none": 0.7}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "obstacle1_x", "threshold": 124.5, "condition": "obstacle1_x <= 124.50", "left": {"id": 13, "depth": 8, "is_leaf": true, "samples": 5, "impurity": 0.007, "prediction": "jump", "distribution": {"jump": 99.6, "duck": 0.0, "none": 0.4}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": null, "threshold": null, "condition": "Action: JUMP", "left": null, "right": null}, "right": {"id": 14, "depth": 8, "is_leaf": true, "samples": 7, "impurity": 0.022, "prediction": "jump", "distribution": {"jump": 98.9, "duck": 0.0, "none": 1.1}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": null, "threshold": null, "condition": "Action: JUMP", "left": null, "right": null}}, "right": {"id": 15, "depth": 7, "is_leaf": false, "samples": 19, "impurity": 0.101, "prediction": "jump", "distribution": {"jump": 94.7, "duck": 0.0, "none": 5.3}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "speed", "threshold": 7.62, "condition": "speed <= 7.62", "left": {"id": 16, "depth": 8, "is_leaf": true, "samples": 9, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": null, "threshold": null, "condition": "Action: NONE", "left": null, "right": null}, "right": {"id": 17, "depth": 8, "is_leaf": true, "samples": 10, "impurity": 0.043, "prediction": "jump", "distribution": {"jump": 97.8, "duck": 0.0, "none": 2.2}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": null, "threshold": null, "condition": "Action: JUMP", "left": null, "right": null}}}}}, "right": {"id": 18, "depth": 4, "is_leaf": false, "samples": 27, "impurity": 0.266, "prediction": "jump", "distribution": {"jump": 84.2, "duck": 0.0, "none": 15.8}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": "speed", "threshold": 6.83, "condition": "speed <= 6.83", "left": {"id": 19, "depth": 5, "is_leaf": true, "samples": 5, "impurity": 0.043, "prediction": "jump", "distribution": {"jump": 97.8, "duck": 0.0, "none": 2.2}, "counts": {"jump": 0, "duck": 0, "none": 0}, "feature": null, "threshold": null, "condition": "Action: JUMP", "left": null, "right": null}, "right": {"id": 20, "depth": 5, "is_leaf": false, "samples": 22, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": "obstacle1_size", "threshold": 1.5, "condition": "obstacle1_size <= 1.50", "left": {"id": 21, "depth": 6, "is_leaf": true, "samples": 9, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": null, "threshold": null, "condition": "Action: NONE", "left": null, "right": null}, "right": {"id": 22, "depth": 6, "is_leaf": true, "samples": 13, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": null, "threshold": null, "condition": "Action: NONE", "left": null, "right": null}}}}, "right": {"id": 23, "depth": 3, "is_leaf": true, "samples": 18, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": null, "threshold": null, "condition": "Action: NONE", "left": null, "right": null}}}, "right": {"id": 24, "depth": 1, "is_leaf": false, "samples": 782, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": "speed", "threshold": 6.47, "condition": "speed <= 6.47", "left": {"id": 25, "depth": 2, "is_leaf": true, "samples": 6, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": null, "threshold": null, "condition": "Action: NONE", "left": null, "right": null}, "right": {"id": 26, "depth": 2, "is_leaf": true, "samples": 776, "impurity": 0.0, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "counts": {"jump": 0, "duck": 0, "none": 1}, "feature": null, "threshold": null, "condition": "Action: NONE", "left": null, "right": null}}};
+const crashData = {"obstacle_type": "pterodactyl", "obstacle_x": 49.0, "obstacle_y": 50.0, "speed": 9.210999999999997, "jumping": true, "ducking": false, "action_executed": "none", "predicted_action": "none", "explanation": "Collision with pterodactyl (y=50.0) at distance 49.0px. Decision tree chose 'NONE'.", "path_info": {"node_ids": [0, 1, 2, 3], "leaf_id": 3, "predicted_action": "none", "steps": [{"node_id": 0, "is_leaf": false, "samples": 1491, "prediction": "none", "distribution": {"jump": 50.0, "duck": 0.0, "none": 50.0}, "feature": "obstacle1_x", "threshold": 144.5, "actual_value": 49.0, "condition": "obstacle1_x <= 144.50", "branch_taken": "<=", "is_satisfied": true, "next_node": 1}, {"node_id": 1, "is_leaf": false, "samples": 709, "prediction": "jump", "distribution": {"jump": 68.1, "duck": 0.0, "none": 31.9}, "feature": "obstacle1_x", "threshold": 105.0, "actual_value": 49.0, "condition": "obstacle1_x <= 105.00", "branch_taken": "<=", "is_satisfied": true, "next_node": 2}, {"node_id": 2, "is_leaf": false, "samples": 618, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "feature": "obstacle2_type_cactusLarge", "threshold": 0.5, "actual_value": 0.0, "condition": "obstacle2_type_cactusLarge <= 0.50", "branch_taken": "<=", "is_satisfied": true, "next_node": 3}, {"node_id": 3, "is_leaf": true, "samples": 587, "prediction": "none", "distribution": {"jump": 0.0, "duck": 0.0, "none": 100.0}, "feature": null, "threshold": null, "actual_value": null, "condition": "LEAF: Action = NONE", "branch_taken": null, "is_satisfied": null, "next_node": null}]}, "raw_features": {"obstacle1_x": 49.0, "obstacle1_y": 50.0, "obstacle1_type": "pterodactyl", "obstacle1_size": 1, "obstacle2_x": -1.0, "obstacle2_y": -1.0, "obstacle2_type": "none", "obstacle2_size": 0, "speed": 9.210999999999997, "jumping": 1, "ducking": 0}};
+const highlightIds = new Set([0, 1, 2, 3]);
+
+// Map of crash steps by node id
+const crashStepsMap = {};
+if (crashData && crashData.path_info) {
+  crashData.path_info.steps.forEach(s => {
+    crashStepsMap[s.node_id] = s;
+  });
+}
+
+const NODE_W = 180;
+const NODE_H = 75;
+const LEVEL_H = 130;
+const SIBLING_GAP = 30;
+
+// Hierarchical layout calculation
+function layoutTree(root) {
+  let nextX = 40;
+  function assignX(node) {
+    if (!node) return;
+    if (node.is_leaf || (!node.left && !node.right)) {
+      node.x = nextX;
+      nextX += NODE_W + SIBLING_GAP;
+    } else {
+      if (node.left) assignX(node.left);
+      if (node.right) assignX(node.right);
+      const l = node.left ? node.left.x : node.right.x;
+      const r = node.right ? node.right.x : node.left.x;
+      node.x = (l + r) / 2;
+    }
+    node.y = 60 + node.depth * LEVEL_H;
+  }
+  assignX(root);
+}
+
+layoutTree(rawTree);
+
+// SVG Pan & Zoom state
+let scale = 0.85;
+let tx = 80;
+let ty = 30;
+let isPanning = false;
+let startX = 0;
+let startY = 0;
+
+const svg = document.getElementById("tree-svg");
+const viewport = document.getElementById("viewport");
+const linksLayer = document.getElementById("links-layer");
+const nodesLayer = document.getElementById("nodes-layer");
+
+function updateTransform() {
+  viewport.setAttribute("transform", `translate(${tx}, ${ty}) scale(${scale})`);
+}
+
+const container = document.getElementById("canvas-container");
+container.addEventListener("mousedown", (e) => {
+  if (e.target.closest(".node-group")) return;
+  isPanning = true;
+  startX = e.clientX - tx;
+  startY = e.clientY - ty;
+});
+
+window.addEventListener("mousemove", (e) => {
+  if (!isPanning) return;
+  tx = e.clientX - startX;
+  ty = e.clientY - startY;
+  updateTransform();
+});
+
+window.addEventListener("mouseup", () => {
+  isPanning = false;
+});
+
+container.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+  const mouseX = e.clientX - container.getBoundingClientRect().left;
+  const mouseY = e.clientY - container.getBoundingClientRect().top;
+  
+  tx = mouseX - (mouseX - tx) * zoomFactor;
+  ty = mouseY - (mouseY - ty) * zoomFactor;
+  scale *= zoomFactor;
+  updateTransform();
+}, { passive: false });
+
+function zoomIn() {
+  scale *= 1.25;
+  updateTransform();
+}
+
+function zoomOut() {
+  scale *= 0.8;
+  updateTransform();
+}
+
+function resetZoom() {
+  scale = 0.8;
+  tx = 60;
+  ty = 40;
+  updateTransform();
+}
+
+function focusCrashPath() {
+  if (!crashData || !crashData.path_info) return;
+  const leafId = crashData.path_info.leaf_id;
+  let targetNode = null;
+  function findNode(n) {
+    if (!n) return;
+    if (n.id === leafId) { targetNode = n; return; }
+    findNode(n.left);
+    findNode(n.right);
+  }
+  findNode(rawTree);
+  if (targetNode) {
+    const rect = container.getBoundingClientRect();
+    scale = 1.0;
+    tx = rect.width / 2 - targetNode.x - NODE_W / 2;
+    ty = rect.height / 2 - targetNode.y - NODE_H / 2;
+    updateTransform();
+    selectNode(targetNode);
+  }
+}
+
+// Render Nodes & Links
+function render(node) {
+  if (!node) return;
+
+  const isCrashNode = highlightIds.has(node.id);
+  const crashStep = crashStepsMap[node.id];
+
+  // Render children links
+  if (node.left) {
+    renderLink(node, node.left, true);
+    render(node.left);
+  }
+  if (node.right) {
+    renderLink(node, node.right, false);
+    render(node.right);
+  }
+
+  // Node Element
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.setAttribute("class", `node-group ${isCrashNode ? "node-crash" : ""}`);
+  g.setAttribute("transform", `translate(${node.x}, ${node.y})`);
+  g.onclick = () => selectNode(node);
+
+  const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  rect.setAttribute("class", `node-box node-leaf-${node.prediction}`);
+  rect.setAttribute("width", NODE_W);
+  rect.setAttribute("height", NODE_H);
+  g.appendChild(rect);
+
+  // Node ID text
+  const textId = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  textId.setAttribute("class", "node-id");
+  textId.setAttribute("x", 10);
+  textId.setAttribute("y", 18);
+  textId.textContent = `#${node.id} ${node.is_leaf ? "LEAF" : ""}`;
+  g.appendChild(textId);
+
+  // Condition or Leaf Action
+  const textCond = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  textCond.setAttribute("class", "node-condition");
+  textCond.setAttribute("x", 10);
+  textCond.setAttribute("y", 36);
+  if (node.is_leaf) {
+    textCond.textContent = `Action: ${node.prediction.toUpperCase()}`;
+    textCond.setAttribute("fill", `var(--${node.prediction})`);
+  } else {
+    textCond.textContent = node.condition;
+  }
+  g.appendChild(textCond);
+
+  // Crash actual value badge
+  if (crashStep) {
+    const textCrash = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    textCrash.setAttribute("class", "node-crash-badge");
+    textCrash.setAttribute("x", 10);
+    textCrash.setAttribute("y", 52);
+    if (!node.is_leaf) {
+      textCrash.textContent = `Actual: ${crashStep.actual_value} (${crashStep.branch_taken})`;
+    } else {
+      textCrash.textContent = `CRASH ACTION: ${crashStep.prediction.toUpperCase()}`;
+    }
+    g.appendChild(textCrash);
+  } else {
+    // Samples count
+    const textSamples = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    textSamples.setAttribute("class", "node-samples");
+    textSamples.setAttribute("x", 10);
+    textSamples.setAttribute("y", 52);
+    textSamples.textContent = `samples: ${node.samples} | gini: ${node.impurity}`;
+    g.appendChild(textSamples);
+  }
+
+  // Action badge pill in corner
+  const pillW = 46;
+  const pillH = 18;
+  const pillRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  pillRect.setAttribute("class", `node-action-pill node-action-pill-${node.prediction}`);
+  pillRect.setAttribute("x", NODE_W - pillW - 8);
+  pillRect.setAttribute("y", 8);
+  pillRect.setAttribute("width", pillW);
+  pillRect.setAttribute("height", pillH);
+  g.appendChild(pillRect);
+
+  const pillText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  pillText.setAttribute("class", `node-action-text action-text-${node.prediction}`);
+  pillText.setAttribute("x", NODE_W - pillW/2 - 8);
+  pillText.setAttribute("y", 20);
+  pillText.textContent = node.prediction.toUpperCase();
+  g.appendChild(pillText);
+
+  nodesLayer.appendChild(g);
+}
+
+function renderLink(parent, child, isLeft) {
+  const x1 = parent.x + NODE_W / 2;
+  const y1 = parent.y + NODE_H;
+  const x2 = child.x + NODE_W / 2;
+  const y2 = child.y;
+
+  const isCrashLink = highlightIds.has(parent.id) && highlightIds.has(child.id);
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  const cy = (y1 + y2) / 2;
+  const d = `M ${x1} ${y1} C ${x1} ${cy}, ${x2} ${cy}, ${x2} ${y2}`;
+  path.setAttribute("d", d);
+  path.setAttribute("class", `link ${isCrashLink ? "link-crash" : ""}`);
+  linksLayer.appendChild(path);
+
+  // Branch label (<= or >)
+  const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  label.setAttribute("class", `link-label ${isCrashLink ? "link-label-crash" : ""}`);
+  label.setAttribute("x", (x1 + x2) / 2 + (isLeft ? -12 : 12));
+  label.setAttribute("y", cy - 4);
+  label.textContent = isLeft ? "<= True" : "> False";
+  linksLayer.appendChild(label);
+}
+
+function selectNode(node) {
+  const drawer = document.getElementById("details-drawer");
+  const title = document.getElementById("drawer-node-title");
+  const content = document.getElementById("drawer-content");
+
+  title.textContent = `Node #${node.id} (${node.is_leaf ? "Leaf" : "Decision"})`;
+  
+  const crashStep = crashStepsMap[node.id];
+  let crashHtml = "";
+  if (crashStep) {
+    crashHtml = `
+      <div style="background:rgba(239, 68, 68, 0.2); border:1px solid #ef4444; border-radius:6px; padding:10px; margin-bottom:10px;">
+        <div style="color:#f87171; font-weight:700; margin-bottom:4px;">&#9888; CRASH DECISION STEP</div>
+        ${!node.is_leaf ? `
+          <div style="font-size:12px;"><strong>Feature Tested:</strong> ${crashStep.feature}</div>
+          <div style="font-size:12px;"><strong>Dino Value:</strong> ${crashStep.actual_value}</div>
+          <div style="font-size:12px;"><strong>Split Condition:</strong> ${crashStep.condition}</div>
+          <div style="font-size:12px;"><strong>Branch Selected:</strong> <span style="color:#38bdf8; font-weight:bold;">${crashStep.branch_taken}</span></div>
+        ` : `
+          <div style="font-size:12px;"><strong>Predicted Action:</strong> ${crashStep.prediction.toUpperCase()}</div>
+          <div style="font-size:12px; color:#fca5a5; margin-top:4px;">This leaf selected action '${crashStep.prediction}', resulting in collision.</div>
+        `}
+      </div>
+    `;
+  }
+
+  const distJump = node.distribution.jump || 0;
+  const distDuck = node.distribution.duck || 0;
+  const distNone = node.distribution.none || 0;
+
+  content.innerHTML = `
+    ${crashHtml}
+    <div class="drawer-row"><span>Type:</span><strong>${node.is_leaf ? "Leaf Node" : "Split Node"}</strong></div>
+    <div class="drawer-row"><span>Condition:</span><strong>${node.condition}</strong></div>
+    <div class="drawer-row"><span>Samples in Train:</span><strong>${node.samples}</strong></div>
+    <div class="drawer-row"><span>Gini Impurity:</span><strong>${node.impurity}</strong></div>
+    <div class="drawer-row"><span>Majority Class:</span><strong style="color:var(--${node.prediction})">${node.prediction.toUpperCase()}</strong></div>
+    
+    <div style="margin-top:10px;">
+      <div style="font-size:12px; color:#94a3b8; margin-bottom:4px;">Training Action Distribution:</div>
+      <div class="dist-bar">
+        <div class="dist-segment" style="width:${distJump}%; background:var(--jump)"></div>
+        <div class="dist-segment" style="width:${distDuck}%; background:var(--duck)"></div>
+        <div class="dist-segment" style="width:${distNone}%; background:var(--none)"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:4px;">
+        <span style="color:var(--jump)">Jump: ${distJump}%</span>
+        <span style="color:var(--duck)">Duck: ${distDuck}%</span>
+        <span style="color:var(--none)">None: ${distNone}%</span>
+      </div>
+    </div>
+  `;
+
+  drawer.style.display = "flex";
+}
+
+function closeDrawer() {
+  document.getElementById("details-drawer").style.display = "none";
+}
+
+render(rawTree);
+updateTransform();
+
+if (crashData) {
+  setTimeout(focusCrashPath, 300);
+}
+</script>
+</body>
+</html>

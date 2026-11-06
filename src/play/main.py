@@ -10,6 +10,7 @@ from src.browser_gateway import connect, disconnect, CDP
 from src.play.script import SCRIPT
 
 from src.logger import Logger
+from src.decision_graph import show_crash_decision_graph
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -49,7 +50,7 @@ def load_model(model):
     return saved
 
 
-def predict_action(saved, state):
+def predict_action_full(saved, state):
     # The browser already returns exactly two normalized obstacles.
     first, second = state["obstacles"][:2]
 
@@ -77,8 +78,14 @@ def predict_action(saved, state):
     frame = frame.reindex(columns=saved["features"], fill_value=0)
 
     action = str(saved["model"].predict(frame)[0]).lower()
+    valid_action = action if action in VALID_ACTIONS else "none"
 
-    return action if action in VALID_ACTIONS else "none", first
+    return valid_action, first, raw_features, frame
+
+
+def predict_action(saved, state):
+    action, first, _, _ = predict_action_full(saved, state)
+    return action, first
 
 
 def play(model):
@@ -115,6 +122,9 @@ def play(model):
         Logger.log(indent=1, message="System Playing (Ctrl+C to exit)")
         Logger.log(indent=1, message="")
 
+        history = []
+        MAX_HISTORY = 50
+
         while True:
             state = cdp.evaluate("window.__pythonDino.getState()")
 
@@ -123,14 +133,29 @@ def play(model):
                 continue
 
             if state.get("crashed"):
-                Logger.log(indent=1, label="STATUS", message="Game Over")
+                Logger.log(indent=1, label="STATUS", message="Game Over (Crash Detected)")
+                show_crash_decision_graph(
+                    saved=saved,
+                    crash_state=state,
+                    history=history,
+                    model_name=model,
+                )
                 return
 
             if not state.get("ready"):
                 time.sleep(POLL_INTERVAL)
                 continue
 
-            action, first = predict_action(saved, state)
+            action, first, raw_features, frame = predict_action_full(saved, state)
+            history.append({
+                "state": state,
+                "raw_features": raw_features,
+                "frame": frame,
+                "action": action,
+                "first": first,
+            })
+            if len(history) > MAX_HISTORY:
+                history.pop(0)
 
             result = cdp.evaluate(
                 "window.__pythonDino.act(" + json.dumps(action) + ")"

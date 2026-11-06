@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
 from src.logger import Logger
+from src.decision_graph import show_decision_graph
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -143,6 +144,13 @@ def train(gameplay):
     Logger.log(
         indent=1,
         message=f"Training Complete"
+    )
+
+    show_decision_graph(
+        model=model,
+        feature_names=list(X.columns),
+        class_names=list(model.classes_),
+        name=gameplay,
     )
 
 if __name__ == "__main__":
