@@ -11,6 +11,7 @@ from src.play.script import SCRIPT
 
 from src.logger import Logger
 from src.decision_graph import show_crash_decision_graph
+from src.playback import PlaybackRecorder
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -122,6 +123,7 @@ def play(model):
         Logger.log(indent=1, message="System Playing (Ctrl+C to exit)")
         Logger.log(indent=1, message="")
 
+        recorder = PlaybackRecorder(model, saved)
         history = []
         MAX_HISTORY = 50
 
@@ -134,6 +136,8 @@ def play(model):
 
             if state.get("crashed"):
                 Logger.log(indent=1, label="STATUS", message="Game Over (Crash Detected)")
+                recorder.mark_crashed(state)
+                recorder.save()
                 show_crash_decision_graph(
                     saved=saved,
                     crash_state=state,
@@ -161,6 +165,8 @@ def play(model):
                 "window.__pythonDino.act(" + json.dumps(action) + ")"
             )
 
+            recorder.record_step(state, raw_features, frame, action, result)
+
             if not isinstance(result, dict) or not result.get("ok"):
                 Logger.log(
                     indent=1,
@@ -181,6 +187,7 @@ def play(model):
             time.sleep(POLL_INTERVAL)
 
     except KeyboardInterrupt:
+        recorder.save()
         Logger.log(indent=1, message="Autoplay Stopped! Hope you like")
 
     except Exception as error:
