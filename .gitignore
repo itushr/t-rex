@@ -16,6 +16,8 @@ env/
 # Generated datasets
 *.csv
 *.jsonl
+models/
+playback/
 
 # Trained models
 *.joblib
