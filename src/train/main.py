@@ -2,6 +2,7 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
@@ -28,7 +29,15 @@ TARGET = "action"
 VALID_ACTIONS = {"none", "jump", "duck"}
 OBSTACLE_TYPES = {"none", "cactusSmall", "cactusLarge", "pterodactyl", "collectable"}
 
-def create_model():
+def create_model(model_type="decision_tree"):
+    if model_type == "random_forest":
+        return RandomForestClassifier(
+            n_estimators=10,
+            max_depth=12,
+            min_samples_leaf=5,
+            class_weight="balanced",
+            random_state=42,
+        )
     return DecisionTreeClassifier(
         max_depth=12,
         min_samples_leaf=5,
@@ -37,15 +46,17 @@ def create_model():
     )
 
 
-def train(gameplay):
+def train(gameplay, model_type="decision_tree"):
+    model_name_label = "Random forest" if model_type == "random_forest" else "Decision tree"
     Logger.log(
         blanckline=True,
         indent=0,
-        message=f"Starting Training..."
+        message=f"Starting Training ({model_name_label})..."
     )
     
+    model_suffix = "random_forest" if model_type == "random_forest" else "decision_tree"
     DATA_PATH = BASE_DIR / "gameplay" / f"{gameplay}.csv"
-    MODEL_PATH = BASE_DIR / "models" / f"{gameplay}.pkl"
+    MODEL_PATH = BASE_DIR / "models" / f"{gameplay}_{model_suffix}.pkl"
     
     if not DATA_PATH.exists():
         Logger.error(
@@ -113,7 +124,7 @@ def train(gameplay):
         stratify=y if can_stratify else None,
     )
 
-    evaluation_model = create_model()
+    evaluation_model = create_model(model_type)
     evaluation_model.fit(X_train, y_train)
     predictions = evaluation_model.predict(X_test)
 
@@ -122,11 +133,12 @@ def train(gameplay):
         message=f"Accuracy: {(accuracy_score(y_test, predictions)*100):.2f}%"
     )
 
-    model = create_model()
+    model = create_model(model_type)
     model.fit(X, y)
     joblib.dump(
         {
             "model": model,
+            "model_type": model_type,
             "features": list(X.columns),
             "numeric_features": NUMERIC_FEATURES,
             "type_features": TYPE_FEATURES,
@@ -150,7 +162,7 @@ def train(gameplay):
         model=model,
         feature_names=list(X.columns),
         class_names=list(model.classes_),
-        name=gameplay,
+        name=f"{gameplay}_{model_suffix}",
     )
 
 if __name__ == "__main__":

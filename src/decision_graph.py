@@ -12,12 +12,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG_URL = "http://localhost:9222"
 
 
+def _resolve_model_classes(model, class_names=None):
+    """
+    Safely resolves string class names for DecisionTreeClassifier or RandomForest estimator.
+    """
+    if hasattr(model, "classes_"):
+        raw_classes = model.classes_
+        if len(raw_classes) > 0 and isinstance(raw_classes[0], (int, float, np.integer, np.floating)) and class_names is not None:
+            return [str(class_names[int(c)]) if int(c) < len(class_names) else str(c) for c in raw_classes]
+        return [str(c) for c in raw_classes]
+    elif class_names is not None:
+        return [str(c) for c in class_names]
+    return ["jump", "duck", "none"]
+
+
 def extract_tree_data(model, feature_names, class_names=None):
     """
     Extracts scikit-learn DecisionTreeClassifier tree_ into a structured dictionary.
     """
     tree = model.tree_
-    model_classes = [str(c) for c in getattr(model, "classes_", class_names or [])]
+    model_classes = _resolve_model_classes(model, class_names)
     all_actions = ["jump", "duck", "none"]
 
     def build_node(node_id, depth=0):
@@ -31,7 +45,9 @@ def extract_tree_data(model, feature_names, class_names=None):
 
         distribution = {act: 0.0 for act in all_actions}
         counts = {act: 0 for act in all_actions}
-        for i, cls_name in enumerate(model_classes):
+        limit = min(len(raw_values), len(model_classes))
+        for i in range(limit):
+            cls_name = model_classes[i]
             distribution[cls_name] = round(float(raw_values[i]) / total_val * 100, 1)
             counts[cls_name] = int(raw_values[i])
 
@@ -70,15 +86,40 @@ def extract_tree_data(model, feature_names, class_names=None):
     return build_node(0, 0)
 
 
-def trace_decision_path(model, frame, feature_names, class_names=None):
+def extract_forest_data(model, feature_names, class_names=None):
     """
-    Computes the exact node path taken by the decision tree for a single row sample.
+    Extracts all decision trees from a model (either a single tree or random forest ensemble).
     """
-    model_classes = [str(c) for c in getattr(model, "classes_", class_names or [])]
+    target_classes = list(model.classes_) if hasattr(model, "classes_") else class_names
+    if hasattr(model, "estimators_"):
+        trees = [
+            extract_tree_data(est, feature_names, target_classes)
+            for est in model.estimators_
+        ]
+        return {
+            "model_type": "random_forest",
+            "n_estimators": len(trees),
+            "trees": trees,
+        }
+    else:
+        tree = extract_tree_data(model, feature_names, target_classes)
+        return {
+            "model_type": "decision_tree",
+            "n_estimators": 1,
+            "trees": [tree],
+        }
+
+
+def trace_single_tree_path(model, frame, feature_names, class_names=None):
+    """
+    Computes the decision path for a single DecisionTreeClassifier.
+    """
+    model_classes = _resolve_model_classes(model, class_names)
     all_actions = ["jump", "duck", "none"]
     tree = model.tree_
 
-    indicator = model.decision_path(frame)
+    frame_matrix = frame.values if hasattr(frame, "values") else frame
+    indicator = model.decision_path(frame_matrix)
     node_indices = indicator.indices.tolist()
 
     steps = []
@@ -92,7 +133,9 @@ def trace_decision_path(model, frame, feature_names, class_names=None):
         raw_values = tree.value[node_id][0]
         total_val = float(np.sum(raw_values)) if np.sum(raw_values) > 0 else 1.0
         distribution = {act: 0.0 for act in all_actions}
-        for i, cls_name in enumerate(model_classes):
+        limit = min(len(raw_values), len(model_classes))
+        for i in range(limit):
+            cls_name = model_classes[i]
             distribution[cls_name] = round(float(raw_values[i]) / total_val * 100, 1)
 
         pred_idx = int(np.argmax(raw_values))
@@ -144,12 +187,71 @@ def trace_decision_path(model, frame, feature_names, class_names=None):
     }
 
 
+def trace_decision_path(model, frame, feature_names, class_names=None):
+    """
+    Computes decision path for either a DecisionTreeClassifier or RandomForestClassifier.
+    For a random forest, returns each individual tree's prediction and path.
+    """
+    target_classes = list(model.classes_) if hasattr(model, "classes_") else class_names
+    if hasattr(model, "estimators_"):
+        forest_paths = []
+        votes = {}
+        for i, est in enumerate(model.estimators_):
+            t_path = trace_single_tree_path(est, frame, feature_names, target_classes)
+            pred = t_path["predicted_action"]
+            forest_paths.append({
+                "tree_index": i,
+                "predicted_action": pred,
+                "node_ids": t_path["node_ids"],
+                "leaf_id": t_path["leaf_id"],
+                "steps": t_path["steps"],
+            })
+            votes[pred] = votes.get(pred, 0) + 1
+
+        ensemble_pred = str(model.predict(frame)[0]).lower()
+
+        return {
+            "model_type": "random_forest",
+            "predicted_action": ensemble_pred,
+            "votes": votes,
+            "trees": forest_paths,
+            "node_ids": forest_paths[0]["node_ids"],
+            "leaf_id": forest_paths[0]["leaf_id"],
+            "steps": forest_paths[0]["steps"],
+        }
+    else:
+        path = trace_single_tree_path(model, frame, feature_names, class_names)
+        return {
+            "model_type": "decision_tree",
+            "predicted_action": path["predicted_action"],
+            "votes": {path["predicted_action"]: 1},
+            "trees": [{
+                "tree_index": 0,
+                "predicted_action": path["predicted_action"],
+                "node_ids": path["node_ids"],
+                "leaf_id": path["leaf_id"],
+                "steps": path["steps"],
+            }],
+            "node_ids": path["node_ids"],
+            "leaf_id": path["leaf_id"],
+            "steps": path["steps"],
+        }
+
+
 def generate_decision_graph_html(model, feature_names, class_names, title="Decision graph"):
     """
     Builds a standalone interactive HTML document with SVG tree visualization.
+    Supports both DecisionTreeClassifier (single tree) and RandomForestClassifier (tree selector list).
+    Follows the unslop and frontend design skill specifications.
     """
-    tree_data = extract_tree_data(model, feature_names, class_names)
-    tree_json = json.dumps(tree_data)
+    if isinstance(model, dict) and "trees" in model:
+        forest_data = model
+    else:
+        forest_data = extract_forest_data(model, feature_names, class_names)
+    forest_json = json.dumps(forest_data)
+
+    is_rf = forest_data["model_type"] == "random_forest"
+    type_label = f"Random forest ({forest_data['n_estimators']} trees)" if is_rf else "Decision tree"
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -159,13 +261,13 @@ def generate_decision_graph_html(model, feature_names, class_names, title="Decis
 <title>{title}</title>
 <style>
   :root {{
-    --bg: #090a0f;
-    --panel-bg: #11141c;
-    --card-bg: #171b26;
-    --border: #232938;
-    --border-light: #323b4e;
+    --bg: #0b0e14;
+    --panel-bg: #121721;
+    --card-bg: #18202e;
+    --border: #243044;
+    --border-light: #34445f;
     --text: #f1f5f9;
-    --text-dim: #94a3b8;
+    --text-dim: #8b9bb4;
     --text-muted: #64748b;
     --accent: #38bdf8;
     --jump: #10b981;
@@ -200,7 +302,6 @@ def generate_decision_graph_html(model, feature_names, class_names, title="Decis
   .title {{
     font-size: 15px;
     font-weight: 700;
-    letter-spacing: 0.3px;
     color: var(--text);
   }}
   .meta-tag {{
@@ -223,7 +324,7 @@ def generate_decision_graph_html(model, feature_names, class_names, title="Decis
     padding: 6px 12px;
     border-radius: 4px;
     font-size: 13px;
-    width: 200px;
+    width: 180px;
     outline: none;
     transition: border-color 0.15s;
   }}
@@ -245,11 +346,77 @@ def generate_decision_graph_html(model, feature_names, class_names, title="Decis
     background: var(--border);
     border-color: var(--border-light);
   }}
+  .btn-sm {{
+    padding: 4px 8px;
+    font-size: 11px;
+  }}
+  .btn-active {{
+    background: var(--accent);
+    color: #0b0e14;
+    border-color: var(--accent);
+    font-weight: 600;
+  }}
   #workspace {{
     flex: 1;
     display: flex;
     overflow: hidden;
     position: relative;
+  }}
+  #forest-sidebar {{
+    width: 270px;
+    background: var(--panel-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    z-index: 10;
+  }}
+  .panel-header {{
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }}
+  .tree-list {{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+  }}
+  .tree-item {{
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }}
+  .tree-item:hover {{
+    border-color: var(--border-light);
+  }}
+  .tree-item.selected {{
+    border-color: var(--accent);
+    background: rgba(56, 189, 248, 0.08);
+  }}
+  .tree-item-info {{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }}
+  .tree-item-title {{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }}
+  .tree-item-meta {{
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: ui-monospace, monospace;
   }}
   #canvas-container {{
     flex: 1;
@@ -339,8 +506,8 @@ def generate_decision_graph_html(model, feature_names, class_names, title="Decis
   .pill-text-duck {{ fill: var(--duck); }}
   .pill-text-none {{ fill: var(--text-dim); }}
 
-  #sidebar {{
-    width: 320px;
+  #node-sidebar {{
+    width: 300px;
     background: var(--panel-bg);
     border-left: 1px solid var(--border);
     display: flex;
@@ -348,18 +515,11 @@ def generate_decision_graph_html(model, feature_names, class_names, title="Decis
     overflow-y: auto;
     z-index: 10;
   }}
-  .sidebar-header {{
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-  }}
   .sidebar-body {{
-    padding: 16px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }}
   .card {{
     background: var(--card-bg);
@@ -437,6 +597,7 @@ def generate_decision_graph_html(model, feature_names, class_names, title="Decis
   <div class="brand-group">
     <div class="title">Decision graph</div>
     <div class="meta-tag">{title}</div>
+    <div class="meta-tag">{type_label}</div>
   </div>
 
   <div class="controls">
@@ -448,6 +609,8 @@ def generate_decision_graph_html(model, feature_names, class_names, title="Decis
 </header>
 
 <div id="workspace">
+  {"<div id='forest-sidebar'><div class='panel-header'>Trees in ensemble</div><div class='tree-list' id='tree-list-container'></div></div>" if is_rf else ""}
+
   <div id="canvas-container">
     <svg id="tree-svg">
       <g id="viewport">
@@ -464,40 +627,24 @@ def generate_decision_graph_html(model, feature_names, class_names, title="Decis
     </div>
   </div>
 
-  <div id="sidebar">
-    <div class="sidebar-header">Node details</div>
+  <div id="node-sidebar">
+    <div class="panel-header">Node details</div>
     <div class="sidebar-body" id="node-details-body">
       <p style="font-size:12px; color:var(--text-muted); line-height:1.5;">
-        Select any node in the tree to view its split condition, sample count, and class distribution.
+        Select any node in the tree to inspect its split condition, sample count, and class distribution.
       </p>
     </div>
   </div>
 </div>
 
 <script>
-const rawTree = {tree_json};
+const forestData = {forest_json};
+let activeTreeIndex = 0;
 
 const NODE_W = 180;
 const NODE_H = 72;
 const LEVEL_H = 120;
 const SIBLING_GAP = 24;
-
-let nextX = 40;
-function assignX(node) {{
-  if (!node) return;
-  if (node.is_leaf || (!node.left && !node.right)) {{
-    node.x = nextX;
-    nextX += NODE_W + SIBLING_GAP;
-  }} else {{
-    if (node.left) assignX(node.left);
-    if (node.right) assignX(node.right);
-    const l = node.left ? node.left.x : node.right.x;
-    const r = node.right ? node.right.x : node.left.x;
-    node.x = (l + r) / 2;
-  }}
-  node.y = 40 + node.depth * LEVEL_H;
-}}
-assignX(rawTree);
 
 let scale = 0.85;
 let tx = 60;
@@ -561,102 +708,132 @@ function resetZoom() {{
   updateTransform();
 }}
 
+// Reusable Tree Component
 const allNodes = new Map();
 const allLinks = [];
 
-function render(node, parent = null, isLeft = true) {{
-  if (!node) return;
-  allNodes.set(node.id, {{ node, parent }});
-
-  if (parent) {{
-    const sx = parent.x + NODE_W / 2;
-    const sy = parent.y + NODE_H;
-    const ex = node.x + NODE_W / 2;
-    const ey = node.y;
-    const my = (sy + ey) / 2;
-
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d", `M ${{sx}} ${{sy}} C ${{sx}} ${{my}}, ${{ex}} ${{my}}, ${{ex}} ${{ey}}`);
-    path.setAttribute("class", "link");
-    path.id = `link-${{parent.id}}-${{node.id}}`;
-    linksLayer.appendChild(path);
-
-    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    label.setAttribute("class", "link-label");
-    label.setAttribute("x", (sx + ex) / 2 + (isLeft ? -14 : 6));
-    label.setAttribute("y", my);
-    label.textContent = isLeft ? "<=" : ">";
-    linksLayer.appendChild(label);
-
-    allLinks.push({{ parentId: parent.id, childId: node.id, element: path }});
+function layoutTree(root) {{
+  let nextX = 40;
+  function assignX(node) {{
+    if (!node) return;
+    if (node.is_leaf || (!node.left && !node.right)) {{
+      node.x = nextX;
+      nextX += NODE_W + SIBLING_GAP;
+    }} else {{
+      if (node.left) assignX(node.left);
+      if (node.right) assignX(node.right);
+      const l = node.left ? node.left.x : node.right.x;
+      const r = node.right ? node.right.x : node.left.x;
+      node.x = (l + r) / 2;
+    }}
+    node.y = 40 + node.depth * LEVEL_H;
   }}
-
-  if (node.left) render(node.left, node, true);
-  if (node.right) render(node.right, node, false);
-
-  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  g.setAttribute("class", "node-group");
-  g.setAttribute("id", `node-${{node.id}}`);
-  g.setAttribute("transform", `translate(${{node.x}}, ${{node.y}})`);
-  g.onclick = (e) => {{
-    e.stopPropagation();
-    selectNode(node);
-  }};
-
-  const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-  rect.setAttribute("class", `node-box`);
-  rect.setAttribute("width", NODE_W);
-  rect.setAttribute("height", NODE_H);
-  g.appendChild(rect);
-
-  const textId = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  textId.setAttribute("class", "node-id");
-  textId.setAttribute("x", 10);
-  textId.setAttribute("y", 16);
-  textId.textContent = `#${{node.id}} ${{node.is_leaf ? "LEAF" : ""}}`;
-  g.appendChild(textId);
-
-  const textCond = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  textCond.setAttribute("class", "node-condition");
-  textCond.setAttribute("x", 10);
-  textCond.setAttribute("y", 34);
-  if (node.is_leaf) {{
-    textCond.textContent = `Action: ${{node.prediction.toUpperCase()}}`;
-    textCond.setAttribute("fill", `var(--${{node.prediction}})`);
-  }} else {{
-    textCond.textContent = node.condition;
-  }}
-  g.appendChild(textCond);
-
-  const textSamples = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  textSamples.setAttribute("class", "node-samples");
-  textSamples.setAttribute("x", 10);
-  textSamples.setAttribute("y", 52);
-  textSamples.textContent = `samples: ${{node.samples}} | gini: ${{node.impurity}}`;
-  g.appendChild(textSamples);
-
-  const pillW = 44;
-  const pillH = 18;
-  const pillRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-  pillRect.setAttribute("class", `node-pill node-pill-${{node.prediction}}`);
-  pillRect.setAttribute("x", NODE_W - pillW - 8);
-  pillRect.setAttribute("y", 8);
-  pillRect.setAttribute("width", pillW);
-  pillRect.setAttribute("height", pillH);
-  g.appendChild(pillRect);
-
-  const pillText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  pillText.setAttribute("class", `node-pill-text pill-text-${{node.prediction}}`);
-  pillText.setAttribute("x", NODE_W - pillW / 2 - 8);
-  pillText.setAttribute("y", 17);
-  pillText.textContent = node.prediction.toUpperCase();
-  g.appendChild(pillText);
-
-  nodesLayer.appendChild(g);
+  assignX(root);
 }}
 
-render(rawTree);
-updateTransform();
+function renderTree(root) {{
+  allNodes.clear();
+  allLinks.length = 0;
+  linksLayer.innerHTML = "";
+  nodesLayer.innerHTML = "";
+
+  if (!root) return;
+  layoutTree(root);
+
+  function drawBranch(node, parent = null, isLeft = true) {{
+    if (!node) return;
+    allNodes.set(node.id, {{ node, parent }});
+
+    if (parent) {{
+      const sx = parent.x + NODE_W / 2;
+      const sy = parent.y + NODE_H;
+      const ex = node.x + NODE_W / 2;
+      const ey = node.y;
+      const my = (sy + ey) / 2;
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", `M ${{sx}} ${{sy}} C ${{sx}} ${{my}}, ${{ex}} ${{my}}, ${{ex}} ${{ey}}`);
+      path.setAttribute("class", "link");
+      path.id = `link-${{parent.id}}-${{node.id}}`;
+      linksLayer.appendChild(path);
+
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("class", "link-label");
+      label.setAttribute("x", (sx + ex) / 2 + (isLeft ? -14 : 6));
+      label.setAttribute("y", my);
+      label.textContent = isLeft ? "<=" : ">";
+      linksLayer.appendChild(label);
+
+      allLinks.push({{ parentId: parent.id, childId: node.id, element: path }});
+    }}
+
+    if (node.left) drawBranch(node.left, node, true);
+    if (node.right) drawBranch(node.right, node, false);
+
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "node-group");
+    g.setAttribute("id", `node-${{node.id}}`);
+    g.setAttribute("transform", `translate(${{node.x}}, ${{node.y}})`);
+    g.onclick = (e) => {{
+      e.stopPropagation();
+      selectNode(node);
+    }};
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("class", "node-box");
+    rect.setAttribute("width", NODE_W);
+    rect.setAttribute("height", NODE_H);
+    g.appendChild(rect);
+
+    const textId = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    textId.setAttribute("class", "node-id");
+    textId.setAttribute("x", 10);
+    textId.setAttribute("y", 16);
+    textId.textContent = `#${{node.id}} ${{node.is_leaf ? "LEAF" : ""}}`;
+    g.appendChild(textId);
+
+    const textCond = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    textCond.setAttribute("class", "node-condition");
+    textCond.setAttribute("x", 10);
+    textCond.setAttribute("y", 34);
+    if (node.is_leaf) {{
+      textCond.textContent = `Action: ${{node.prediction.toUpperCase()}}`;
+      textCond.setAttribute("fill", `var(--${{node.prediction}})`);
+    }} else {{
+      textCond.textContent = node.condition;
+    }}
+    g.appendChild(textCond);
+
+    const textSamples = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    textSamples.setAttribute("class", "node-samples");
+    textSamples.setAttribute("x", 10);
+    textSamples.setAttribute("y", 52);
+    textSamples.textContent = `samples: ${{node.samples}} | gini: ${{node.impurity}}`;
+    g.appendChild(textSamples);
+
+    const pillW = 44;
+    const pillH = 18;
+    const pillRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    pillRect.setAttribute("class", `node-pill node-pill-${{node.prediction}}`);
+    pillRect.setAttribute("x", NODE_W - pillW - 8);
+    pillRect.setAttribute("y", 8);
+    pillRect.setAttribute("width", pillW);
+    pillRect.setAttribute("height", pillH);
+    g.appendChild(pillRect);
+
+    const pillText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    pillText.setAttribute("class", `node-pill-text pill-text-${{node.prediction}}`);
+    pillText.setAttribute("x", NODE_W - pillW / 2 - 8);
+    pillText.setAttribute("y", 17);
+    pillText.textContent = node.prediction.toUpperCase();
+    g.appendChild(pillText);
+
+    nodesLayer.appendChild(g);
+  }}
+
+  drawBranch(root);
+  resetZoom();
+}}
 
 function selectNode(node) {{
   document.querySelectorAll(".node-group").forEach(el => el.classList.remove("node-selected"));
@@ -760,6 +937,33 @@ function handleSearch() {{
     }}
   }});
 }}
+
+function selectTree(index) {{
+  activeTreeIndex = index;
+  document.querySelectorAll(".tree-item").forEach((el, i) => {{
+    if (i === index) el.classList.add("selected");
+    else el.classList.remove("selected");
+  }});
+  renderTree(forestData.trees[index]);
+}}
+
+// Initialize
+if (forestData.model_type === "random_forest") {{
+  const treeList = document.getElementById("tree-list-container");
+  if (treeList) {{
+    treeList.innerHTML = forestData.trees.map((t, i) => `
+      <div class="tree-item ${{i === 0 ? "selected" : ""}}" onclick="selectTree(${{i}})">
+        <div class="tree-item-info">
+          <div class="tree-item-title">Tree #${{i + 1}}</div>
+          <div class="tree-item-meta">${{t.samples}} samples</div>
+        </div>
+        <button class="btn btn-sm" onclick="event.stopPropagation(); selectTree(${{i}})">View tree</button>
+      </div>
+    `).join("");
+  }}
+}}
+
+renderTree(forestData.trees[0]);
 </script>
 </body>
 </html>
@@ -769,7 +973,7 @@ function handleSearch() {{
 
 def export_matplotlib_png(model, feature_names, class_names, output_png_path):
     """
-    Exports a clean static PNG visualization of the decision tree.
+    Exports a clean static PNG visualization of the decision tree (or tree #1 if forest).
     """
     try:
         import matplotlib
@@ -778,8 +982,11 @@ def export_matplotlib_png(model, feature_names, class_names, output_png_path):
         from sklearn.tree import plot_tree
 
         fig = plt.figure(figsize=(24, 12), dpi=150)
+        tree_to_plot = model.estimators_[0] if hasattr(model, "estimators_") else model
+        title = "T-Rex random forest (Tree #1)" if hasattr(model, "estimators_") else "T-Rex decision tree overview"
+
         plot_tree(
-            model,
+            tree_to_plot,
             feature_names=feature_names,
             class_names=[str(c) for c in class_names],
             filled=True,
@@ -787,7 +994,7 @@ def export_matplotlib_png(model, feature_names, class_names, output_png_path):
             max_depth=4,
             fontsize=7,
         )
-        plt.title("T-Rex decision tree overview", fontsize=14, fontweight="bold")
+        plt.title(title, fontsize=14, fontweight="bold")
         plt.tight_layout()
         plt.savefig(output_png_path)
         plt.close(fig)
@@ -832,7 +1039,7 @@ def open_in_browser(file_path):
 
 def show_decision_graph(model, feature_names, class_names, name="model"):
     """
-    Called after training to show the full decision graph.
+    Called after training to show the decision graph.
     """
     out_dir = BASE_DIR / "models"
     out_dir.mkdir(parents=True, exist_ok=True)

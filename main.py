@@ -61,7 +61,13 @@ while True:
         except:
             print(">>> INVALID INPUT, BYE!")
             break
-        train(Path(gameplays[gameplay-1]).stem)
+        print("\n>>> Choose model type:")
+        print("    [1] Decision tree")
+        print("    [2] Random forest")
+        model_type_input = input(">>> [1-2] (default 1): ").strip()
+        model_type = "random_forest" if model_type_input == "2" else "decision_tree"
+
+        train(Path(gameplays[gameplay-1]).stem, model_type=model_type)
     elif choice == 3:
         models = list_models()
         

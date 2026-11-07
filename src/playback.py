@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from src.decision_graph import extract_tree_data, trace_decision_path, open_in_browser
+from src.decision_graph import extract_forest_data, trace_decision_path, open_in_browser
 from src.logger import Logger
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,7 +12,8 @@ PLAYBACK_DIR = BASE_DIR / "playback"
 
 class PlaybackRecorder:
     """
-    Records every prediction during autoplay and exports data to @/playback.
+    Records predictions during autoplay and exports data to playback directory.
+    Supports both DecisionTreeClassifier and RandomForestClassifier models.
     """
 
     def __init__(self, model_name, saved_model):
@@ -22,6 +23,9 @@ class PlaybackRecorder:
         self.features = saved_model["features"]
         self.type_features = saved_model["type_features"]
         self.actions = saved_model.get("actions", list(self.model.classes_))
+        self.model_type = saved_model.get("model_type") or (
+            "random_forest" if hasattr(self.model, "estimators_") else "decision_tree"
+        )
 
         self.records = []
         self.start_wall_time = datetime.now()
@@ -59,27 +63,36 @@ class PlaybackRecorder:
 
         executed_action = result.get("executed", action) if isinstance(result, dict) else action
 
-        compact_steps = []
-        for s in path_info["steps"]:
-            if not s["is_leaf"]:
-                compact_steps.append({
-                    "node_id": s["node_id"],
-                    "feature": s["feature"],
-                    "thresh": s["threshold"],
-                    "actual": s["actual_value"],
-                    "branch": s["branch_taken"],
-                    "ok": s["is_satisfied"],
-                    "samples": s["samples"],
-                    "pred": s["prediction"],
-                })
-            else:
-                compact_steps.append({
-                    "node_id": s["node_id"],
-                    "is_leaf": True,
-                    "pred": s["prediction"],
-                    "dist": s["distribution"],
-                    "samples": s["samples"],
-                })
+        compact_trees = []
+        for t in path_info.get("trees", []):
+            compact_steps = []
+            for s in t.get("steps", []):
+                if not s.get("is_leaf"):
+                    compact_steps.append({
+                        "node_id": s["node_id"],
+                        "feature": s["feature"],
+                        "thresh": s["threshold"],
+                        "actual": s["actual_value"],
+                        "branch": s["branch_taken"],
+                        "ok": s["is_satisfied"],
+                        "samples": s["samples"],
+                        "pred": s["prediction"],
+                    })
+                else:
+                    compact_steps.append({
+                        "node_id": s["node_id"],
+                        "is_leaf": True,
+                        "pred": s["prediction"],
+                        "dist": s["distribution"],
+                        "samples": s["samples"],
+                    })
+            compact_trees.append({
+                "tree_index": t["tree_index"],
+                "predicted_action": t["predicted_action"],
+                "node_ids": t["node_ids"],
+                "leaf_id": t["leaf_id"],
+                "steps": compact_steps,
+            })
 
         entry = {
             "step": step_num,
@@ -91,9 +104,12 @@ class PlaybackRecorder:
             "obs2": obs2,
             "action": action,
             "executed": executed_action,
-            "path": path_info["node_ids"],
-            "leaf_id": path_info["leaf_id"],
-            "steps": compact_steps,
+            "model_type": path_info.get("model_type", self.model_type),
+            "votes": path_info.get("votes", {}),
+            "trees": compact_trees,
+            "path": path_info.get("node_ids", []),
+            "leaf_id": path_info.get("leaf_id", 0),
+            "steps": compact_trees[0]["steps"] if compact_trees else [],
         }
 
         self.records.append(entry)
@@ -116,15 +132,18 @@ class PlaybackRecorder:
         duration = round(time.time() - self.start_perf_time, 2)
         total_steps = len(self.records)
 
-        tree_data = extract_tree_data(self.model, self.features, self.actions)
+        forest_data = extract_forest_data(self.model, self.features, self.actions)
 
         playback_payload = {
             "model_name": self.model_name,
+            "model_type": forest_data["model_type"],
+            "n_estimators": forest_data["n_estimators"],
             "recorded_at": self.start_wall_time.strftime("%Y-%m-%d %H:%M:%S"),
             "duration": duration,
             "total_steps": total_steps,
             "crashed": self.crashed,
-            "tree": tree_data,
+            "forest": forest_data,
+            "tree": forest_data["trees"][0] if forest_data["trees"] else None,
             "records": self.records,
         }
 
@@ -133,15 +152,12 @@ class PlaybackRecorder:
         data_js_path = PLAYBACK_DIR / "data.js"
         index_html_path = PLAYBACK_DIR / "index.html"
 
-        # Save session JSON data
         with json_path.open("w", encoding="utf-8") as f:
             json.dump(playback_payload, f)
 
-        # Update data.js for CORS-free local script loading
         with data_js_path.open("w", encoding="utf-8") as f:
             f.write("window.__PLAYBACK_DATA__ = " + json.dumps(playback_payload) + ";\n")
 
-        # Ensure index.html template exists and is up to date
         template_html = get_playback_template_html()
         with index_html_path.open("w", encoding="utf-8") as f:
             f.write(template_html)
@@ -171,8 +187,8 @@ class PlaybackRecorder:
 def get_playback_template_html():
     """
     Returns the un-slopped playback dashboard template HTML.
-    Visualizes session data with table of predictions and interactive decision tree.
-    Clicking any table row highlights its decision tree path.
+    Visualizes session predictions and reusable decision tree visualizer.
+    Supports single tree and random forest ensemble views with individual tree inspection.
     """
     return """<!DOCTYPE html>
 <html lang="en">
@@ -182,12 +198,12 @@ def get_playback_template_html():
 <title>Autoplay playback</title>
 <style>
   :root {
-    --bg: #090a0f;
-    --panel-bg: #11141c;
-    --card-bg: #171b26;
-    --border: #232938;
-    --border-light: #323b4e;
-    --text: #f1f5f9;
+    --bg: #0b0e14;
+    --panel-bg: #121721;
+    --card-bg: #18202e;
+    --border: #243044;
+    --border-light: #33435c;
+    --text: #f0f4fc;
     --text-dim: #94a3b8;
     --text-muted: #64748b;
     --accent: #38bdf8;
@@ -220,6 +236,7 @@ def get_playback_template_html():
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
   }
   .title {
     font-size: 15px;
@@ -233,11 +250,13 @@ def get_playback_template_html():
     background: var(--card-bg);
     border: 1px solid var(--border);
     color: var(--text-dim);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .header-actions {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
   }
   .btn {
     background: var(--card-bg);
@@ -257,12 +276,15 @@ def get_playback_template_html():
     background: var(--border);
     border-color: var(--border-light);
   }
-  .btn-primary {
-    background: #0284c7;
-    border-color: #0369a1;
+  .btn-sm {
+    padding: 3px 8px;
+    font-size: 11px;
   }
-  .btn-primary:hover {
-    background: #0369a1;
+  .btn-active {
+    background: var(--accent);
+    color: #0b0e14;
+    border-color: var(--accent);
+    font-weight: 600;
   }
   #workspace {
     flex: 1;
@@ -271,9 +293,9 @@ def get_playback_template_html():
     position: relative;
   }
   #table-panel {
-    width: 48%;
-    min-width: 440px;
-    max-width: 680px;
+    width: 44%;
+    min-width: 420px;
+    max-width: 620px;
     background: var(--panel-bg);
     border-right: 1px solid var(--border);
     display: flex;
@@ -288,6 +310,7 @@ def get_playback_template_html():
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    flex-wrap: wrap;
   }
   .filter-select, .search-box {
     background: var(--card-bg);
@@ -302,7 +325,7 @@ def get_playback_template_html():
     border-color: var(--accent);
   }
   .search-box {
-    width: 140px;
+    width: 130px;
   }
   .table-scroll-container {
     flex: 1;
@@ -352,7 +375,7 @@ def get_playback_template_html():
     border-radius: 3px;
     font-size: 10px;
     font-weight: 700;
-    font-family: ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     letter-spacing: 0.5px;
   }
   .action-jump {
@@ -401,7 +424,7 @@ def get_playback_template_html():
   .step-metrics {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
     font-size: 12px;
   }
   .metric-item {
@@ -410,16 +433,66 @@ def get_playback_template_html():
     padding: 4px 8px;
     border-radius: 4px;
     color: var(--text-dim);
-    font-family: ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .metric-item strong {
     color: var(--text);
+  }
+  #forest-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+  }
+  .forest-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .forest-trees-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .forest-tree-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .forest-tree-card:hover {
+    border-color: var(--border-light);
+  }
+  .forest-tree-card.active {
+    border-color: var(--accent);
+    background: rgba(56, 189, 248, 0.08);
+  }
+  .tree-card-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .path-summary {
     font-size: 12px;
     color: var(--text-dim);
     line-height: 1.4;
-    font-family: ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   #tree-container {
     flex: 1;
@@ -446,7 +519,7 @@ def get_playback_template_html():
   }
   .link-label {
     font-size: 10px;
-    font-family: ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     fill: var(--text-muted);
     font-weight: 600;
   }
@@ -456,7 +529,12 @@ def get_playback_template_html():
     stroke-width: 1.5px;
     rx: 4px;
     ry: 4px;
+    cursor: pointer;
     transition: stroke 0.15s, fill 0.15s;
+  }
+  .node-box:hover {
+    stroke: var(--border-light);
+    fill: var(--card-bg);
   }
   .node-active .node-box {
     stroke: var(--accent) !important;
@@ -465,23 +543,27 @@ def get_playback_template_html():
   }
   .node-id {
     font-size: 10px;
-    font-family: ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     fill: var(--text-muted);
     font-weight: 600;
+    pointer-events: none;
   }
   .node-condition {
     font-size: 11px;
     font-weight: 600;
     fill: var(--text);
+    pointer-events: none;
   }
   .node-samples {
     font-size: 10px;
     fill: var(--text-dim);
-    font-family: ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    pointer-events: none;
   }
   .node-pill {
     rx: 3px;
     ry: 3px;
+    pointer-events: none;
   }
   .node-pill-jump { fill: rgba(16, 185, 129, 0.2); stroke: var(--jump); stroke-width: 1px; }
   .node-pill-duck { fill: rgba(245, 158, 11, 0.2); stroke: var(--duck); stroke-width: 1px; }
@@ -491,7 +573,8 @@ def get_playback_template_html():
     font-weight: 700;
     text-anchor: middle;
     dominant-baseline: central;
-    font-family: ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    pointer-events: none;
   }
   .pill-text-jump { fill: var(--jump); }
   .pill-text-duck { fill: var(--duck); }
@@ -520,6 +603,19 @@ def get_playback_template_html():
     height: 8px;
     border-radius: 50%;
   }
+  .tree-badge-indicator {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(17, 20, 28, 0.9);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--accent);
+    z-index: 10;
+  }
 </style>
 <script src="data.js"></script>
 </head>
@@ -528,9 +624,10 @@ def get_playback_template_html():
 <header>
   <div class="brand-group">
     <div class="title">Autoplay playback</div>
-    <div class="meta-tag" id="meta-model">Model: —</div>
-    <div class="meta-tag" id="meta-steps">Steps: —</div>
-    <div class="meta-tag" id="meta-duration">Duration: —</div>
+    <div class="meta-tag" id="meta-model">Model: (none)</div>
+    <div class="meta-tag" id="meta-type">Type: (none)</div>
+    <div class="meta-tag" id="meta-steps">Steps: 0</div>
+    <div class="meta-tag" id="meta-duration">Duration: 0s</div>
   </div>
 
   <div class="header-actions">
@@ -558,7 +655,7 @@ def get_playback_template_html():
       </div>
 
       <input type="text" class="search-box" id="search-input" placeholder="Search..." oninput="applyFilters()">
-      <span id="filtered-count" style="font-size:11px; color:var(--text-muted);"></span>
+      <span id="filtered-count" style="font-size:11px; color:var(--text-muted); font-family:ui-monospace, monospace;"></span>
     </div>
 
     <div class="table-scroll-container" id="table-container">
@@ -583,19 +680,33 @@ def get_playback_template_html():
     <div id="step-card">
       <div class="step-top">
         <div class="step-title" id="hud-step-title">Select a row to inspect</div>
-        <span class="action-badge action-none" id="hud-action-badge">NONE</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="hud-votes-tag" class="meta-tag" style="display:none;"></span>
+          <span class="action-badge action-none" id="hud-action-badge">NONE</span>
+        </div>
       </div>
 
       <div class="step-metrics">
-        <div class="metric-item">Obstacle 1: <strong id="hud-obs1">—</strong></div>
+        <div class="metric-item">Obstacle 1: <strong id="hud-obs1">None</strong></div>
         <div class="metric-item">Speed: <strong id="hud-speed">0.0</strong></div>
         <div class="metric-item">State: <strong id="hud-state">Ground</strong></div>
+        <div class="metric-item">Obstacle 2: <strong id="hud-obs2">None</strong></div>
       </div>
 
-      <div class="path-summary" id="hud-path">Path: —</div>
+      <div id="forest-section" style="display:none;">
+        <div class="forest-label-row">
+          <span>Ensemble estimators</span>
+          <span id="forest-active-label" style="color:var(--accent);">Viewing Tree 1</span>
+        </div>
+        <div class="forest-trees-row" id="forest-trees-row"></div>
+      </div>
+
+      <div class="path-summary" id="hud-path">Path: Not selected</div>
     </div>
 
     <div id="tree-container">
+      <div class="tree-badge-indicator" id="tree-badge-indicator">Tree 1</div>
+
       <svg id="tree-svg">
         <g id="viewport">
           <g id="links-layer"></g>
@@ -607,7 +718,7 @@ def get_playback_template_html():
         <div class="legend-item"><span class="legend-dot" style="background:var(--jump)"></span> Jump</div>
         <div class="legend-item"><span class="legend-dot" style="background:var(--duck)"></span> Duck</div>
         <div class="legend-item"><span class="legend-dot" style="background:var(--none)"></span> None</div>
-        <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span> Selected path</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span> Active path</div>
       </div>
     </div>
   </div>
@@ -615,10 +726,11 @@ def get_playback_template_html():
 
 <script>
 let currentPayload = null;
-let rawTree = null;
+let forestData = null;
 let records = [];
 let filteredIndices = [];
 let currentStepIndex = 0;
+let activeTreeIndex = 0;
 let isScrubbing = false;
 let scrubTimer = null;
 
@@ -672,16 +784,6 @@ treeContainer.addEventListener("wheel", (e) => {
   scale *= zoomFactor;
   updateTransform();
 }, { passive: false });
-
-function zoomIn() {
-  scale *= 1.25;
-  updateTransform();
-}
-
-function zoomOut() {
-  scale *= 0.8;
-  updateTransform();
-}
 
 function resetZoom() {
   scale = 0.85;
@@ -799,6 +901,36 @@ function renderTree(node, parent = null, isLeft = true) {
   nodesLayer.appendChild(g);
 }
 
+function loadTreeIntoView(treeIdx, preserveTransform = false) {
+  if (!forestData || !forestData.trees || !forestData.trees[treeIdx]) return;
+  activeTreeIndex = treeIdx;
+
+  allNodes.clear();
+  allLinks.length = 0;
+  linksLayer.innerHTML = "";
+  nodesLayer.innerHTML = "";
+
+  const tree = forestData.trees[treeIdx];
+  layoutTree(tree);
+  renderTree(tree);
+
+  if (!preserveTransform) {
+    resetZoom();
+  } else {
+    updateTransform();
+  }
+
+  const indicator = document.getElementById("tree-badge-indicator");
+  indicator.textContent = forestData.n_estimators > 1 ? `Tree ${treeIdx + 1} of ${forestData.n_estimators}` : "Decision tree";
+  const forestActiveLabel = document.getElementById("forest-active-label");
+  if (forestActiveLabel) {
+    forestActiveLabel.textContent = `Viewing Tree ${treeIdx + 1}`;
+  }
+
+  updateTreeCardsActiveState();
+  highlightActiveStepTreePath();
+}
+
 function renderTableRows() {
   tbody.innerHTML = "";
   const frag = document.createDocumentFragment();
@@ -885,29 +1017,98 @@ function selectStep(recIdx) {
   badge.textContent = rec.action.toUpperCase();
   badge.className = `action-badge action-${rec.action}`;
 
-  let obsText = "None";
-  if (rec.obs1 && rec.obs1.type !== "none") {
-    obsText = `${rec.obs1.type} at ${rec.obs1.x.toFixed(1)} px`;
+  // Votes summary if random forest
+  const votesTag = document.getElementById("hud-votes-tag");
+  if (rec.votes && Object.keys(rec.votes).length > 0 && forestData && forestData.n_estimators > 1) {
+    const voteParts = Object.entries(rec.votes).map(([act, count]) => `${act}: ${count}`);
+    votesTag.textContent = `Votes: ${voteParts.join(", ")}`;
+    votesTag.style.display = "inline-block";
+  } else {
+    votesTag.style.display = "none";
   }
-  document.getElementById("hud-obs1").textContent = obsText;
+
+  let obs1Text = "None";
+  if (rec.obs1 && rec.obs1.type !== "none") {
+    obs1Text = `${rec.obs1.type} at ${rec.obs1.x.toFixed(1)} px`;
+  }
+  document.getElementById("hud-obs1").textContent = obs1Text;
+
+  let obs2Text = "None";
+  if (rec.obs2 && rec.obs2.type !== "none") {
+    obs2Text = `${rec.obs2.type} at ${rec.obs2.x.toFixed(1)} px`;
+  }
+  document.getElementById("hud-obs2").textContent = obs2Text;
+
   document.getElementById("hud-speed").textContent = rec.speed.toFixed(2);
   document.getElementById("hud-state").textContent = rec.jumping ? "Jumping" : (rec.ducking ? "Ducking" : "Ground");
 
-  // Traversal summary
+  updateForestCards(rec);
+  highlightActiveStepTreePath();
+}
+
+function updateForestCards(rec) {
+  const container = document.getElementById("forest-trees-row");
+  const section = document.getElementById("forest-section");
+
+  if (!forestData || forestData.n_estimators <= 1 || !rec.trees || rec.trees.length <= 1) {
+    section.style.display = "none";
+    return;
+  }
+
+  section.style.display = "flex";
+  container.innerHTML = "";
+
+  rec.trees.forEach((t) => {
+    const card = document.createElement("div");
+    card.className = "forest-tree-card" + (t.tree_index === activeTreeIndex ? " active" : "");
+    card.id = `tree-card-${t.tree_index}`;
+
+    card.innerHTML = `
+      <span class="tree-card-name">Tree ${t.tree_index + 1}</span>
+      <span class="action-badge action-${t.predicted_action}">${t.predicted_action.toUpperCase()}</span>
+      <button class="btn btn-sm ${t.tree_index === activeTreeIndex ? "btn-active" : ""}" onclick="loadTreeIntoView(${t.tree_index}, true)">View tree</button>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function updateTreeCardsActiveState() {
+  document.querySelectorAll(".forest-tree-card").forEach(c => c.classList.remove("active"));
+  document.querySelectorAll(".forest-tree-card .btn").forEach(b => b.classList.remove("btn-active"));
+  const activeCard = document.getElementById(`tree-card-${activeTreeIndex}`);
+  if (activeCard) {
+    activeCard.classList.add("active");
+    const btn = activeCard.querySelector(".btn");
+    if (btn) btn.classList.add("btn-active");
+  }
+}
+
+function highlightActiveStepTreePath() {
+  if (records.length === 0 || currentStepIndex < 0 || currentStepIndex >= records.length) return;
+  const rec = records[currentStepIndex];
+
+  let targetTreeInfo = null;
+  if (rec.trees && rec.trees.length > 0) {
+    targetTreeInfo = rec.trees.find(t => t.tree_index === activeTreeIndex) || rec.trees[0];
+  }
+
+  const nodeIds = targetTreeInfo ? targetTreeInfo.node_ids : (rec.path || []);
+  const steps = targetTreeInfo ? targetTreeInfo.steps : (rec.steps || []);
+
+  highlightPath(nodeIds);
+
   const conditions = [];
-  if (rec.steps) {
-    rec.steps.forEach(s => {
+  if (steps) {
+    steps.forEach(s => {
       if (!s.is_leaf) {
         conditions.push(`${s.feature} ${s.branch} ${s.thresh} (actual: ${s.actual})`);
       }
     });
   }
-  const pathStr = rec.path ? rec.path.map(id => `#${id}`).join(" -> ") : "—";
+  const pathStr = nodeIds.length > 0 ? nodeIds.map(id => `#${id}`).join(" -> ") : "None";
   const condStr = conditions.length > 0 ? " | Tests: " + conditions.join(", ") : "";
   document.getElementById("hud-path").textContent = `Path: ${pathStr}${condStr}`;
-
-  // Highlight tree path
-  highlightPath(rec.path || []);
 }
 
 function highlightPath(nodeIds) {
@@ -1002,27 +1203,35 @@ function handleFileSelect(event) {
 
 function renderSession(payload) {
   currentPayload = payload;
-  rawTree = payload.tree;
   records = payload.records || [];
   filteredIndices = records.map((_, i) => i);
 
-  document.getElementById("meta-model").textContent = `Model: ${payload.model_name || "—"}`;
+  if (payload.forest && payload.forest.trees) {
+    forestData = payload.forest;
+  } else if (payload.tree) {
+    forestData = {
+      model_type: payload.model_type || "decision_tree",
+      n_estimators: 1,
+      trees: [payload.tree],
+    };
+  } else {
+    forestData = null;
+  }
+
+  const modelTypeLabel = forestData && forestData.model_type === "random_forest"
+    ? `Random forest (${forestData.n_estimators} trees)`
+    : "Decision tree";
+
+  document.getElementById("meta-model").textContent = `Model: ${payload.model_name || "(none)"}`;
+  document.getElementById("meta-type").textContent = `Type: ${modelTypeLabel}`;
   document.getElementById("meta-steps").textContent = `Steps: ${payload.total_steps || records.length}`;
   document.getElementById("meta-duration").textContent = `Duration: ${payload.duration || 0}s`;
 
-  // Render tree
-  allNodes.clear();
-  allLinks.length = 0;
-  linksLayer.innerHTML = "";
-  nodesLayer.innerHTML = "";
-
-  if (rawTree) {
-    layoutTree(rawTree);
-    renderTree(rawTree);
-    resetZoom();
+  activeTreeIndex = 0;
+  if (forestData && forestData.trees && forestData.trees.length > 0) {
+    loadTreeIntoView(0);
   }
 
-  // Render table
   applyFilters();
 
   if (records.length > 0) {
@@ -1030,7 +1239,6 @@ function renderSession(payload) {
   }
 }
 
-// Auto-load embedded data if available
 if (window.__PLAYBACK_DATA__) {
   renderSession(window.__PLAYBACK_DATA__);
 }
