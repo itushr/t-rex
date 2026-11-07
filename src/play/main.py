@@ -10,7 +10,6 @@ from src.browser_gateway import connect, disconnect, CDP
 from src.play.script import SCRIPT
 
 from src.logger import Logger
-from src.decision_graph import show_crash_decision_graph
 from src.playback import PlaybackRecorder
 
 
@@ -124,8 +123,6 @@ def play(model):
         Logger.log(indent=1, message="")
 
         recorder = PlaybackRecorder(model, saved)
-        history = []
-        MAX_HISTORY = 50
 
         while True:
             state = cdp.evaluate("window.__pythonDino.getState()")
@@ -138,12 +135,6 @@ def play(model):
                 Logger.log(indent=1, label="STATUS", message="Game Over (Crash Detected)")
                 recorder.mark_crashed(state)
                 recorder.save()
-                show_crash_decision_graph(
-                    saved=saved,
-                    crash_state=state,
-                    history=history,
-                    model_name=model,
-                )
                 return
 
             if not state.get("ready"):
@@ -151,15 +142,6 @@ def play(model):
                 continue
 
             action, first, raw_features, frame = predict_action_full(saved, state)
-            history.append({
-                "state": state,
-                "raw_features": raw_features,
-                "frame": frame,
-                "action": action,
-                "first": first,
-            })
-            if len(history) > MAX_HISTORY:
-                history.pop(0)
 
             result = cdp.evaluate(
                 "window.__pythonDino.act(" + json.dumps(action) + ")"
