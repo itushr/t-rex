@@ -54,8 +54,12 @@ def predict_action_full(saved, state):
     # The browser already returns exactly two normalized obstacles.
     first, second = state["obstacles"][:2]
 
+    obs_dist = float(first["x"])
+    speed = float(state.get("speed", 0))
+    time_to_impact = round(obs_dist / speed, 3) if (obs_dist > 0 and speed > 0) else -1.0
+
     raw_features = {
-        "obstacle1_x": float(first["x"]),
+        "obstacle1_x": obs_dist,
         "obstacle1_y": float(first["y"]),
         "obstacle1_type": first["type"],
         "obstacle1_size": int(first["size"]),
@@ -65,9 +69,10 @@ def predict_action_full(saved, state):
         "obstacle2_type": second["type"],
         "obstacle2_size": int(second["size"]),
 
-        "speed": float(state.get("speed", 0)),
+        "speed": speed,
         "jumping": int(bool(state.get("jumping", False))),
         "ducking": int(bool(state.get("ducking", False))),
+        "time_to_impact": time_to_impact,
     }
 
     frame = pd.get_dummies(

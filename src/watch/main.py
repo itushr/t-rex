@@ -28,6 +28,7 @@ COLUMNS = [
     "speed",
     "jumping",
     "ducking",
+    "time_to_impact",
     "action",
 ]
 
@@ -133,6 +134,14 @@ def watch():
                             message="Action Discarded: Duck while ducking"
                         )
                     else:
+                        if "time_to_impact" not in row or row["time_to_impact"] is None:
+                            try:
+                                obs_x = float(row.get("obstacle1_x", -1))
+                                spd = float(row.get("speed", 0))
+                                row["time_to_impact"] = round(obs_x / spd, 3) if (obs_x > 0 and spd > 0) else -1.0
+                            except (TypeError, ValueError, ZeroDivisionError):
+                                row["time_to_impact"] = -1.0
+
                         writer.writerow({
                             column: row.get(column)
                             for column in COLUMNS

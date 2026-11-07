@@ -118,8 +118,8 @@ def trace_single_tree_path(model, frame, feature_names, class_names=None):
     all_actions = ["jump", "duck", "none"]
     tree = model.tree_
 
-    frame_matrix = frame.values if hasattr(frame, "values") else frame
-    indicator = model.decision_path(frame_matrix)
+    eval_frame = frame if hasattr(model, "feature_names_in_") else (frame.values if hasattr(frame, "values") else frame)
+    indicator = model.decision_path(eval_frame)
     node_indices = indicator.indices.tolist()
 
     steps = []

@@ -94,10 +94,21 @@ class PlaybackRecorder:
                 "steps": compact_steps,
             })
 
+        speed_val = round(float(raw_features.get("speed", 0)), 2)
+        tti_val = raw_features.get("time_to_impact")
+        if tti_val is None or float(tti_val) <= 0:
+            if obs1["x"] > 0 and speed_val > 0:
+                tti_val = round(obs1["x"] / speed_val, 2)
+            else:
+                tti_val = -1.0
+        else:
+            tti_val = round(float(tti_val), 2)
+
         entry = {
             "step": step_num,
             "time": elapsed,
-            "speed": round(float(raw_features.get("speed", 0)), 2),
+            "speed": speed_val,
+            "time_to_impact": tti_val,
             "jumping": bool(raw_features.get("jumping", 0)),
             "ducking": bool(raw_features.get("ducking", 0)),
             "obs1": obs1,
@@ -666,6 +677,7 @@ def get_playback_template_html():
             <th style="width:60px;">Time</th>
             <th style="width:65px;">Action</th>
             <th>Obstacle 1</th>
+            <th style="width:55px;">TTI</th>
             <th>Obstacle 2</th>
             <th style="width:50px;">Speed</th>
             <th style="width:65px;">State</th>
@@ -688,6 +700,7 @@ def get_playback_template_html():
 
       <div class="step-metrics">
         <div class="metric-item">Obstacle 1: <strong id="hud-obs1">None</strong></div>
+        <div class="metric-item">TTI: <strong id="hud-tti">None</strong></div>
         <div class="metric-item">Speed: <strong id="hud-speed">0.0</strong></div>
         <div class="metric-item">State: <strong id="hud-state">Ground</strong></div>
         <div class="metric-item">Obstacle 2: <strong id="hud-obs2">None</strong></div>
@@ -948,6 +961,11 @@ function renderTableRows() {
       obs1Str = `${r.obs1.type} (${r.obs1.x.toFixed(1)} px)`;
     }
 
+    let ttiStr = "None";
+    if (r.time_to_impact !== undefined && r.time_to_impact > 0) {
+      ttiStr = `${r.time_to_impact.toFixed(1)}`;
+    }
+
     let obs2Str = "None";
     if (r.obs2 && r.obs2.type !== "none") {
       obs2Str = `${r.obs2.type} (${r.obs2.x.toFixed(1)} px)`;
@@ -962,6 +980,7 @@ function renderTableRows() {
       <td style="font-family:ui-monospace, monospace;">${r.time.toFixed(2)}s</td>
       <td><span class="action-badge action-${r.action}">${r.action.toUpperCase()}</span></td>
       <td>${obs1Str}</td>
+      <td style="font-family:ui-monospace, monospace; color:var(--text-dim);">${ttiStr}</td>
       <td>${obs2Str}</td>
       <td style="font-family:ui-monospace, monospace;">${r.speed.toFixed(1)}</td>
       <td style="color:var(--text-dim);">${stateStr}</td>
@@ -1032,6 +1051,12 @@ function selectStep(recIdx) {
     obs1Text = `${rec.obs1.type} at ${rec.obs1.x.toFixed(1)} px`;
   }
   document.getElementById("hud-obs1").textContent = obs1Text;
+
+  let ttiText = "None";
+  if (rec.time_to_impact !== undefined && rec.time_to_impact > 0) {
+    ttiText = `${rec.time_to_impact.toFixed(2)}`;
+  }
+  document.getElementById("hud-tti").textContent = ttiText;
 
   let obs2Text = "None";
   if (rec.obs2 && rec.obs2.type !== "none") {

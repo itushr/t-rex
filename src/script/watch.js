@@ -72,6 +72,11 @@
         const first = getObstacle(0);
         const second = getObstacle(1);
 
+        const currentSpeed = Number(r.currentSpeed) || 0;
+        const timeToImpact = (first.x > 0 && currentSpeed > 0)
+            ? Number((first.x / currentSpeed).toFixed(3))
+            : -1;
+
         return {
             obstacle1_x: first.x,
             obstacle1_y: first.y,
@@ -87,11 +92,12 @@
             obstacle2_width: second.width,
             obstacle2_height: second.height,
 
-            speed: Number(r.currentSpeed) || 0,
+            speed: currentSpeed,
             jumping: r.tRex.jumping ? 1 : 0,
             ducking: r.tRex.ducking ? 1 : 0,
             dino_y: Number(r.tRex.yPos) || 0,
             score: Number(r.distanceRan) || 0,
+            time_to_impact: timeToImpact,
 
             action: action
         };
@@ -157,7 +163,7 @@
 
             // Idle (none) frame: apply throttling logic
             if (contextFramesLeft > 0) {
-                // Just after an action — record context frames freely
+                // Just after an action: record context frames freely
                 contextFramesLeft--;
                 return snapshot("none");
             }

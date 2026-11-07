@@ -63,6 +63,11 @@ SCRIPT = r"""
         const first = getObstacle(0);
         const second = getObstacle(1);
 
+        const currentSpeed = Number(r.currentSpeed) || 0;
+        const timeToImpact = (first.x > 0 && currentSpeed > 0)
+            ? Number((first.x / currentSpeed).toFixed(3))
+            : -1;
+
         return {
             obstacle1_x: first.x,
             obstacle1_y: first.y,
@@ -74,10 +79,11 @@ SCRIPT = r"""
             obstacle2_type: second.type,
             obstacle2_size: second.size,
 
-            speed: Number(r.currentSpeed) || 0,
+            speed: currentSpeed,
 
             jumping: Number(Boolean(r.tRex.jumping)),
             ducking: Number(Boolean(r.tRex.ducking)),
+            time_to_impact: timeToImpact,
 
             action: action
         };

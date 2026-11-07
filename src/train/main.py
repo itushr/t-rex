@@ -22,12 +22,27 @@ NUMERIC_FEATURES = [
     "speed",
     "jumping",
     "ducking",
+    "time_to_impact",
 ]
 TYPE_FEATURES = ["obstacle1_type", "obstacle2_type"]
 FEATURES = NUMERIC_FEATURES + TYPE_FEATURES
 TARGET = "action"
 VALID_ACTIONS = {"none", "jump", "duck"}
 OBSTACLE_TYPES = {"none", "cactusSmall", "cactusLarge", "pterodactyl", "collectable"}
+
+def compute_time_to_impact(obs_x, speed):
+    """
+    Computes time_to_impact = obs_dist / speed.
+    Returns -1.0 if there is no approaching obstacle or speed is non-positive.
+    """
+    try:
+        x = float(obs_x)
+        s = float(speed)
+        if x > 0 and s > 0:
+            return round(x / s, 3)
+    except (TypeError, ValueError, ZeroDivisionError):
+        pass
+    return -1.0
 
 def create_model(model_type="decision_tree"):
     if model_type == "random_forest":
@@ -66,6 +81,18 @@ def train(gameplay, model_type="decision_tree"):
         return
 
     df = pd.read_csv(DATA_PATH)
+
+    # Feature Engineering: Explicitly compute time_to_impact = obs_dist / speed
+    if "time_to_impact" not in df.columns or df["time_to_impact"].isnull().any():
+        computed_tti = [
+            compute_time_to_impact(x, s)
+            for x, s in zip(df.get("obstacle1_x", []), df.get("speed", []))
+        ]
+        if "time_to_impact" not in df.columns:
+            df["time_to_impact"] = computed_tti
+        else:
+            df["time_to_impact"] = df["time_to_impact"].fillna(pd.Series(computed_tti))
+
     missing = set(FEATURES + [TARGET]) - set(df.columns)
     if missing:
         Logger.error(
