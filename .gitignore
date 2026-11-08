@@ -1,4 +1,6 @@
+backend/data/
 driver/data/
+data/
 
 node_modules/
 __pycache__/

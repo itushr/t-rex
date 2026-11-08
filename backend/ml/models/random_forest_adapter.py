@@ -2,9 +2,9 @@ from typing import Any, Dict, List
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
-from driver.ml.base.model_adapter import BaseModelAdapter
-from driver.ml.models.tree_extractor import extract_tree_data
-from driver.ml.models.path_tracer import trace_single_tree_path
+from ml.base.model_adapter import BaseModelAdapter
+from ml.models.tree_extractor import extract_tree_data
+from ml.models.path_tracer import trace_single_tree_path
 
 
 class RandomForestAdapter(BaseModelAdapter):

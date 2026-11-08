@@ -1,7 +1,7 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "driver" / "data"
+DATA_DIR = BASE_DIR / "data"
 GAMEPLAY_DIR = DATA_DIR / "gameplay"
 PLAYBACK_DIR = DATA_DIR / "playback"
 MODELS_DIR = DATA_DIR / "models"

@@ -1,27 +1,35 @@
 # Architecture Overview
 
-Dino ML is structured into modular layers to separate local bot automation, machine learning logic, server orchestration, and browser visualization.
+Dino ML is structured into modular layers separating local bot automation, machine learning logic, server orchestration, and browser visualization.
 
 ## Directory Structure
 
 ```text
 dino-ml/
-├── ml/             # Feature transforms, model training, tree extraction
-├── server/         # FastAPI / WebSocket orchestrator
-├── frontend/       # React visualizer & copied dino game, inbrowser model autoplay
-├── driver/         # Python bot that records & plays real chrome-dino game
-├── data/           # (.gitignored) collected data (gameplay, playback, models)
+├── backend/
+│   ├── driver/     # Python bot that records & plays real chrome-dino game via CDP
+│   ├── server/     # FastAPI / WebSocket orchestrator API
+│   ├── ml/         # Feature transforms, model training, tree/forest extraction
+│   └── data/       # (.gitignored) collected data (gameplay, playback, models)
+├── frontend/       # React visualizer & copied dino game, in-browser model autoplay
 └── docs/           # Architecture and technical documentation
 ```
 
-## Two-Part System
+## Modular Backend Design
 
-1. **Local Chrome Bot (Not Hosted)**:
-   - Uses local Chrome remote debugging (`--remote-debugging-port=9222`).
-   - Python CDP driver injects non-invasive observation/actuation bridges.
-   - Collects gameplay samples, executes trained models, and records playback traces.
+1. **`backend/driver`**:
+   - Standalone Python project with its own `requirements.txt`.
+   - Connects to local Chrome via DevTools Protocol (`--remote-debugging-port=9222`).
+   - Handles gameplay recording (`watch_script.js`), model autoplay (`play_script.js`), and playback generation.
 
-2. **Web Visualizer & Orchestrator (Hosted / Reusable)**:
-   - FastAPI server provides REST APIs and WebSocket telemetry streaming.
-   - React visualizer built with Tailwind CSS v4 renders decision trees, forest estimators, and step-by-step decision paths.
-   - The same visualizer layer works for local sessions and remote server data.
+2. **`backend/server`**:
+   - Standalone Python project with its own `requirements.txt`.
+   - FastAPI server with REST endpoints (`/api/models`, `/api/playbacks`, `/api/train`) and WebSocket telemetry streaming (`/ws/stream`).
+   - Serves the compiled React frontend from `frontend/dist`.
+
+3. **`backend/ml`**:
+   - Decoupled ML engine shared by driver and server.
+   - Provides adapters for games (`DinoGameAdapter`) and models (`DecisionTreeAdapter`, `RandomForestAdapter`).
+
+4. **`backend/data`**:
+   - Central storage directory for raw gameplay CSVs, trained `.pkl` models, and JSON playback sessions.

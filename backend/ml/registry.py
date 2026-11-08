@@ -1,9 +1,9 @@
 from typing import Dict
-from driver.ml.base.game_adapter import BaseGameAdapter
-from driver.ml.base.model_adapter import BaseModelAdapter
-from driver.ml.games.dino_adapter import DinoGameAdapter
-from driver.ml.models.decision_tree_adapter import DecisionTreeAdapter
-from driver.ml.models.random_forest_adapter import RandomForestAdapter
+from ml.base.game_adapter import BaseGameAdapter
+from ml.base.model_adapter import BaseModelAdapter
+from ml.games.dino_adapter import DinoGameAdapter
+from ml.models.decision_tree_adapter import DecisionTreeAdapter
+from ml.models.random_forest_adapter import RandomForestAdapter
 
 _GAMES: Dict[str, BaseGameAdapter] = {}
 _MODELS: Dict[str, BaseModelAdapter] = {}

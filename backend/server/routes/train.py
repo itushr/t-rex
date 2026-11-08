@@ -1,7 +1,7 @@
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from driver.ml.trainer import train_model
+from ml.trainer import train_model
 from server.config import GAMEPLAY_DIR, MODELS_DIR
 
 router = APIRouter(prefix="/api", tags=["training"])

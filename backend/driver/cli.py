@@ -1,11 +1,11 @@
 from pathlib import Path
 from driver.autoplay import run_autoplay
 from driver.recorder import record_gameplay
-from driver.ml.serialization import load_trained_model
-from driver.ml.trainer import train_model
+from ml.serialization import load_trained_model
+from ml.trainer import train_model
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = BASE_DIR.parent / "data"
 
 
 def list_files(folder: Path, pattern: str) -> list:

@@ -4,7 +4,7 @@ from typing import Any, Dict
 from driver.browser import open_dino_tab
 from driver.cdp import CDPClient
 from driver.playback_recorder import PlaybackRecorder
-from driver.ml.registry import get_game_adapter, get_model_adapter
+from ml.registry import get_game_adapter, get_model_adapter
 
 
 def run_autoplay(model_path: Path, model_bundle: Dict[str, Any], output_dir: Path) -> Path:

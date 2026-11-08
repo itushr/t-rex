@@ -4,8 +4,8 @@ import pandas as pd
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-from driver.ml.registry import get_game_adapter, get_model_adapter
-from driver.ml.serialization import save_trained_model
+from ml.registry import get_game_adapter, get_model_adapter
+from ml.serialization import save_trained_model
 
 
 def prepare_training_data(

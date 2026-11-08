@@ -1,27 +1,31 @@
 # Chrome Bot Driver Guide
 
-The `driver/` package connects directly to an active Google Chrome instance via the Chrome DevTools Protocol (CDP) WebSocket without requiring Selenium or WebDriver binaries.
+The `backend/driver` project connects directly to an active Google Chrome instance via the Chrome DevTools Protocol (CDP) WebSocket without requiring Selenium or WebDriver binaries.
 
-## 1. Launching Chrome with Remote Debugging
+## 1. Requirements & Dependencies
 
-Launch Chrome with the remote debugging port enabled:
+The driver is a separate Python project with its own dependencies in `backend/driver/requirements.txt`:
 
 ```bash
-google-chrome --remote-debugging-port=9222 chrome://dino
+cd backend/driver
+pip install -r requirements.txt
 ```
 
-Or on Linux / macOS:
+## 2. Launching Chrome with Remote Debugging
+
+The driver can automatically launch Chrome or connect to an existing instance:
 
 ```bash
-chromium-browser --remote-debugging-port=9222 chrome://dino
+google-chrome --remote-debugging-port=9222 --remote-allow-origins=* --user-data-dir=/tmp/dino-ai-chrome
 ```
 
-## 2. Recording Gameplay
+## 3. Recording Gameplay (Watch Mode)
 
-Run option `[1]` in `main.py` or invoke the driver directly:
+Run `python main.py` inside `backend/driver/` and choose option `[1]`:
 
 ```bash
-python -m driver.cli
+cd backend/driver
+python main.py
 ```
 
 - When the game starts, the recorder captures:
@@ -29,13 +33,12 @@ python -m driver.cli
   - Speed, jumping, and ducking states.
   - Engineered `time_to_impact = obstacle1_x / speed`.
   - Actions (`jump`, `duck`, `none`).
-- Saved into `data/gameplay/gameplay_<timestamp>.csv`.
+- Saved into `backend/data/gameplay/gameplay_<timestamp>.csv`.
 
-## 3. Autoplay with Trained Models
+## 4. Autoplay with Trained Models
 
-Run option `[3]` in `main.py`:
-
-- Loads the selected model bundle from `data/models/*.pkl`.
+Run option `[3]` in `backend/driver/main.py`:
+- Loads the selected model bundle from `backend/data/models/*.pkl`.
 - Feeds live game states into the model at 100Hz.
-- Issues jump / duck / none commands via `Runner.instance_.tRex`.
-- Records every decision path and saves a replay to `data/playback/*.json`.
+- Issues jump / duck / none commands via `Runner.getInstance().tRex`.
+- Records every decision path and saves a replay to `backend/data/playback/*.json`.

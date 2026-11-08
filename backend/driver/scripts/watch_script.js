@@ -1,26 +1,26 @@
 (() => {
-    const r = Runner.getInstance();
-    if (!r || !r.tRex || !r.horizon) throw new Error("Dino game not ready");
+    function getRunner() {
+        return (typeof Runner !== "undefined" && typeof Runner.getInstance === "function") ? Runner.getInstance() : null;
+    }
     if (window.__dinoRecorder?.uninstall) window.__dinoRecorder.uninstall();
 
     const queue = [];
     let duckHeld = false;
 
     function classifyKey(e) {
-        const k = e.key, kc = e.keyCode || e.which;
-        if (kc === 40 || k === "ArrowDown") return "duck";
-        if (kc === 38 || kc === 32 || k === "ArrowUp" || k === " ") return "jump";
+        const kc = e.keyCode || e.which, k = e.key, c = e.code;
+        if (kc === 40 || k === "ArrowDown" || k === "Down" || c === "ArrowDown") return "duck";
+        if (kc === 38 || kc === 32 || k === "ArrowUp" || k === "Up" || k === " " || k === "Spacebar" || c === "ArrowUp" || c === "Space") return "jump";
         return null;
     }
 
     function snapshot(action) {
-        const rn = Runner.getInstance();
+        const rn = getRunner();
         if (!rn || !rn.tRex || !rn.horizon) return null;
         const obs = [...(rn.horizon.obstacles || [])]
             .map(o => ({ x: Number(o.xPos), y: Number(o.yPos), type: o.typeConfig?.type ?? "none", size: Number(o.size) || 1 }))
             .filter(o => Number.isFinite(o.x)).sort((a, b) => a.x - b.x);
-        const f = obs[0] || { x: -1, y: -1, type: "none", size: 0 };
-        const s = obs[1] || { x: -1, y: -1, type: "none", size: 0 };
+        const f = obs[0] || { x: -1, y: -1, type: "none", size: 0 }, s = obs[1] || { x: -1, y: -1, type: "none", size: 0 };
         const spd = Number(rn.currentSpeed) || 0;
         return {
             obstacle1_x: f.x, obstacle1_y: f.y, obstacle1_type: f.type, obstacle1_size: f.size,
@@ -36,8 +36,8 @@
         if (!k) return;
         if (k === "duck") duckHeld = true;
         if (e.repeat) return;
-        const rn = Runner.getInstance();
-        if (!rn || rn.crashed || rn.paused || !(rn.playing || rn.activated)) return;
+        const rn = getRunner();
+        if (!rn || !rn.tRex || !rn.horizon || rn.crashed || rn.paused || !(rn.playing || rn.activated)) return;
         if (k === "jump" && rn.tRex.jumping) return;
         const row = snapshot(k);
         if (row) queue.push(row);
@@ -49,17 +49,21 @@
 
     window.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("keyup", onKeyUp, true);
+    document.addEventListener("keydown", onKeyDown, true);
+    document.addEventListener("keyup", onKeyUp, true);
 
     window.__dinoRecorder = {
         nextSample() {
             if (queue.length > 0) return queue.shift();
-            const rn = Runner.getInstance();
-            if (!rn || rn.crashed || rn.paused || !(rn.playing || rn.activated)) return null;
+            const rn = getRunner();
+            if (!rn || !rn.tRex || !rn.horizon || rn.crashed || rn.paused || !(rn.playing || rn.activated)) return null;
             return snapshot(duckHeld ? "duck" : "none");
         },
         uninstall() {
             window.removeEventListener("keydown", onKeyDown, true);
             window.removeEventListener("keyup", onKeyUp, true);
+            document.removeEventListener("keydown", onKeyDown, true);
+            document.removeEventListener("keyup", onKeyUp, true);
             delete window.__dinoRecorder;
         }
     };

@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
-from driver.ml.registry import get_model_adapter
-from driver.ml.serialization import load_trained_model
+from ml.registry import get_model_adapter
+from ml.serialization import load_trained_model
 from server.config import MODELS_DIR
 
 

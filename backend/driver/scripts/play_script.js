@@ -1,6 +1,10 @@
 (() => {
-    const r = Runner.getInstance();
-    if (!r || !r.tRex || !r.horizon) throw new Error("Dino game not ready");
+    function getRunner() {
+        return (typeof Runner !== "undefined" && typeof Runner.getInstance === "function")
+            ? Runner.getInstance()
+            : null;
+    }
+
     if (window.__dinoBot?.uninstall) window.__dinoBot.uninstall();
 
     function readObstacles(rn) {
@@ -11,7 +15,7 @@
 
     window.__dinoBot = {
         getState() {
-            const rn = Runner.getInstance();
+            const rn = getRunner();
             if (!rn || !rn.tRex) return { error: "Runner unavailable" };
             const obstacles = readObstacles(rn);
             while (obstacles.length < 2) obstacles.push({ x: -1, y: -1, type: "none", size: 0 });
@@ -25,7 +29,7 @@
             };
         },
         act(action) {
-            const rn = Runner.getInstance();
+            const rn = getRunner();
             if (!rn || !rn.tRex || rn.crashed || rn.paused) return { ok: false };
             if (action === "jump") {
                 if (rn.tRex.ducking && typeof rn.tRex.setDuck === "function") rn.tRex.setDuck(false);

@@ -1,7 +1,12 @@
+import sys
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 from server.routes.models import router as models_router
 from server.routes.playbacks import router as playbacks_router
@@ -30,7 +35,7 @@ def health_check():
 
 
 # Optional static mounting for compiled frontend dist
-frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
 

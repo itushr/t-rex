@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Tuple
 import pandas as pd
 
-from driver.ml.base.game_adapter import BaseGameAdapter
-from driver.ml.games.dino_constants import (
+from ml.base.game_adapter import BaseGameAdapter
+from ml.games.dino_constants import (
     NUMERIC_FEATURES,
     CATEGORICAL_FEATURES,
     VALID_ACTIONS,

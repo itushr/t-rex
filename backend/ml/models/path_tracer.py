@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
-from driver.ml.models.tree_extractor import resolve_class_names
+from ml.models.tree_extractor import resolve_class_names
 
 
 def trace_single_tree_path(
