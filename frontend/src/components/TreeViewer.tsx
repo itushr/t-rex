@@ -48,13 +48,13 @@ export const TreeViewer: React.FC<TreeViewerProps> = ({
       onMouseMove={handleMouseMove}
       onMouseUp={() => setIsPanning(false)}
       onWheel={handleWheel}
-      className="relative flex-1 h-full w-full overflow-hidden cursor-grab active:cursor-grabbing bg-bg-primary select-none"
+      className="relative flex-1 h-full w-full overflow-hidden cursor-grab active:cursor-grabbing select-none dark"
     >
-      {titleBadge && (
-        <div className="absolute top-3 right-3 bg-bg-panel/90 border border-border-default px-2.5 py-1 rounded text-xs font-mono-code text-accent z-10">
+      {/* {titleBadge && (
+        <div className="absolute top-3 right-3 border border-border px-2.5 py-1 rounded text-xs font-mono-code text-accent z-10">
           {titleBadge}
         </div>
-      )}
+      )} */}
 
       <svg className="w-full h-full">
         <g transform={`translate(${transform.tx}, ${transform.ty}) scale(${transform.scale})`}>
@@ -66,13 +66,13 @@ export const TreeViewer: React.FC<TreeViewerProps> = ({
                   <path
                     d={`M ${link.sx} ${link.sy} C ${link.sx} ${link.my}, ${link.ex} ${link.my}, ${link.ex} ${link.ey}`}
                     fill="none"
-                    stroke={isHighlight ? "var(--color-accent)" : "var(--color-border-default)"}
+                    stroke={isHighlight ? "var(--color-accent)" : "var(--color-border)"}
                     strokeWidth={isHighlight ? 2.5 : 1.5}
                   />
                   <text
                     x={(link.sx + link.ex) / 2 + (link.isLeft ? -14 : 6)}
                     y={link.my}
-                    className="text-[10px] font-mono-code fill-text-muted font-semibold"
+                    className="text-[10px] font-semibold"
                   >
                     {link.isLeft ? "<=" : ">"}
                   </text>

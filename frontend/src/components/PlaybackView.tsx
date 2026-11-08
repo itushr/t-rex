@@ -36,11 +36,11 @@ export const PlaybackView: React.FC<PlaybackViewProps> = ({ session, scrubber })
         onSelectIndex={(idx) => scrubber.setCurrentIndex(idx)}
       />
 
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg-primary">
-        <StepHUD step={currentStep} activeTreeIndex={activeTreeIndex} />
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* <StepHUD step={currentStep} activeTreeIndex={activeTreeIndex} /> */}
 
         {nEstimators > 1 && (
-          <div className="px-3 py-1.5 bg-bg-panel border-b border-border-default">
+          <div className="px-3 py-1.5 border-b border-border">
             <ForestSelector
               nEstimators={nEstimators}
               activeTreeIndex={activeTreeIndex}

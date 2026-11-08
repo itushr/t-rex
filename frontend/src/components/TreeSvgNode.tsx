@@ -38,39 +38,38 @@ export const TreeSvgNode: React.FC<TreeSvgNodeProps> = ({ node, isActive, onSele
         }`}
       />
 
-      <text x={10} y={16} className="text-[10px] font-mono-code fill-text-muted font-semibold">
-        #{node.id} {node.is_leaf ? "LEAF" : ""}
+      <text x={10} y={16} className="text-[10px] font-mono-code fill-foreground font-semibold">
+        #{node.id} {node.is_leaf ? "leaf" : ""}
       </text>
 
       <text
         x={10}
         y={34}
-        className="text-[11px] font-semibold"
-        fill={node.is_leaf ? color.text : "var(--color-text-primary)"}
+        className="text-[11px] font-semibold fill-foreground"
       >
         {node.is_leaf ? `Action: ${node.prediction.toUpperCase()}` : node.condition}
       </text>
 
-      <text x={10} y={52} className="text-[10px] font-mono-code fill-text-dim">
+      <text x={10} y={52} className="text-[10px] font-mono-code fill-foreground">
         samples: {node.samples} | gini: {node.impurity}
       </text>
 
       <rect
-        x={NODE_W - pillW - 8}
-        y={8}
+        x={NODE_W - pillW}
+        y={0}
         width={pillW}
         height={pillH}
         rx={3}
         ry={3}
         fill={color.bg}
-        stroke={color.border}
-        strokeWidth={1}
+        // stroke={color.border}
+        // strokeWidth={1}
       />
       <text
-        x={NODE_W - pillW / 2 - 8}
-        y={20}
+        x={NODE_W - pillW / 2}
+        y={12}
         textAnchor="middle"
-        className="text-[10px] font-mono-code font-bold pointer-events-none"
+        className="text-[8px] pointer-events-none"
         fill={color.text}
       >
         {node.prediction.toUpperCase()}

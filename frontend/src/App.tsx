@@ -32,9 +32,9 @@ export function App() {
   const scrubber = usePlaybackScrubber(currentSession?.records ?? []);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-bg-primary text-text-primary">
+    <div className="flex flex-col h-screen w-screen overflow-hidden text-foreground bg-background">
       <Header
-        title="Dino ML Visualizer"
+        title="T-Rex"
         viewMode={viewMode}
         setViewMode={setViewMode}
         isPlaying={scrubber.isPlaying}
@@ -43,7 +43,7 @@ export function App() {
         onNext={scrubber.nextStep}
       />
 
-      {viewMode === "playback" && (
+      {/* {viewMode === "playback" && (
         <div className="px-3 py-1.5 bg-bg-panel border-b border-border-default flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
             <span className="text-text-muted">Session:</span>
@@ -65,7 +65,7 @@ export function App() {
             </span>
           )}
         </div>
-      )}
+      )} */}
 
       {viewMode === "playback" && currentSession && (
         <PlaybackView session={currentSession} scrubber={scrubber} />
