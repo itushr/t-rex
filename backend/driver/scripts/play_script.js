@@ -37,10 +37,10 @@
                 return { ok: true, executed: "jump" };
             }
             if (action === "duck") {
-                if (typeof rn.tRex.setDuck === "function") rn.tRex.setDuck(true);
+                if (!rn.tRex.ducking && !rn.tRex.jumping && typeof rn.tRex.setDuck === "function") rn.tRex.setDuck(true);
                 return { ok: true, executed: "duck" };
             }
-            if (rn.tRex.ducking && typeof rn.tRex.setDuck === "function") rn.tRex.setDuck(false);
+            // if (rn.tRex.ducking && typeof rn.tRex.setDuck === "function") rn.tRex.setDuck(false);
             return { ok: true, executed: "none" };
         },
         uninstall() {
