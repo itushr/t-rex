@@ -9,6 +9,7 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 from server.routes.models import router as models_router
+from server.routes.onnx_models import router as onnx_router
 from server.routes.playbacks import router as playbacks_router
 from server.routes.train import router as train_router
 from server.routes.ws import router as ws_router
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(models_router)
+app.include_router(onnx_router)
 app.include_router(playbacks_router)
 app.include_router(train_router)
 app.include_router(ws_router)
@@ -32,6 +34,11 @@ app.include_router(ws_router)
 @app.get("/api/health")
 def health_check():
     return {"status": "healthy", "service": "dino-ml-server"}
+
+
+ort_dist = Path(__file__).resolve().parents[2] / "frontend" / "node_modules" / "onnxruntime-web" / "dist"
+if ort_dist.exists():
+    app.mount("/ort", StaticFiles(directory=str(ort_dist)), name="ort")
 
 
 # Optional static mounting for compiled frontend dist

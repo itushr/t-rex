@@ -5,8 +5,9 @@ DATA_DIR = BASE_DIR / "data"
 GAMEPLAY_DIR = DATA_DIR / "gameplay"
 PLAYBACK_DIR = DATA_DIR / "playback"
 MODELS_DIR = DATA_DIR / "models"
+ONNX_DIR = DATA_DIR / "onnxs"
 
-for folder in [GAMEPLAY_DIR, PLAYBACK_DIR, MODELS_DIR]:
+for folder in [GAMEPLAY_DIR, PLAYBACK_DIR, MODELS_DIR, ONNX_DIR]:
     folder.mkdir(parents=True, exist_ok=True)
 
 HOST = "0.0.0.0"
