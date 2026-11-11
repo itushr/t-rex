@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { AUDIO_PRESS, AUDIO_HIT, AUDIO_REACHED } from "./runnerAudio";
+import ActionPanel from "../components/ActionPanel";
 
 export function WebRunnerPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,6 +73,7 @@ export function WebRunnerPage() {
           </div>
         </div>
       </div>
+      <ActionPanel />
     </div>
   );
 }
