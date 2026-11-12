@@ -16,7 +16,7 @@ export function WebRunnerPage() {
     const linkTag = document.createElement("link");
     linkTag.rel = "stylesheet"; linkTag.href = "/t-rex-runner/index.css";
     document.head.appendChild(linkTag);
-    document.body.classList.add("offline");
+    document.body.classList.add("offline", "arcade-mode");
 
     const tpl = document.getElementById("audio-resources") as HTMLTemplateElement | null;
     if (tpl) {
@@ -41,6 +41,8 @@ export function WebRunnerPage() {
           r.isWeb = true;
           r.soundEnabled = soundManager.isSoundEnabled();
           r.loadSounds?.();
+          if (r.containerEl) r.containerEl.style.width = r.dimensions?.WIDTH + "px";
+          r.activated = true; r.setArcadeMode?.();
         }
       }
     }

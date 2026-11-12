@@ -404,6 +404,9 @@
             this.tRex = new Trex(this.canvas, this.spriteDef.TREX);
 
             this.outerContainerEl.appendChild(this.containerEl);
+            this.containerEl.style.width = this.dimensions.WIDTH + 'px';
+            this.activated = true;
+            this.setArcadeMode();
 
             if (IS_MOBILE) {
                 this.createTouchController();

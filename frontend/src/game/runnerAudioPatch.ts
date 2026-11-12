@@ -5,6 +5,15 @@ export function patchRunner(Runner: any): void {
   Runner.__audioPatched = true;
 
   const proto = Runner.prototype;
+  const origInit = proto.init;
+  proto.init = function () {
+    const res = origInit?.apply(this, arguments as any);
+    if (this.containerEl) this.containerEl.style.width = this.dimensions.WIDTH + "px";
+    this.activated = true;
+    this.setArcadeMode?.();
+    return res;
+  };
+
   const origUpdate = proto.update;
   proto.update = function () {
     if (this !== Runner.instance_) { this.stop?.(); return; }

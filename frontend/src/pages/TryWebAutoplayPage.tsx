@@ -20,7 +20,7 @@ export function TryWebAutoplayPage({ modelName }: { modelName: string }) {
     const linkTag = document.createElement("link");
     linkTag.rel = "stylesheet"; linkTag.href = "/t-rex-runner/index.css";
     document.head.appendChild(linkTag);
-    document.body.classList.add("offline");
+    document.body.classList.add("offline", "arcade-mode");
 
     const tpl = document.getElementById("audio-resources") as HTMLTemplateElement | null;
     if (tpl) tpl.innerHTML = `<audio id="offline-sound-press" src="${AUDIO_PRESS}"></audio><audio id="offline-sound-hit" src="${AUDIO_HIT}"></audio><audio id="offline-sound-reached" src="${AUDIO_REACHED}"></audio>`;
@@ -46,6 +46,8 @@ export function TryWebAutoplayPage({ modelName }: { modelName: string }) {
       const r = win.Runner.instance_;
       if (r) {
         r.soundEnabled = false; r.isWeb = false; r.stopListening?.(); r.onVisibilityChange = () => {};
+        if (r.containerEl) r.containerEl.style.width = r.dimensions?.WIDTH + "px";
+        r.activated = true; r.setArcadeMode?.();
         autoplay.init(modelName).then((ok) => { if (ok) autoplay.start(); });
       }
     }
