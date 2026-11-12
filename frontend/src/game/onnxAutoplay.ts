@@ -55,6 +55,7 @@ export class OnnxDinoAutoplay {
       if (!runner.playing && !runner.crashed) {
         runner.loadSounds?.(); runner.playing = true;
         runner.update?.(); runner.tRex?.startJump?.(runner.currentSpeed);
+        runner.playSound?.(runner.soundFx?.BUTTON_PRESS || "BUTTON_PRESS");
       }
 
       this.isBusy = true;
@@ -75,7 +76,10 @@ export class OnnxDinoAutoplay {
     const rex = runner.tRex;
     if (action === "jump") {
       if (rex.ducking && typeof rex.setDuck === "function") rex.setDuck(false);
-      if (!rex.jumping && typeof rex.startJump === "function") rex.startJump(runner.currentSpeed);
+      if (!rex.jumping && typeof rex.startJump === "function") {
+        rex.startJump(runner.currentSpeed);
+        runner.playSound?.(runner.soundFx?.BUTTON_PRESS || "BUTTON_PRESS");
+      }
     } else if (action === "duck") {
       if (!rex.ducking && !rex.jumping && typeof rex.setDuck === "function") rex.setDuck(true);
     } else {

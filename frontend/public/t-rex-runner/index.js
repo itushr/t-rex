@@ -551,6 +551,10 @@
          * Update the game frame and schedules the next one.
          */
         update: function () {
+            if (this !== Runner.instance_) {
+                this.stop();
+                return;
+            }
             this.updatePending = false;
 
             var now = getTimeStamp();
@@ -593,13 +597,17 @@
                     }
                 } else {
                     this.gameOver();
+                    return;
                 }
 
-                var playAchievementSound = this.distanceMeter.update(deltaTime,
-                    Math.ceil(this.distanceRan));
+                var score = this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan));
+                this.distanceMeter.update(deltaTime, Math.ceil(this.distanceRan));
 
-                if (playAchievementSound) {
-                    this.playSound(this.soundFx.SCORE);
+                if (score > 0 && score % 100 === 0 && this.lastCenturyScore !== score) {
+                    this.lastCenturyScore = score;
+                    if (this.playing && !this.crashed && !this.paused) {
+                        this.playSound(this.soundFx.SCORE);
+                    }
                 }
 
                 // Night mode.
@@ -806,6 +814,8 @@
             this.stop();
             this.crashed = true;
             this.distanceMeter.acheivement = false;
+            var el = document.getElementById('offline-sound-reached');
+            if (el) { el.pause(); el.currentTime = 0; }
 
             this.tRex.update(100, Trex.status.CRASHED);
 
@@ -831,8 +841,11 @@
         stop: function () {
             this.playing = false;
             this.paused = true;
+            this.updatePending = false;
             cancelAnimationFrame(this.raqId);
             this.raqId = 0;
+            var el = document.getElementById('offline-sound-reached');
+            if (el) { el.pause(); el.currentTime = 0; }
         },
 
         play: function () {
@@ -852,6 +865,9 @@
                 this.playing = true;
                 this.crashed = false;
                 this.distanceRan = 0;
+                this.lastCenturyScore = 0;
+                var el = document.getElementById('offline-sound-reached');
+                if (el) { el.pause(); el.currentTime = 0; }
                 this.setSpeed(this.config.SPEED);
                 this.time = getTimeStamp();
                 this.containerEl.classList.remove(Runner.classes.CRASHED);
@@ -912,12 +928,38 @@
          * @param {SoundBuffer} soundBuffer
          */
         playSound: function (soundBuffer) {
-            if (soundBuffer && this.audioContext) {
+            if (this !== Runner.instance_) return;
+            var isJump = soundBuffer === this.soundFx.BUTTON_PRESS || soundBuffer === 'BUTTON_PRESS';
+            var isScore = soundBuffer === this.soundFx.SCORE || soundBuffer === 'SCORE';
+            if (window.soundManager) {
+                window.soundManager.play(isJump ? 'jump' : isScore ? 'score' : 'hit', soundBuffer, this);
+                return;
+            }
+            if (Runner.soundEnabled === false || this.soundEnabled === false) {
+                return;
+            }
+            if (isScore && (!this.playing || this.crashed || this.paused)) {
+                return;
+            }
+            var buf = typeof soundBuffer === 'string' ? (this.soundFx && this.soundFx[soundBuffer]) : soundBuffer;
+            if (buf && this.audioContext) {
                 try {
+                    if (this.audioContext.state === 'suspended') {
+                        this.audioContext.resume().catch(function () {});
+                    }
                     var sourceNode = this.audioContext.createBufferSource();
-                    sourceNode.buffer = soundBuffer;
+                    sourceNode.buffer = buf;
                     sourceNode.connect(this.audioContext.destination);
                     sourceNode.start(0);
+                    return;
+                } catch (e) {}
+            }
+            var soundId = isJump ? 'offline-sound-press' : isScore ? 'offline-sound-reached' : 'offline-sound-hit';
+            var el = document.getElementById(soundId);
+            if (el) {
+                try {
+                    el.currentTime = 0;
+                    el.play().catch(function () {});
                 } catch (e) {}
             }
         },
@@ -1929,6 +1971,7 @@
 
         this.digits = [];
         this.acheivement = false;
+        this.lastAchievementScore = 0;
         this.defaultString = '';
         this.flashTimer = 0;
         this.flashIterations = 0;
@@ -2087,7 +2130,9 @@
 
                 if (distance > 0) {
                     // Acheivement unlocked
-                    if (distance % this.config.ACHIEVEMENT_DISTANCE == 0) {
+                    if (distance % this.config.ACHIEVEMENT_DISTANCE == 0 &&
+                        this.lastAchievementScore !== distance) {
+                        this.lastAchievementScore = distance;
                         // Flash score and play sound.
                         this.acheivement = true;
                         this.flashTimer = 0;
@@ -2162,6 +2207,7 @@
         reset: function () {
             this.update(0);
             this.acheivement = false;
+            this.lastAchievementScore = 0;
         }
     };
 
