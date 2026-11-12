@@ -4,9 +4,10 @@ import { TryWebAutoplayPage } from "./pages/TryWebAutoplayPage";
 import { ModelVisualizePage } from "./pages/ModelVisualizePage";
 import { PlaybackVisualizePage } from "./pages/PlaybackVisualizePage";
 import { VisualizerIndexPage } from "./pages/VisualizerIndexPage";
+import { TrainPage } from "./pages/TrainPage";
 
 interface RouteInfo {
-  type: "web" | "try-web" | "model-viz" | "playback-viz" | "index";
+  type: "web" | "try-web" | "model-viz" | "playback-viz" | "train" | "index";
   modelName?: string;
   treeIndex?: number;
   playbackName?: string;
@@ -17,14 +18,15 @@ interface RouteInfo {
 function parseRoute(): RouteInfo {
   const p = window.location.pathname;
   if (p === "/web") return { type: "web" };
+  if (p === "/train") return { type: "train" };
 
   const tryWeb = p.match(/^\/try-web\/autoplay\/(.+?)\/?$/);
   if (tryWeb) return { type: "try-web", modelName: decodeURIComponent(tryWeb[1]).replace(/^\[|\]$/g, "") };
 
-  const mTree = p.match(/^\/visualize\/mod(?:el)?\/([^/]+)\/tree\/(\d+)\/?$/);
+  const mTree = p.match(/^\/visualize\/mod(?:el|al)?\/([^/]+)\/tree\/(\d+)\/?$/);
   if (mTree) return { type: "model-viz", modelName: decodeURIComponent(mTree[1]), treeIndex: parseInt(mTree[2], 10) };
 
-  const mRoot = p.match(/^\/visualize\/mod(?:el)?\/([^/]+)\/?$/);
+  const mRoot = p.match(/^\/visualize\/mod(?:el|al)?\/([^/]+)\/?$/);
   if (mRoot) return { type: "model-viz", modelName: decodeURIComponent(mRoot[1]) };
 
   const pTree = p.match(/^\/visualize\/playback\/([^/]+)\/prediction\/(\d+)\/tree\/(\d+)\/?$/);
@@ -55,6 +57,7 @@ export function App() {
     return () => window.removeEventListener("popstate", handlePop);
   }, []);
 
+  if (route.type === "train") return <TrainPage />;
   if (route.type === "try-web" && route.modelName) return <TryWebAutoplayPage modelName={route.modelName} />;
   if (route.type === "web") return <WebRunnerPage />;
   if (route.type === "model-viz" && route.modelName) {

@@ -1,35 +1,44 @@
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from ml.trainer import train_model
 from server.config import GAMEPLAY_DIR, MODELS_DIR
+from server.services.local_trainer import train_local_model
 
 router = APIRouter(prefix="/api", tags=["training"])
 
 
 class TrainRequest(BaseModel):
-    gameplay_name: str
+    gameplay_name: Optional[str] = None
     game_id: str = "dino"
     model_type: str = "decision_tree"
+    samples: Optional[List[Dict[str, Any]]] = None
 
 
 @router.get("/gameplays")
 def list_gameplays():
-    """Returns available human gameplay CSV files for training."""
     files = []
     for f in sorted(GAMEPLAY_DIR.glob("*.csv"), key=lambda p: p.stat().st_mtime, reverse=True):
         files.append({
-            "name": f.stem,
-            "filename": f.name,
-            "size_bytes": f.stat().st_size,
-            "modified": f.stat().st_mtime,
+            "name": f.stem, "filename": f.name,
+            "size_bytes": f.stat().st_size, "modified": f.stat().st_mtime,
         })
     return files
 
 
+@router.post("/train/local")
 @router.post("/train")
 def trigger_training(req: TrainRequest):
-    """Triggers ML training on the specified gameplay dataset."""
+    if req.samples:
+        try:
+            return train_local_model(req.samples, req.model_type)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+    if not req.gameplay_name:
+        raise HTTPException(status_code=400, detail="gameplay_name or samples required")
+
     csv_path = GAMEPLAY_DIR / f"{req.gameplay_name}.csv"
     if not csv_path.exists():
         csv_path = GAMEPLAY_DIR / req.gameplay_name
@@ -38,14 +47,8 @@ def trigger_training(req: TrainRequest):
 
     out_name = f"{req.gameplay_name}_{req.model_type}.pkl"
     out_path = MODELS_DIR / out_name
-
     try:
-        result = train_model(
-            data_path=csv_path,
-            output_path=out_path,
-            game_id=req.game_id,
-            model_type=req.model_type,
-        )
-        return {"ok": True, "result": result}
+        res = train_model(data_path=csv_path, output_path=out_path, game_id=req.game_id, model_type=req.model_type)
+        return {"ok": True, "result": res}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))

@@ -3,88 +3,76 @@ from ml.models.tree_extractor import extract_tree_data
 from ml.registry import get_model_adapter
 from ml.serialization import load_trained_model
 from server.config import MODELS_DIR
+from server.services.local_store import get_local_bundle, get_local_graph
+
+
+def _resolve_bundle(model_name: str) -> Dict[str, Any]:
+    if model_name == "local":
+        b = get_local_bundle()
+        if b:
+            return b
+    path = MODELS_DIR / f"{model_name}.pkl"
+    if not path.exists():
+        path = MODELS_DIR / model_name
+    return load_trained_model(path)
 
 
 def list_models() -> List[Dict[str, Any]]:
-    """Lists available trained models with metadata."""
     results = []
-    for file in sorted(MODELS_DIR.glob("*.pkl"), key=lambda p: p.stat().st_mtime, reverse=True):
+    for f in sorted(MODELS_DIR.glob("*.pkl"), key=lambda p: p.stat().st_mtime, reverse=True):
         try:
-            bundle = load_trained_model(file)
+            bundle = load_trained_model(f)
             results.append({
-                "name": file.stem,
-                "filename": file.name,
+                "name": f.stem, "filename": f.name,
                 "game_id": bundle.get("game_id", "dino"),
                 "model_type": bundle.get("model_type", "unknown"),
                 "features_count": len(bundle.get("features", [])),
                 "actions": bundle.get("actions", []),
-                "size_bytes": file.stat().st_size,
-                "modified": file.stat().st_mtime,
+                "size_bytes": f.stat().st_size, "modified": f.stat().st_mtime,
             })
         except Exception:
-            results.append({"name": file.stem, "filename": file.name, "error": "corrupt_artifact"})
+            results.append({"name": f.stem, "filename": f.name, "error": "corrupt_artifact"})
     return results
 
 
 def get_model_summary(model_name: str) -> Dict[str, Any]:
-    """Returns lightweight model metadata without extracting tree graphs."""
-    path = MODELS_DIR / f"{model_name}.pkl"
-    if not path.exists():
-        path = MODELS_DIR / model_name
-    bundle = load_trained_model(path)
-    model = bundle["model"]
-    n_est = len(model.estimators_) if hasattr(model, "estimators_") else 1
+    bundle = _resolve_bundle(model_name)
+    m = bundle["model"]
     return {
-        "model_name": model_name,
-        "model_type": bundle.get("model_type", "unknown"),
+        "model_name": model_name, "model_type": bundle.get("model_type", "unknown"),
         "game_id": bundle.get("game_id", "dino"),
-        "n_estimators": n_est,
-        "features": bundle.get("features", []),
-        "actions": bundle.get("actions", []),
+        "n_estimators": len(m.estimators_) if hasattr(m, "estimators_") else 1,
+        "features": bundle.get("features", []), "actions": bundle.get("actions", []),
     }
 
 
 def get_model_single_tree(model_name: str, tree_index: int = 0) -> Dict[str, Any]:
-    """Extracts a single tree from a model bundle by index."""
-    path = MODELS_DIR / f"{model_name}.pkl"
-    if not path.exists():
-        path = MODELS_DIR / model_name
-    bundle = load_trained_model(path)
-    model = bundle["model"]
-    mtype = bundle.get("model_type", "unknown")
-    features = bundle.get("features", [])
-    actions = bundle.get("actions", [])
-    if hasattr(model, "estimators_"):
-        if tree_index < 0 or tree_index >= len(model.estimators_):
+    bundle = _resolve_bundle(model_name)
+    m = bundle["model"]
+    feats, acts = bundle.get("features", []), bundle.get("actions", [])
+    if hasattr(m, "estimators_"):
+        if tree_index < 0 or tree_index >= len(m.estimators_):
             raise IndexError("Tree index out of range")
-        est = model.estimators_[tree_index]
-        n_est = len(model.estimators_)
+        est, n_est = m.estimators_[tree_index], len(m.estimators_)
     else:
-        est = model
-        n_est = 1
-    tree = extract_tree_data(est, features, actions)
+        est, n_est = m, 1
     return {
-        "model_name": model_name,
-        "model_type": mtype,
-        "tree_index": tree_index,
-        "n_estimators": n_est,
-        "tree": tree,
+        "model_name": model_name, "model_type": bundle.get("model_type", "unknown"),
+        "tree_index": tree_index, "n_estimators": n_est,
+        "tree": extract_tree_data(est, feats, acts),
     }
 
 
 def get_model_graph(model_name: str) -> Dict[str, Any]:
-    """Loads a model and extracts its complete decision tree or ensemble hierarchy."""
-    path = MODELS_DIR / f"{model_name}.pkl"
-    if not path.exists():
-        path = MODELS_DIR / model_name
-    bundle = load_trained_model(path)
+    if model_name == "local":
+        g = get_local_graph()
+        if g:
+            return g
+    bundle = _resolve_bundle(model_name)
     adapter = get_model_adapter(bundle.get("model_type", "decision_tree"))
-    graph = adapter.extract_graph(bundle["model"], bundle["features"], bundle["actions"])
     return {
-        "model_name": model_name,
-        "model_type": bundle.get("model_type"),
+        "model_name": model_name, "model_type": bundle.get("model_type"),
         "game_id": bundle.get("game_id", "dino"),
-        "features": bundle.get("features", []),
-        "actions": bundle.get("actions", []),
-        "graph": graph,
+        "features": bundle.get("features", []), "actions": bundle.get("actions", []),
+        "graph": adapter.extract_graph(bundle["model"], bundle["features"], bundle["actions"]),
     }

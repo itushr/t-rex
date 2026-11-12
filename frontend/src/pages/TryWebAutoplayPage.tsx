@@ -5,6 +5,7 @@ import { ActionPanel } from "../components/ActionPanel";
 import { patchRunner } from "../game/runnerAudioPatch";
 import { soundManager } from "../game/soundManager";
 import { useGameRunnerControls } from "../game/useGameRunnerControls";
+import { useAutoplayPlaybackRecorder } from "../game/useAutoplayPlaybackRecorder";
 
 const INPUTS = ["keydown", "keyup", "keypress", "mousedown", "touchstart"] as const;
 
@@ -13,6 +14,7 @@ export function TryWebAutoplayPage({ modelName }: { modelName: string }) {
   const autoplayRef = useRef<OnnxDinoAutoplay>(new OnnxDinoAutoplay());
   const [soundEnabled, setSoundEnabled] = useState(false);
   const { gameStatus, togglePlayPause, restart } = useGameRunnerControls();
+  const { isRecording, isRecordingPaused, toggleRecord, visualizePlayback } = useAutoplayPlaybackRecorder(gameStatus, autoplayRef.current);
 
   useEffect(() => {
     soundManager.setSoundEnabled(false);
@@ -30,7 +32,6 @@ export function TryWebAutoplayPage({ modelName }: { modelName: string }) {
       e.stopPropagation(); if (e.type.startsWith("key")) e.preventDefault();
     };
     INPUTS.forEach((ev) => window.addEventListener(ev, disable, { capture: true }));
-
     const autoplay = autoplayRef.current;
     let initialized = false;
 
@@ -87,11 +88,10 @@ export function TryWebAutoplayPage({ modelName }: { modelName: string }) {
         </div>
       </div>
       <ActionPanel
-        soundEnabled={soundEnabled}
-        onToggleSound={toggleSound}
-        gameStatus={gameStatus}
-        onTogglePlayPause={togglePlayPause}
-        onRestart={restart}
+        soundEnabled={soundEnabled} onToggleSound={toggleSound} gameStatus={gameStatus}
+        onTogglePlayPause={togglePlayPause} onRestart={restart}
+        isRecording={isRecording} isRecordingPaused={isRecordingPaused}
+        onToggleRecord={toggleRecord} showVisualize={true} onVisualize={visualizePlayback}
       />
     </div>
   );
