@@ -27,15 +27,41 @@ export interface TreePathResult {
   steps: CompactRuleStep[];
 }
 
+export interface PlaybackMetaStep {
+  step: number;
+  obstacle1: string;
+  speed: number;
+  action: string;
+  p_jump?: number;
+  p_duck?: number;
+  p_none?: number;
+}
+
+export interface PlaybackMetaResponse {
+  filename: string;
+  model_name: string;
+  model_type: string;
+  n_estimators: number;
+  total_steps: number;
+  steps: PlaybackMetaStep[];
+}
+
+export interface PlaybackTreeTableRow {
+  sr: number;
+  obstacle1: string;
+  speed: number;
+  action: string;
+}
+
 export interface PlaybackStep {
   step: number;
   time: number;
   speed: number;
   time_to_impact?: number;
-  jumping: boolean;
-  ducking: boolean;
+  jumping?: boolean;
+  ducking?: boolean;
   obs1: ObstacleData;
-  obs2: ObstacleData;
+  obs2?: ObstacleData;
   action: string;
   executed?: string;
   model_type?: string;
@@ -54,7 +80,7 @@ export interface PlaybackSession {
   recorded_at: string;
   duration: number;
   total_steps: number;
-  crashed: boolean;
+  crashed?: boolean;
   forest?: TreeGraphData;
   tree?: TreeNode;
   records: PlaybackStep[];

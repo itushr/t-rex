@@ -1,44 +1,75 @@
 import { useState, useEffect } from "react";
-import { VisualizerPage } from "./pages/VisualizerPage";
 import { WebRunnerPage } from "./pages/WebRunnerPage";
 import { TryWebAutoplayPage } from "./pages/TryWebAutoplayPage";
+import { ModelVisualizePage } from "./pages/ModelVisualizePage";
+import { PlaybackVisualizePage } from "./pages/PlaybackVisualizePage";
+import { VisualizerIndexPage } from "./pages/VisualizerIndexPage";
 
 interface RouteInfo {
-  type: "visualize" | "web" | "try-web";
+  type: "web" | "try-web" | "model-viz" | "playback-viz" | "index";
   modelName?: string;
+  treeIndex?: number;
+  playbackName?: string;
+  predictionStep?: number;
+  treeNo?: number;
 }
 
 function parseRoute(): RouteInfo {
-  const path = window.location.pathname;
-  if (path === "/web") return { type: "web" };
+  const p = window.location.pathname;
+  if (p === "/web") return { type: "web" };
 
-  const match = path.match(/^\/try-web\/autoplay\/(.+?)\/?$/);
-  if (match) {
-    const raw = decodeURIComponent(match[1]);
-    const cleaned = raw.replace(/^\[|\]$/g, "");
-    return { type: "try-web", modelName: cleaned };
+  const tryWeb = p.match(/^\/try-web\/autoplay\/(.+?)\/?$/);
+  if (tryWeb) return { type: "try-web", modelName: decodeURIComponent(tryWeb[1]).replace(/^\[|\]$/g, "") };
+
+  const mTree = p.match(/^\/visualize\/mod(?:el)?\/([^/]+)\/tree\/(\d+)\/?$/);
+  if (mTree) return { type: "model-viz", modelName: decodeURIComponent(mTree[1]), treeIndex: parseInt(mTree[2], 10) };
+
+  const mRoot = p.match(/^\/visualize\/mod(?:el)?\/([^/]+)\/?$/);
+  if (mRoot) return { type: "model-viz", modelName: decodeURIComponent(mRoot[1]) };
+
+  const pTree = p.match(/^\/visualize\/playback\/([^/]+)\/prediction\/(\d+)\/tree\/(\d+)\/?$/);
+  if (pTree) {
+    return {
+      type: "playback-viz", playbackName: decodeURIComponent(pTree[1]),
+      predictionStep: parseInt(pTree[2], 10), treeNo: parseInt(pTree[3], 10),
+    };
   }
-  return { type: "visualize" };
+
+  const pStep = p.match(/^\/visualize\/playback\/([^/]+)\/prediction\/(\d+)\/?$/);
+  if (pStep) {
+    return { type: "playback-viz", playbackName: decodeURIComponent(pStep[1]), predictionStep: parseInt(pStep[2], 10) };
+  }
+
+  const pRoot = p.match(/^\/visualize\/playback\/([^/]+)\/?$/);
+  if (pRoot) return { type: "playback-viz", playbackName: decodeURIComponent(pRoot[1]), predictionStep: 1 };
+
+  return { type: "index" };
 }
 
 export function App() {
-  const [routeInfo, setRouteInfo] = useState<RouteInfo>(parseRoute);
+  const [route, setRoute] = useState<RouteInfo>(parseRoute);
 
   useEffect(() => {
-    const handlePop = () => setRouteInfo(parseRoute());
+    const handlePop = () => setRoute(parseRoute());
     window.addEventListener("popstate", handlePop);
     return () => window.removeEventListener("popstate", handlePop);
   }, []);
 
-  if (routeInfo.type === "try-web" && routeInfo.modelName) {
-    return <TryWebAutoplayPage modelName={routeInfo.modelName} />;
+  if (route.type === "try-web" && route.modelName) return <TryWebAutoplayPage modelName={route.modelName} />;
+  if (route.type === "web") return <WebRunnerPage />;
+  if (route.type === "model-viz" && route.modelName) {
+    return <ModelVisualizePage modelName={route.modelName} treeIndex={route.treeIndex} />;
   }
-
-  if (routeInfo.type === "web") {
-    return <WebRunnerPage />;
+  if (route.type === "playback-viz" && route.playbackName) {
+    return (
+      <PlaybackVisualizePage
+        playbackName={route.playbackName}
+        predictionStep={route.predictionStep}
+        treeNo={route.treeNo}
+      />
+    );
   }
-
-  return <VisualizerPage />;
+  return <VisualizerIndexPage />;
 }
 
 export default App;
