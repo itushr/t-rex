@@ -9,7 +9,6 @@ export class OnnxDinoAutoplay {
   private intervalId: number | null = null;
   private active = false;
   private isBusy = false;
-  private restarting = false;
 
   async init(modelName: string): Promise<boolean> {
     try {
@@ -39,24 +38,7 @@ export class OnnxDinoAutoplay {
     this.intervalId = window.setInterval(async () => {
       const runner = (window as any).Runner?.instance_;
       if (!runner?.tRex || !this.session || this.isBusy) return;
-
-      if (runner.crashed) {
-        if (!this.restarting) {
-          this.restarting = true;
-          setTimeout(() => {
-            if (this.active && runner.crashed) { runner.restart?.(); runner.stopListening?.(); }
-            this.restarting = false;
-          }, 1000);
-        }
-        return;
-      }
-
-      if (runner.paused && typeof runner.play === "function") runner.play();
-      if (!runner.playing && !runner.crashed) {
-        runner.loadSounds?.(); runner.playing = true;
-        runner.update?.(); runner.tRex?.startJump?.(runner.currentSpeed);
-        runner.playSound?.(runner.soundFx?.BUTTON_PRESS || "BUTTON_PRESS");
-      }
+      if (!runner.playing || runner.paused || runner.crashed) return;
 
       this.isBusy = true;
       try {

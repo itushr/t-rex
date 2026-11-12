@@ -4,6 +4,7 @@ import { OnnxDinoAutoplay } from "../game/onnxAutoplay";
 import { ActionPanel } from "../components/ActionPanel";
 import { patchRunner } from "../game/runnerAudioPatch";
 import { soundManager } from "../game/soundManager";
+import { useGameRunnerControls } from "../game/useGameRunnerControls";
 
 const INPUTS = ["keydown", "keyup", "keypress", "mousedown", "touchstart"] as const;
 
@@ -11,6 +12,7 @@ export function TryWebAutoplayPage({ modelName }: { modelName: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const autoplayRef = useRef<OnnxDinoAutoplay>(new OnnxDinoAutoplay());
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const { gameStatus, togglePlayPause, restart } = useGameRunnerControls();
 
   useEffect(() => {
     soundManager.setSoundEnabled(false);
@@ -44,12 +46,7 @@ export function TryWebAutoplayPage({ modelName }: { modelName: string }) {
       const r = win.Runner.instance_;
       if (r) {
         r.soundEnabled = false; r.isWeb = false; r.stopListening?.(); r.onVisibilityChange = () => {};
-        autoplay.init(modelName).then((ok) => {
-          if (ok) {
-            autoplay.start();
-            if (!r.playing) { r.loadSounds?.(); r.playing = true; r.update?.(); r.tRex?.startJump?.(r.currentSpeed); }
-          }
-        });
+        autoplay.init(modelName).then((ok) => { if (ok) autoplay.start(); });
       }
     }
 
@@ -73,9 +70,7 @@ export function TryWebAutoplayPage({ modelName }: { modelName: string }) {
   }, [modelName]);
 
   const toggleSound = () => setSoundEnabled((prev) => {
-    const next = !prev;
-    soundManager.setSoundEnabled(next);
-    return next;
+    const next = !prev; soundManager.setSoundEnabled(next); return next;
   });
 
   return (
@@ -89,7 +84,13 @@ export function TryWebAutoplayPage({ modelName }: { modelName: string }) {
           </div>
         </div>
       </div>
-      <ActionPanel soundEnabled={soundEnabled} onToggleSound={toggleSound} />
+      <ActionPanel
+        soundEnabled={soundEnabled}
+        onToggleSound={toggleSound}
+        gameStatus={gameStatus}
+        onTogglePlayPause={togglePlayPause}
+        onRestart={restart}
+      />
     </div>
   );
 }

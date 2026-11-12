@@ -21,9 +21,12 @@ export function patchRunner(Runner: any): void {
 
   const origRestart = proto.restart;
   proto.restart = function () {
+    this.paused = false;
     this.lastCenturyScore = 0;
     soundManager.stopScore();
-    return origRestart?.apply(this, arguments as any);
+    const res = origRestart?.apply(this, arguments as any);
+    this.paused = false;
+    return res;
   };
 
   const origGameOver = proto.gameOver;

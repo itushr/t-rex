@@ -3,10 +3,12 @@ import { AUDIO_PRESS, AUDIO_HIT, AUDIO_REACHED } from "./runnerAudio";
 import { ActionPanel } from "../components/ActionPanel";
 import { patchRunner } from "../game/runnerAudioPatch";
 import { soundManager } from "../game/soundManager";
+import { useGameRunnerControls } from "../game/useGameRunnerControls";
 
 export function WebRunnerPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const { gameStatus, togglePlayPause, restart } = useGameRunnerControls();
 
   useEffect(() => {
     soundManager.setSoundEnabled(true);
@@ -81,7 +83,13 @@ export function WebRunnerPage() {
           </div>
         </div>
       </div>
-      <ActionPanel soundEnabled={soundEnabled} onToggleSound={toggleSound} />
+      <ActionPanel
+        soundEnabled={soundEnabled}
+        onToggleSound={toggleSound}
+        gameStatus={gameStatus}
+        onTogglePlayPause={togglePlayPause}
+        onRestart={restart}
+      />
     </div>
   );
 }
