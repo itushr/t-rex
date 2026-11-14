@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ensureGuestToken } from "../services/guestAuth";
 import { listPrivateGameplays, listPrivateModels, listPrivatePlaybacks } from "../services/privateApi";
 import { ModelCard, GameplayCard, PlaybackCard } from "../components/dashboard/BentoCards";
+import Navabar from "../components/Navbar";
 
 const BENTO_PATTERN = [1, 3, 2, 3, 1, 2, 3, 3, 2, 3, 1, 3];
 
@@ -52,13 +53,15 @@ export function PrivateDashboardV2Page() {
   }, []);
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground p-5 sm:p-10">
-      <div className="max-w-[1100px] mx-auto">
-        <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 auto-rows-[150px] [grid-auto-flow:row_dense] gap-[14px]">
+    <div className="min-h-screen bg-accent-foreground text-foreground p-5">
+      <Navabar />
+
+      <div className="mt-20 max-w-275 mx-auto">
+        <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 auto-rows-37.5 grid-flow-row-dense gap-2">
           {items.map((it) => {
             if (it.kind === "model") return <ModelCard key={it.id} model={it} />;
             if (it.kind === "gameplay") return <GameplayCard key={it.id} gameplay={it} />;
-            return <PlaybackCard key={it.id} playback={it} />;
+            if (it.kind === "playback") return <PlaybackCard key={it.id} playback={it} />;
           })}
         </main>
       </div>
