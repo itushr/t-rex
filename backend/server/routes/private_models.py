@@ -33,11 +33,12 @@ def list_user_models(user_id: str = Depends(get_current_user_id)):
     for f in sorted(mdir.glob("*.pkl"), key=lambda p: p.stat().st_mtime, reverse=True):
         try:
             b = joblib.load(f)
+            ts = float(b.get("created_at") or b.get("timestamp") or f.stat().st_mtime)
             res.append({
                 "name": f.stem, "filename": f.name, "game_id": b.get("game_id", "dino"),
                 "model_type": b.get("model_type", "unknown"), "features_count": len(b.get("features", [])),
                 "features": b.get("features", []), "actions": b.get("actions", []),
-                "size_bytes": f.stat().st_size, "modified": f.stat().st_mtime,
+                "size_bytes": f.stat().st_size, "modified": ts, "timestamp": ts, "created_at": ts,
             })
         except Exception:
             res.append({"name": f.stem, "filename": f.name, "error": "corrupt"})

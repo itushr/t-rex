@@ -32,10 +32,12 @@ def list_user_playbacks(user_id: str = Depends(get_current_user_id)):
         try:
             with open(f, "r") as fh:
                 d = json.load(fh)
+            ts = float(d.get("timestamp") or d.get("created_at") or f.stat().st_mtime)
             res.append({
                 "name": f.stem, "filename": f.name, "model_name": d.get("model_name"),
                 "model_type": d.get("model_type"), "total_steps": d.get("total_steps", 0),
-                "duration": d.get("duration", 0.0), "modified": f.stat().st_mtime,
+                "duration": d.get("duration", 0.0), "modified": ts,
+                "timestamp": ts, "created_at": ts,
             })
         except Exception:
             res.append({"name": f.stem, "filename": f.name, "error": "corrupt"})

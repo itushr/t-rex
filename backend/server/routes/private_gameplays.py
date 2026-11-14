@@ -19,11 +19,10 @@ def list_user_gameplays(user_id: str = Depends(get_current_user_id)):
     gdir = get_user_sub_dir(user_id, "gameplay")
     files = []
     for f in sorted(gdir.glob("*.csv"), key=lambda p: p.stat().st_mtime, reverse=True):
+        ts = f.stat().st_mtime
         files.append({
-            "name": f.stem,
-            "filename": f.name,
-            "size_bytes": f.stat().st_size,
-            "modified": f.stat().st_mtime,
+            "name": f.stem, "filename": f.name, "size_bytes": f.stat().st_size,
+            "modified": ts, "timestamp": ts, "created_at": ts,
         })
     return files
 

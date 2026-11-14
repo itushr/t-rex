@@ -52,9 +52,11 @@ def save_user_playback(
     raw_pname = playback_name or f"playback_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     cpname = sanitize_name(raw_pname)
 
+    now_ts = datetime.now().timestamp()
     playback = {
         "model_name": cmodel, "model_type": bundle.get("model_type"), "n_estimators": 1,
         "recorded_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp": now_ts, "created_at": now_ts,
         "duration": duration, "total_steps": len(records), "crashed": crashed,
         "forest": graph, "records": records,
     }

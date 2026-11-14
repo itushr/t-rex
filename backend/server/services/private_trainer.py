@@ -39,15 +39,18 @@ def train_user_model(
     actions = sorted(y.unique().tolist())
     graph = ma.extract_graph(model, features, actions)
 
+    now_ts = datetime.now().timestamp()
     bundle = {
         "model": model, "model_type": model_type, "game_id": "dino",
         "features": features, "numeric_features": ga.numeric_features,
         "categorical_features": ga.categorical_features, "categories": categories, "actions": actions,
+        "created_at": now_ts, "timestamp": now_ts,
     }
     onnx_meta = {
         "name": cname, "model_type": model_type, "game_id": "dino",
         "features": features, "numeric_features": ga.numeric_features,
         "type_features": ga.categorical_features, "categories": categories, "actions": actions,
+        "created_at": now_ts, "timestamp": now_ts,
     }
 
     joblib.dump(bundle, safe_user_file(user_id, "models", f"{cname}.pkl"))
