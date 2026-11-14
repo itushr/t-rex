@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from ml.games.dino_constants import NUMERIC_FEATURES, CATEGORICAL_FEATURES
 from ml.trainer import train_model
 from server.config import GAMEPLAY_DIR, MODELS_DIR
 from server.services.local_trainer import train_local_model
@@ -14,6 +15,15 @@ class TrainRequest(BaseModel):
     game_id: str = "dino"
     model_type: str = "decision_tree"
     samples: Optional[List[Dict[str, Any]]] = None
+    selected_features: Optional[List[str]] = None
+
+
+@router.get("/features")
+def get_available_features():
+    return {
+        "numeric_features": list(NUMERIC_FEATURES),
+        "categorical_features": list(CATEGORICAL_FEATURES),
+    }
 
 
 @router.get("/gameplays")
@@ -32,7 +42,7 @@ def list_gameplays():
 def trigger_training(req: TrainRequest):
     if req.samples:
         try:
-            return train_local_model(req.samples, req.model_type)
+            return train_local_model(req.samples, req.model_type, req.selected_features)
         except Exception as exc:
             raise HTTPException(status_code=400, detail=str(exc))
 

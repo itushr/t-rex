@@ -1,8 +1,9 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import pandas as pd
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 from sklearn.metrics import accuracy_score
+from ml.games.filtered_adapter import FilteredGameAdapter
 from ml.registry import get_game_adapter, get_model_adapter
 from ml.trainer import prepare_training_data
 from server.services.local_store import set_local_model
@@ -30,11 +31,15 @@ def _ensure_diversity(df: pd.DataFrame) -> pd.DataFrame:
     return clean
 
 
-def train_local_model(samples: List[Dict[str, Any]], model_type: str = "decision_tree") -> Dict[str, Any]:
+def train_local_model(
+    samples: List[Dict[str, Any]],
+    model_type: str = "decision_tree",
+    selected_features: Optional[List[str]] = None,
+) -> Dict[str, Any]:
     if not samples:
         raise ValueError("Cannot train with 0 samples")
     df = _ensure_diversity(pd.DataFrame(samples))
-    ga = get_game_adapter("dino")
+    ga = FilteredGameAdapter(get_game_adapter("dino"), selected_features)
     ma = get_model_adapter(model_type)
 
     X, y, categories, features = prepare_training_data(df, ga)
@@ -51,40 +56,23 @@ def train_local_model(samples: List[Dict[str, Any]], model_type: str = "decision
     graph = ma.extract_graph(model, features, actions)
 
     bundle = {
-        "model": model,
-        "model_type": model_type,
-        "game_id": "dino",
-        "features": features,
-        "numeric_features": ga.numeric_features,
+        "model": model, "model_type": model_type, "game_id": "dino",
+        "features": features, "numeric_features": ga.numeric_features,
         "categorical_features": ga.categorical_features,
-        "categories": categories,
-        "actions": actions,
+        "categories": categories, "actions": actions,
     }
     graph_response = {
-        "model_name": "local",
-        "model_type": model_type,
-        "game_id": "dino",
-        "features": features,
-        "actions": actions,
-        "graph": graph,
+        "model_name": "local", "model_type": model_type, "game_id": "dino",
+        "features": features, "actions": actions, "graph": graph,
     }
     onnx_meta = {
-        "name": "local",
-        "model_type": model_type,
-        "game_id": "dino",
-        "features": features,
-        "numeric_features": ga.numeric_features,
+        "name": "local", "model_type": model_type, "game_id": "dino",
+        "features": features, "numeric_features": ga.numeric_features,
         "type_features": ga.categorical_features,
-        "categories": categories,
-        "actions": actions,
+        "categories": categories, "actions": actions,
     }
     set_local_model(bundle, graph_response, onnx_bytes, onnx_meta)
     return {
-        "ok": True,
-        "model_name": "local",
-        "accuracy": round(acc * 100, 2),
-        "samples": len(df),
-        "features": features,
-        "actions": actions,
-        "onnx_meta": onnx_meta,
+        "ok": True, "model_name": "local", "accuracy": round(acc * 100, 2),
+        "samples": len(df), "features": features, "actions": actions, "onnx_meta": onnx_meta,
     }

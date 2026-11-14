@@ -1,33 +1,24 @@
 import { useEffect, useState } from "react";
-import { CheckCircle, Cpu, Eye, Play, Sparkles } from "lucide-react";
-
-interface TrainResult {
-  accuracy: number;
-  samples: number;
-  actions: string[];
-}
+import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { GameSample, TrainResult } from "../types/train";
+import { ALL_FEATURES } from "../components/train/featureList";
+import { TrimGameplayStep } from "../components/train/TrimGameplayStep";
+import { FeatureSelectStep } from "../components/train/FeatureSelectStep";
+import { TrainResultCard } from "../components/train/TrainResultCard";
 
 export function TrainPage() {
-  const [loading, setLoading] = useState(true);
+  const [samples, setSamples] = useState<GameSample[]>([]);
+  const [trimRange, setTrimRange] = useState<[number, number]>([0, 0]);
+  const [features, setFeatures] = useState<string[]>(ALL_FEATURES.map((f) => f.id));
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TrainResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("dino_local_samples");
-    const samples = raw ? JSON.parse(raw) : [];
-    if (!samples.length) {
-      setError("No recorded samples found. Play and record in /web first.");
-      setLoading(false);
-      return;
-    }
-    fetch("/api/train/local", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ samples, model_type: "decision_tree" }),
-    })
-      .then((r) => r.ok ? r.json() : r.json().then((d) => Promise.reject(d.detail || "Training failed")))
-      .then((data) => { setResult(data); setLoading(false); })
-      .catch((err) => { setError(String(err)); setLoading(false); });
+    const parsed: GameSample[] = raw ? JSON.parse(raw) : [];
+    setSamples(parsed);
+    setTrimRange([0, parsed.length]);
   }, []);
 
   const nav = (url: string) => {
@@ -35,51 +26,67 @@ export function TrainPage() {
     window.dispatchEvent(new PopStateEvent("popstate"));
   };
 
-  return (
-    <div className="min-h-screen bg-[#0d1117] text-white flex flex-col items-center justify-center p-6">
-      <div className="max-w-md w-full bg-[#161b22] border border-border/20 rounded-2xl p-8 shadow-2xl flex flex-col items-center text-center">
-        <div className="size-16 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mb-5 text-cyan-400">
-          <Sparkles className="size-8 animate-pulse" />
+  const handleTrain = async () => {
+    if (!samples.length) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const trimmed = samples.slice(trimRange[0], trimRange[1]);
+      const res = await fetch("/api/train/local", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ samples: trimmed, model_type: "decision_tree", selected_features: features }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Training failed");
+      setResult(data);
+    } catch (err: any) {
+      setError(err?.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!samples.length) {
+    return (
+      <div className="min-h-screen bg-[#F7F4ED] text-black flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white border border-[#DDD6CB] rounded-2xl p-8 text-center space-y-4">
+          <span className="text-xs font-mono uppercase text-[#6E6962]">No Data Recorded</span>
+          <h1 className="text-2xl font-medium tracking-tight">Capture Gameplay First</h1>
+          <p className="text-sm text-[#6E6962]">Record a session on /web using the camera icon in action bar.</p>
+          <button onClick={() => nav("/web")} className="w-full py-3 px-6 rounded-full bg-black text-[#F7F4ED] font-medium text-sm hover:bg-zinc-800 cursor-pointer">
+            Launch /web Runner
+          </button>
         </div>
-        <h1 className="text-2xl font-bold mb-2">Model Training</h1>
-        {loading && <p className="text-zinc-400">Training Decision Tree on recorded game data...</p>}
-        {error && (
-          <div className="text-rose-400 text-sm mb-4">
-            <p>{error}</p>
-            <button onClick={() => nav("/web")} className="mt-4 px-4 py-2 bg-zinc-800 rounded-lg text-white">Back to /web</button>
+      </div>
+    );
+  }
+
+  const activeCount = trimRange[1] - trimRange[0];
+  return (
+    <div className="min-h-screen bg-[#F7F4ED] text-black px-4 py-12 md:py-16 flex flex-col items-center">
+      <div className="max-w-3xl w-full flex flex-col gap-8">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <button onClick={() => nav("/web")} className="text-xs font-mono text-[#6E6962] hover:text-black flex items-center gap-1 cursor-pointer">
+              <ArrowLeft className="size-3.5" /> Back to /web
+            </button>
+            <span className="text-xs font-mono text-[#6E6962]">{samples.length} Raw Frames</span>
           </div>
-        )}
-        {result && (
-          <div className="w-full mt-2">
-            <div className="flex items-center justify-center gap-2 text-emerald-400 font-semibold mb-6">
-              <CheckCircle className="size-5" /> In-Memory Model Trained (local.onnx)
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-6 text-left">
-              <div className="bg-zinc-900/80 p-3 rounded-xl border border-zinc-800">
-                <span className="text-xs text-zinc-500 uppercase">Accuracy</span>
-                <p className="text-xl font-bold text-white">{result.accuracy}%</p>
-              </div>
-              <div className="bg-zinc-900/80 p-3 rounded-xl border border-zinc-800">
-                <span className="text-xs text-zinc-500 uppercase">Samples</span>
-                <p className="text-xl font-bold text-white">{result.samples}</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-3 w-full">
-              <button
-                onClick={() => nav("/visualize/modal/local")}
-                className="w-full py-3 px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-cyan-600/20"
-              >
-                <Eye className="size-5" /> Visualize Model
-              </button>
-              <button
-                onClick={() => nav("/try-web/autoplay/local")}
-                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-emerald-600/20"
-              >
-                <Play className="size-5" /> Start Autoplay
-              </button>
-            </div>
-          </div>
-        )}
+          <h1 className="text-3xl md:text-4xl font-medium tracking-tight mt-1">Train Runner Intelligence</h1>
+          <p className="text-sm text-[#6E6962]">Trim captured frames, customize sensory inputs, and compile an in-memory decision tree.</p>
+        </div>
+        <TrimGameplayStep samples={samples} trimRange={trimRange} onChange={setTrimRange} />
+        <FeatureSelectStep selected={features} onChange={setFeatures} />
+        {error && <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-mono">{error}</div>}
+        <button
+          type="button" onClick={handleTrain} disabled={loading || activeCount < 10 || features.length === 0}
+          className="w-full py-4 px-8 rounded-full bg-black text-[#F7F4ED] font-medium text-base hover:bg-zinc-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+        >
+          {loading ? <Loader2 className="size-5 animate-spin" /> : <Sparkles className="size-5" />}
+          <span>{loading ? "Compiling Model..." : `Train Model (${activeCount} frames, ${features.length} inputs)`}</span>
+        </button>
+        {result && <TrainResultCard result={result} onNavigate={nav} />}
       </div>
     </div>
   );
