@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { GameRecorder } from "./gameRecorder";
+import { savePrivateGameplay } from "../services/privateApi";
 import type { GameStatus } from "./useGameRunnerControls";
 
 export function useWebGameRecorder(gameStatus: GameStatus) {
@@ -54,6 +55,9 @@ export function useWebGameRecorder(gameStatus: GameStatus) {
     recRef.current.stop();
     setIsRecording(false);
     sessionStorage.setItem("dino_local_samples", JSON.stringify(samples));
+    if (samples.length >= 10) {
+      savePrivateGameplay(samples).catch(() => {});
+    }
     window.history.pushState(null, "", "/train");
     window.dispatchEvent(new PopStateEvent("popstate"));
   };

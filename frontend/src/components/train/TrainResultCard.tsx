@@ -15,7 +15,7 @@ export function TrainResultCard({ result, onNavigate }: Props) {
           <h2 className="text-xl font-medium tracking-tight text-black">Model Compiled Successfully</h2>
         </div>
         <span className="text-xs font-mono px-3 py-1 bg-black text-[#F7F4ED] rounded-full self-start sm:self-auto">
-          local.onnx
+          {result.model_name}.onnx
         </span>
       </div>
 
@@ -50,7 +50,7 @@ export function TrainResultCard({ result, onNavigate }: Props) {
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <button
           type="button"
-          onClick={() => onNavigate("/visualize/modal/local")}
+          onClick={() => onNavigate(`/visualize/model/private/${result.model_name}`)}
           className="flex-1 py-3 px-6 rounded-full border border-[#DDD6CB] bg-white text-black font-medium text-sm flex items-center justify-center gap-2 hover:border-black transition-colors cursor-pointer"
         >
           <Eye className="size-4" />
@@ -58,7 +58,7 @@ export function TrainResultCard({ result, onNavigate }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => onNavigate("/try-web/autoplay/local")}
+          onClick={() => onNavigate(`/try-web/autoplay/private/${result.model_name}`)}
           className="flex-1 py-3 px-6 rounded-full bg-black text-[#F7F4ED] font-medium text-sm flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer"
         >
           <Play className="size-4 fill-current" />

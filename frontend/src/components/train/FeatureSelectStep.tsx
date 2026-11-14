@@ -23,7 +23,7 @@ export function FeatureSelectStep({ selected, onChange }: Props) {
     <div className="bg-white border border-[#DDD6CB] rounded-2xl p-6 md:p-8 flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#DDD6CB] pb-4">
         <div>
-          <span className="text-xs font-mono uppercase tracking-wider text-[#6E6962]">Step 02</span>
+          <span className="text-xs font-mono uppercase tracking-wider text-[#6E6962]">Step 03</span>
           <h2 className="text-xl font-medium tracking-tight text-black mt-1">Select Input Features</h2>
         </div>
         <div className="flex items-center gap-2">

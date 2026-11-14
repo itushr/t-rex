@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchModelInfo, fetchModelSingleTree } from "../services/api";
+import { getPrivateModelInfo, getPrivateModelSingleTree } from "../services/privateApi";
 import { ModelInfo } from "../types/model";
 import { TreeNode } from "../types/tree";
 import { TreeViewer } from "../components/TreeViewer";
@@ -7,26 +8,30 @@ import { NodeModal } from "../components/NodeModal";
 import { DinoIcon } from "../components/DinoIcon";
 import { navigateTo } from "../utils/navigation";
 
-export function ModelVisualizePage({ modelName, treeIndex }: { modelName: string; treeIndex?: number }) {
+export function ModelVisualizePage({ modelName, treeIndex, isPrivate = false }: { modelName: string; treeIndex?: number; isPrivate?: boolean }) {
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [tree, setTree] = useState<TreeNode | null>(null);
   const [inspected, setInspected] = useState<TreeNode | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const getInfo = isPrivate ? getPrivateModelInfo : fetchModelInfo;
+  const getTree = isPrivate ? getPrivateModelSingleTree : fetchModelSingleTree;
+  const basePath = isPrivate ? `/visualize/model/private/${modelName}` : `/visualize/model/${modelName}`;
+
   useEffect(() => {
-    fetchModelInfo(modelName).then((res) => {
+    getInfo(modelName).then((res) => {
       setInfo(res);
       if (res.model_type === "decision_tree") {
-        fetchModelSingleTree(modelName, 0).then((t) => { setTree(t.tree); setLoading(false); });
+        getTree(modelName, 0).then((t: any) => { setTree(t.tree); setLoading(false); });
       } else { setLoading(false); }
     });
-  }, [modelName]);
+  }, [modelName, isPrivate]);
 
   useEffect(() => {
     if (!info || info.model_type !== "random_forest" || !treeIndex) return;
     setLoading(true);
-    fetchModelSingleTree(modelName, treeIndex - 1).then((t) => { setTree(t.tree); setLoading(false); });
-  }, [modelName, info, treeIndex]);
+    getTree(modelName, treeIndex - 1).then((t: any) => { setTree(t.tree); setLoading(false); });
+  }, [modelName, info, treeIndex, isPrivate]);
 
   const isForestList = info?.model_type === "random_forest" && !treeIndex;
 
@@ -34,18 +39,13 @@ export function ModelVisualizePage({ modelName, treeIndex }: { modelName: string
     <div className="visualizer-theme flex flex-col h-screen w-screen overflow-hidden text-foreground bg-background">
       <header className="border-b border-border px-2 py-2.5 flex items-center justify-between flex-wrap gap-3 z-30 bg-background text-foreground">
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-2">
-            <DinoIcon />
-            <span className="font-semibold text-sm">{modelName}</span>
-          </span>
+          <span className="flex items-center gap-2"><DinoIcon /><span className="font-semibold text-sm">{modelName}</span></span>
           <span className="border border-border rounded px-2 py-0.5 text-xs text-muted-foreground uppercase">{info?.model_type ?? ""}</span>
+          {isPrivate && <span className="bg-black text-[#F7F4ED] rounded px-2 py-0.5 text-xs font-mono">Private</span>}
           {treeIndex && <span className="text-xs font-mono font-medium">Tree #{treeIndex} of {info?.n_estimators}</span>}
         </div>
         {treeIndex && info?.model_type === "random_forest" && (
-          <button
-            onClick={() => navigateTo(`/visualize/model/${modelName}`)}
-            className="border border-border rounded px-2.5 py-1 text-xs hover:bg-card cursor-pointer transition-colors"
-          >
+          <button onClick={() => navigateTo(basePath)} className="border border-border rounded px-2.5 py-1 text-xs hover:bg-card cursor-pointer">
             ← Back to Trees
           </button>
         )}
@@ -60,9 +60,7 @@ export function ModelVisualizePage({ modelName, treeIndex }: { modelName: string
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-border bg-background text-muted-foreground text-[10px] uppercase font-mono text-left">
-                    <th className="p-2.5 w-16">SR</th>
-                    <th className="p-2.5">Tree</th>
-                    <th className="p-2.5 w-24 text-right">Action</th>
+                    <th className="p-2.5 w-16">SR</th><th className="p-2.5">Tree</th><th className="p-2.5 w-24 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -71,10 +69,7 @@ export function ModelVisualizePage({ modelName, treeIndex }: { modelName: string
                       <td className="p-2.5 font-mono text-muted-foreground">#{i + 1}</td>
                       <td className="p-2.5 font-medium">Estimator {i + 1}</td>
                       <td className="p-2.5 text-right">
-                        <button
-                          onClick={() => navigateTo(`/visualize/model/${modelName}/tree/${i + 1}`)}
-                          className="border border-border rounded px-2.5 py-1 text-xs hover:bg-card cursor-pointer"
-                        >
+                        <button onClick={() => navigateTo(`${basePath}/tree/${i + 1}`)} className="border border-border rounded px-2.5 py-1 text-xs hover:bg-card cursor-pointer">
                           View
                         </button>
                       </td>
@@ -94,3 +89,4 @@ export function ModelVisualizePage({ modelName, treeIndex }: { modelName: string
     </div>
   );
 }
+export default ModelVisualizePage;

@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import type { OnnxDinoAutoplay, AutoplayStep } from "./onnxAutoplay";
 import type { GameStatus } from "./useGameRunnerControls";
 import { readObstacles } from "./dinoFeatureExtractor";
+import { savePrivatePlayback } from "../services/privateApi";
 
-export function useAutoplayPlaybackRecorder(gameStatus: GameStatus, autoplay: OnnxDinoAutoplay) {
+export function useAutoplayPlaybackRecorder(
+  gameStatus: GameStatus, autoplay: OnnxDinoAutoplay, modelName = "local", isPrivate = false
+) {
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const stepsRef = useRef<AutoplayStep[]>([]);
@@ -41,11 +44,15 @@ export function useAutoplayPlaybackRecorder(gameStatus: GameStatus, autoplay: On
         obs1, obs2, action: "none", time_to_impact: -1, crashed: Boolean(r?.crashed),
       }];
     }
-    await fetch("/api/playbacks/local", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ steps }),
-    });
-    window.history.pushState(null, "", "/visualize/playback/local");
+    if (isPrivate) {
+      const res = await savePrivatePlayback(modelName, steps);
+      window.history.pushState(null, "", `/visualize/playback/private/${res.name}`);
+    } else {
+      await fetch("/api/playbacks/local", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ steps }),
+      });
+      window.history.pushState(null, "", "/visualize/playback/local");
+    }
     window.dispatchEvent(new PopStateEvent("popstate"));
   };
 

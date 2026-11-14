@@ -19,8 +19,11 @@ export function VisualizerIndexPage() {
       <header className="border-b border-border px-4 py-2.5 flex items-center justify-between bg-background">
         <div className="flex items-center gap-3">
           <DinoIcon />
-          <span className="font-semibold text-base">T-Rex Visualizer</span>
+          <span className="font-semibold text-base">T-Rex Visualizer (Driver Local)</span>
         </div>
+        <button onClick={() => navigateTo("/dashboard")} className="px-3 py-1 text-xs border border-border rounded hover:bg-card cursor-pointer">
+          Private Studio →
+        </button>
       </header>
 
       <div className="p-8 max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">

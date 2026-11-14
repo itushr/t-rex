@@ -8,9 +8,14 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
+from server.routes.auth import router as auth_router
 from server.routes.models import router as models_router
 from server.routes.onnx_models import router as onnx_router
 from server.routes.playbacks import router as playbacks_router
+from server.routes.private_gameplays import router as p_gameplays_router
+from server.routes.private_models import router as p_models_router
+from server.routes.private_onnx import router as p_onnx_router
+from server.routes.private_playbacks import router as p_playbacks_router
 from server.routes.train import router as train_router
 from server.routes.ws import router as ws_router
 
@@ -24,11 +29,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(models_router)
-app.include_router(onnx_router)
-app.include_router(playbacks_router)
-app.include_router(train_router)
-app.include_router(ws_router)
+for r in [
+    auth_router, models_router, onnx_router, playbacks_router,
+    p_gameplays_router, p_models_router, p_onnx_router, p_playbacks_router,
+    train_router, ws_router,
+]:
+    app.include_router(r)
 
 
 @app.get("/api/health")
@@ -40,8 +46,6 @@ ort_dist = Path(__file__).resolve().parents[2] / "frontend" / "node_modules" / "
 if ort_dist.exists():
     app.mount("/ort", StaticFiles(directory=str(ort_dist)), name="ort")
 
-
-# Optional static mounting for compiled frontend dist
 frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")

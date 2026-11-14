@@ -5,47 +5,52 @@ import { ModelVisualizePage } from "./pages/ModelVisualizePage";
 import { PlaybackVisualizePage } from "./pages/PlaybackVisualizePage";
 import { VisualizerIndexPage } from "./pages/VisualizerIndexPage";
 import { TrainPage } from "./pages/TrainPage";
+import { PrivateDashboardPage } from "./pages/PrivateDashboardPage";
 
 interface RouteInfo {
-  type: "web" | "try-web" | "model-viz" | "playback-viz" | "train" | "index";
-  modelName?: string;
-  treeIndex?: number;
-  playbackName?: string;
-  predictionStep?: number;
-  treeNo?: number;
+  type: "dashboard" | "dashboard-local" | "try-web" | "train" | "autoplay" | "model-viz" | "playback-viz";
+  modelName?: string; isPrivate?: boolean; treeIndex?: number;
+  playbackName?: string; predictionStep?: number; treeNo?: number;
 }
 
 function parseRoute(): RouteInfo {
   const p = window.location.pathname;
-  if (p === "/web") return { type: "web" };
+  if (p === "/" || p === "/dashboard") return { type: "dashboard" };
+  if (p === "/dashboard/local") return { type: "dashboard-local" };
+  if (p === "/try-web" || p === "/web") return { type: "try-web" };
   if (p === "/train") return { type: "train" };
 
-  const tryWeb = p.match(/^\/try-web\/autoplay\/(.+?)\/?$/);
-  if (tryWeb) return { type: "try-web", modelName: decodeURIComponent(tryWeb[1]).replace(/^\[|\]$/g, "") };
+  const autoP = p.match(/^\/try-web\/autoplay\/private\/([^/]+)\/?$/);
+  if (autoP) return { type: "autoplay", modelName: decodeURIComponent(autoP[1]), isPrivate: true };
+  const autoN = p.match(/^\/try-web\/autoplay\/([^/]+)\/?$/);
+  if (autoN) return { type: "autoplay", modelName: decodeURIComponent(autoN[1]), isPrivate: false };
 
-  const mTree = p.match(/^\/visualize\/mod(?:el|al)?\/([^/]+)\/tree\/(\d+)\/?$/);
-  if (mTree) return { type: "model-viz", modelName: decodeURIComponent(mTree[1]), treeIndex: parseInt(mTree[2], 10) };
+  const mTreeP = p.match(/^\/(?:try-web\/visualize\/private\/model|visualize\/mod(?:el|al)?\/private)\/([^/]+)\/tree\/(\d+)\/?$/);
+  if (mTreeP) return { type: "model-viz", isPrivate: true, modelName: decodeURIComponent(mTreeP[1]), treeIndex: parseInt(mTreeP[2], 10) };
+  const mTreeN = p.match(/^\/visualize\/mod(?:el|al)?\/([^/]+)\/tree\/(\d+)\/?$/);
+  if (mTreeN) return { type: "model-viz", isPrivate: false, modelName: decodeURIComponent(mTreeN[1]), treeIndex: parseInt(mTreeN[2], 10) };
 
-  const mRoot = p.match(/^\/visualize\/mod(?:el|al)?\/([^/]+)\/?$/);
-  if (mRoot) return { type: "model-viz", modelName: decodeURIComponent(mRoot[1]) };
+  const mP = p.match(/^\/(?:try-web\/visualize\/private\/(?:model\/)?|visualize\/mod(?:el|al)?\/private\/)([^/]+)\/?$/);
+  if (mP) return { type: "model-viz", isPrivate: true, modelName: decodeURIComponent(mP[1]) };
+  const mN = p.match(/^\/visualize\/mod(?:el|al)?\/([^/]+)\/?$/);
+  if (mN) return { type: "model-viz", isPrivate: false, modelName: decodeURIComponent(mN[1]) };
 
-  const pTree = p.match(/^\/visualize\/playback\/([^/]+)\/prediction\/(\d+)\/tree\/(\d+)\/?$/);
-  if (pTree) {
-    return {
-      type: "playback-viz", playbackName: decodeURIComponent(pTree[1]),
-      predictionStep: parseInt(pTree[2], 10), treeNo: parseInt(pTree[3], 10),
-    };
-  }
+  const pbTreeP = p.match(/^\/(?:try-web\/visualize\/private\/playback|visualize\/playback\/private)\/([^/]+)\/prediction\/(\d+)\/tree\/(\d+)\/?$/);
+  if (pbTreeP) return { type: "playback-viz", isPrivate: true, playbackName: decodeURIComponent(pbTreeP[1]), predictionStep: parseInt(pbTreeP[2], 10), treeNo: parseInt(pbTreeP[3], 10) };
+  const pbTreeN = p.match(/^\/visualize\/playback\/([^/]+)\/prediction\/(\d+)\/tree\/(\d+)\/?$/);
+  if (pbTreeN) return { type: "playback-viz", isPrivate: false, playbackName: decodeURIComponent(pbTreeN[1]), predictionStep: parseInt(pbTreeN[2], 10), treeNo: parseInt(pbTreeN[3], 10) };
 
-  const pStep = p.match(/^\/visualize\/playback\/([^/]+)\/prediction\/(\d+)\/?$/);
-  if (pStep) {
-    return { type: "playback-viz", playbackName: decodeURIComponent(pStep[1]), predictionStep: parseInt(pStep[2], 10) };
-  }
+  const pbStepP = p.match(/^\/(?:try-web\/visualize\/private\/playback|visualize\/playback\/private)\/([^/]+)\/prediction\/(\d+)\/?$/);
+  if (pbStepP) return { type: "playback-viz", isPrivate: true, playbackName: decodeURIComponent(pbStepP[1]), predictionStep: parseInt(pbStepP[2], 10) };
+  const pbStepN = p.match(/^\/visualize\/playback\/([^/]+)\/prediction\/(\d+)\/?$/);
+  if (pbStepN) return { type: "playback-viz", isPrivate: false, playbackName: decodeURIComponent(pbStepN[1]), predictionStep: parseInt(pbStepN[2], 10) };
 
-  const pRoot = p.match(/^\/visualize\/playback\/([^/]+)\/?$/);
-  if (pRoot) return { type: "playback-viz", playbackName: decodeURIComponent(pRoot[1]), predictionStep: 1 };
+  const pbP = p.match(/^\/(?:try-web\/visualize\/private\/playback\/|visualize\/playback\/private\/)([^/]+)\/?$/);
+  if (pbP) return { type: "playback-viz", isPrivate: true, playbackName: decodeURIComponent(pbP[1]), predictionStep: 1 };
+  const pbN = p.match(/^\/visualize\/playback\/([^/]+)\/?$/);
+  if (pbN) return { type: "playback-viz", isPrivate: false, playbackName: decodeURIComponent(pbN[1]), predictionStep: 1 };
 
-  return { type: "index" };
+  return { type: "dashboard" };
 }
 
 export function App() {
@@ -57,22 +62,16 @@ export function App() {
     return () => window.removeEventListener("popstate", handlePop);
   }, []);
 
+  if (route.type === "dashboard-local") return <VisualizerIndexPage />;
   if (route.type === "train") return <TrainPage />;
-  if (route.type === "try-web" && route.modelName) return <TryWebAutoplayPage modelName={route.modelName} />;
-  if (route.type === "web") return <WebRunnerPage />;
+  if (route.type === "autoplay" && route.modelName) return <TryWebAutoplayPage modelName={route.modelName} isPrivate={route.isPrivate} />;
+  if (route.type === "try-web") return <WebRunnerPage />;
   if (route.type === "model-viz" && route.modelName) {
-    return <ModelVisualizePage modelName={route.modelName} treeIndex={route.treeIndex} />;
+    return <ModelVisualizePage modelName={route.modelName} treeIndex={route.treeIndex} isPrivate={route.isPrivate} />;
   }
   if (route.type === "playback-viz" && route.playbackName) {
-    return (
-      <PlaybackVisualizePage
-        playbackName={route.playbackName}
-        predictionStep={route.predictionStep}
-        treeNo={route.treeNo}
-      />
-    );
+    return <PlaybackVisualizePage playbackName={route.playbackName} predictionStep={route.predictionStep} treeNo={route.treeNo} isPrivate={route.isPrivate} />;
   }
-  return <VisualizerIndexPage />;
+  return <PrivateDashboardPage />;
 }
-
 export default App;

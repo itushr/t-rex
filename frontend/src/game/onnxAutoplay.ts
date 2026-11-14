@@ -1,7 +1,9 @@
 import * as ort from "onnxruntime-web";
 import { extractFeatureVector, readObstacles } from "./dinoFeatureExtractor";
+import { authHeaders } from "../services/guestAuth";
 
 ort.env.wasm.wasmPaths = "/ort/";
+(window as any).ort = ort;
 
 export interface AutoplayStep {
   time: number; speed: number; jumping: boolean; ducking: boolean;
@@ -19,19 +21,21 @@ export class OnnxDinoAutoplay {
   private startTime = 0;
   public onStep?: (step: AutoplayStep) => void;
 
-  async init(modelName: string): Promise<boolean> {
+  async init(modelName: string, isPrivate = false): Promise<boolean> {
     try {
-      const metaRes = await fetch(`/api/onnx/models/${modelName}/meta`);
+      const pfx = isPrivate ? "/api/private/onnx/models" : "/api/onnx/models";
+      const hdrs = isPrivate ? authHeaders() : {};
+      const metaRes = await fetch(`${pfx}/${modelName}/meta`, { headers: hdrs });
       if (!metaRes.ok) return false;
       const meta = await metaRes.json();
       this.features = meta.features || [];
-      const modelRes = await fetch(`/api/onnx/models/${modelName}`);
+      const modelRes = await fetch(`${pfx}/${modelName}`, { headers: hdrs });
       if (!modelRes.ok) return false;
       const buffer = await modelRes.arrayBuffer();
       this.session = await ort.InferenceSession.create(buffer);
       (window as any).__onnxReady = true;
       return true;
-    } catch (err: any) {
+    } catch (err) {
       console.error("ONNX session error:", err);
       return false;
     }
@@ -63,9 +67,7 @@ export class OnnxDinoAutoplay {
             crashed: Boolean(runner.crashed),
           });
         }
-      } catch { /* drop */ } finally {
-        this.isBusy = false;
-      }
+      } catch { /* drop */ } finally { this.isBusy = false; }
     }, 10);
   }
 
