@@ -52,9 +52,9 @@ export function PrivateDashboardV2Page() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#09090b] p-5 sm:p-10">
-      <div className="bento-container">
-        <main className="bento-grid">
+    <div className="dark min-h-screen bg-background text-foreground p-5 sm:p-10">
+      <div className="max-w-[1100px] mx-auto">
+        <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 auto-rows-[150px] [grid-auto-flow:row_dense] gap-[14px]">
           {items.map((it) => {
             if (it.kind === "model") return <ModelCard key={it.id} model={it} />;
             if (it.kind === "gameplay") return <GameplayCard key={it.id} gameplay={it} />;
