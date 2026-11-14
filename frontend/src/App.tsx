@@ -6,15 +6,17 @@ import { PlaybackVisualizePage } from "./pages/PlaybackVisualizePage";
 import { VisualizerIndexPage } from "./pages/VisualizerIndexPage";
 import { TrainPage } from "./pages/TrainPage";
 import { PrivateDashboardPage } from "./pages/PrivateDashboardPage";
+import { PrivateDashboardV2Page } from "./pages/PrivateDashboardV2Page";
 
 interface RouteInfo {
-  type: "dashboard" | "dashboard-local" | "try-web" | "train" | "autoplay" | "model-viz" | "playback-viz";
+  type: "dashboard" | "dashboard-v2" | "dashboard-local" | "try-web" | "train" | "autoplay" | "model-viz" | "playback-viz";
   modelName?: string; isPrivate?: boolean; treeIndex?: number;
   playbackName?: string; predictionStep?: number; treeNo?: number;
 }
 
 function parseRoute(): RouteInfo {
   const p = window.location.pathname;
+  if (p === "/dashboardv2") return { type: "dashboard-v2" };
   if (p === "/" || p === "/dashboard") return { type: "dashboard" };
   if (p === "/dashboard/local") return { type: "dashboard-local" };
   if (p === "/try-web" || p === "/web") return { type: "try-web" };
@@ -72,6 +74,7 @@ export function App() {
   if (route.type === "playback-viz" && route.playbackName) {
     return <PlaybackVisualizePage playbackName={route.playbackName} predictionStep={route.predictionStep} treeNo={route.treeNo} isPrivate={route.isPrivate} />;
   }
+  if (route.type === "dashboard-v2") return <PrivateDashboardV2Page />;
   return <PrivateDashboardPage />;
 }
 export default App;
