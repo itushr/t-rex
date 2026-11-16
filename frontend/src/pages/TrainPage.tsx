@@ -7,6 +7,7 @@ import { ModelSelectStep, SupportedModelType } from "../components/train/ModelSe
 import { FeatureSelectStep } from "../components/train/FeatureSelectStep";
 import { TrainResultCard } from "../components/train/TrainResultCard";
 import { getPrivateGameplay, trainPrivateModel } from "../services/privateApi";
+import Navbar from "../components/Navbar";
 
 export function TrainPage() {
   const [samples, setSamples] = useState<GameSample[]>([]);
@@ -64,14 +65,17 @@ export function TrainPage() {
 
   const activeCount = trimRange[1] - trimRange[0];
   return (
-    <div className="dark min-h-screen bg-background text-foreground px-4 py-8 md:py-12 flex flex-col items-center">
-      <div className="max-w-2xl w-full flex flex-col gap-6">
-        <div className="flex items-center justify-between border-b border-border pb-3">
+    <div className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12 flex flex-col items-center">
+
+      <Navbar />
+
+      <div className="max-w-4xl w-full flex flex-col gap-10 mt-20">
+        {/* <div className="flex items-center justify-between border-b border-border pb-3">
           <button onClick={() => nav("/dashboard")} className="text-xs font-mono text-muted-foreground hover:text-foreground flex items-center gap-1.5 cursor-pointer">
             <ArrowLeft className="size-3.5" /> Dashboard
           </button>
           <span className="text-xs font-mono text-muted-foreground">{samples.length} frames</span>
-        </div>
+        </div> */}
 
         <TrimGameplayStep samples={samples} trimRange={trimRange} onChange={setTrimRange} />
         <ModelSelectStep modelType={modelType} onChange={setModelType} />

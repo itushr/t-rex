@@ -47,15 +47,15 @@ export function TrimGameplayStep({ samples, trimRange, onChange }: Props) {
         onPointerMove={updateFromPointer}
         onPointerUp={() => setDragging(null)}
         onPointerLeave={() => setDragging(null)}
-        className="relative h-20 bg-muted/40 border border-border rounded-xl flex items-center px-2 select-none overflow-hidden touch-none"
+        className="relative h-20 bg-muted/40 border border-border rounded-xl flex items-center px-2 select-none overflow touch-none"
       >
         <div className="absolute inset-0 flex items-center justify-between px-3 pointer-events-none">
           {barData.map((b, i) => (
             <div key={i} style={{ height: `${b.h}%` }} className={`w-1 rounded-full ${b.inRange ? "bg-primary" : "bg-muted-foreground/25"}`} />
           ))}
         </div>
-        <div style={{ left: `${startPct}%`, width: `${Math.max(0, endPct - startPct)}%` }} className="absolute inset-y-0 bg-primary/15 border-y-2 border-primary pointer-events-none">
-          <div className="absolute top-0 bottom-0 left-1/2 w-[1.5px] bg-foreground/50" />
+        <div style={{ left: `${startPct}%`, width: `${Math.max(0, endPct - startPct)}%` }} className="absolute inset-y-0 bg-primary/15 border-y-2 border-primary rounded-md pointer-events-none">
+          {/* <div className="absolute top-0 bottom-0 left-1/2 w-[1.5px] bg-foreground/50" /> */}
         </div>
         <div onPointerDown={(e) => { e.stopPropagation(); setDragging("start"); }} style={{ left: `calc(${startPct}% - 6px)` }} className="absolute inset-y-1 w-3 bg-primary rounded-l-md cursor-ew-resize z-20 flex items-center justify-center shadow">
           <div className="w-[1.5px] h-3 bg-primary-foreground/90 rounded-full" />
