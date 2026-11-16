@@ -5,19 +5,19 @@ import { ModelVisualizePage } from "./pages/ModelVisualizePage";
 import { PlaybackVisualizePage } from "./pages/PlaybackVisualizePage";
 import { VisualizerIndexPage } from "./pages/VisualizerIndexPage";
 import { TrainPage } from "./pages/TrainPage";
-import { PrivateDashboardPage } from "./pages/PrivateDashboardPage";
 import { PrivateDashboardV2Page } from "./pages/PrivateDashboardV2Page";
+import { LandingPage } from "./pages/LandingPage";
 
 interface RouteInfo {
-  type: "dashboard" | "dashboard-v2" | "dashboard-local" | "try-web" | "train" | "autoplay" | "model-viz" | "playback-viz";
+  type: "landing" | "dashboard" | "dashboard-local" | "try-web" | "train" | "autoplay" | "model-viz" | "playback-viz";
   modelName?: string; isPrivate?: boolean; treeIndex?: number;
   playbackName?: string; predictionStep?: number; treeNo?: number;
 }
 
 function parseRoute(): RouteInfo {
   const p = window.location.pathname;
-  if (p === "/dashboardv2") return { type: "dashboard-v2" };
-  if (p === "/" || p === "/dashboard") return { type: "dashboard" };
+  if (p === "/") return { type: "landing" };
+  if (p === "/dashboard" || p === "/dashboardv2") return { type: "dashboard" };
   if (p === "/dashboard/local") return { type: "dashboard-local" };
   if (p === "/try-web" || p === "/web") return { type: "try-web" };
   if (p === "/train") return { type: "train" };
@@ -52,7 +52,7 @@ function parseRoute(): RouteInfo {
   const pbN = p.match(/^\/visualize\/playback\/([^/]+)\/?$/);
   if (pbN) return { type: "playback-viz", isPrivate: false, playbackName: decodeURIComponent(pbN[1]), predictionStep: 1 };
 
-  return { type: "dashboard" };
+  return { type: "landing" };
 }
 
 export function App() {
@@ -64,6 +64,8 @@ export function App() {
     return () => window.removeEventListener("popstate", handlePop);
   }, []);
 
+  if (route.type === "landing") return <LandingPage />;
+  if (route.type === "dashboard") return <PrivateDashboardV2Page />;
   if (route.type === "dashboard-local") return <VisualizerIndexPage />;
   if (route.type === "train") return <TrainPage />;
   if (route.type === "autoplay" && route.modelName) return <TryWebAutoplayPage modelName={route.modelName} isPrivate={route.isPrivate} />;
@@ -74,7 +76,6 @@ export function App() {
   if (route.type === "playback-viz" && route.playbackName) {
     return <PlaybackVisualizePage playbackName={route.playbackName} predictionStep={route.predictionStep} treeNo={route.treeNo} isPrivate={route.isPrivate} />;
   }
-  if (route.type === "dashboard-v2") return <PrivateDashboardV2Page />;
-  return <PrivateDashboardPage />;
+  return <LandingPage />;
 }
 export default App;
