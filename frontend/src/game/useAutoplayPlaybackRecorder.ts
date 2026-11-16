@@ -36,6 +36,8 @@ export function useAutoplayPlaybackRecorder(
 
   const visualizePlayback = async () => {
     let steps = stepsRef.current;
+    setIsRecording(false);
+    setIsRecordingPaused(false);
     if (!steps.length) {
       const r = (window as any).Runner?.instance_;
       const [obs1, obs2] = readObstacles(r);

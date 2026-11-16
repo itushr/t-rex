@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Camera, Eye, Pause, Play, RotateCcw, SkipForward, Volume2, VolumeX, X } from "lucide-react";
 import type { GameStatus } from "../game/useGameRunnerControls";
 
@@ -20,6 +21,28 @@ export function ActionPanel({
   onTogglePlayPause, onRestart, isRecording = false, isRecordingPaused = false,
   onToggleRecord, onForward, showVisualize = false, onVisualize,
 }: ActionPanelProps) {
+  const [elapsedMs, setElapsedMs] = useState(0);
+
+  useEffect(() => {
+    if (!isRecording) {
+      setElapsedMs(0);
+      return;
+    }
+    if (isRecordingPaused) return;
+
+    const start = performance.now() - elapsedMs;
+    const timer = setInterval(() => {
+      setElapsedMs(performance.now() - start);
+    }, 200);
+    return () => clearInterval(timer);
+  }, [isRecording, isRecordingPaused]);
+
+  const totalSec = Math.floor(elapsedMs / 1000);
+  const hrs = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+  const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+  const secs = String(totalSec % 60).padStart(2, "0");
+  const timerDisplay = `${hrs}:${mins}:${secs}`;
+
   const camBg = isRecording ? (isRecordingPaused ? "border-amber-500 bg-amber-500/20" : "border-red-500 bg-red-500/20 animate-pulse") : "border-border/20";
   return (
     <div className="action-panel fixed bottom-10 bg-black/95 text-white rounded-full flex items-center scale-y-90 pointer-events-auto select-none z-50">
@@ -28,7 +51,7 @@ export function ActionPanel({
           <Camera strokeWidth={1.5} fill={isRecording ? (isRecordingPaused ? "#f59e0b" : "#ef4444") : "white"} nonScalingStroke className="size-8 stroke-black" />
         </button>
         <div className="flex gap-5 items-center">
-          <div className="text-3xl">00:00:05</div>
+          <div className="text-3xl font-mono tabular-nums">{timerDisplay}</div>
           {gameStatus === "crashed" ? (
             <button type="button" onClick={onRestart} className="cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-white flex items-center" title="Restart">
               <RotateCcw strokeWidth={2} className="size-7" />

@@ -1,4 +1,4 @@
-import { Play, Eye, Flame, Film, Sparkles, Delete, Trash, ArrowRight, ChevronsRight, DiagramFlowVertical } from "lucide-react";
+import { Trash, ChevronsRight, DiagramFlowVertical } from "lucide-react";
 import { navigateTo } from "../../utils/navigation";
 import { timeAgo } from "../../utils/time";
 
@@ -18,22 +18,6 @@ export function ModelCard({ model }: { model: any }) {
       </div>
 
       <div className="flex flex-col gap-3">
-        {/* <div className="flex flex-wrap gap-1">
-          {feats.slice(0, 4).map((f: string) => (
-            <span key={f} className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">{f}</span>
-          ))}
-          {feats.length > 4 && <span className="text-[10px] font-mono px-1.5 py-0.5 text-muted-foreground">+{feats.length - 4}</span>}
-        </div> */}
-
-        {/* <div className="flex gap-2 pt-2 border-t border-border">
-          <button onClick={() => navigateTo(`/try-web/autoplay/private/${model.name}`)} className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer">
-            <Play className="size-3 fill-current" /> Autoplay
-          </button>
-          <button onClick={() => navigateTo(`/visualize/model/private/${model.name}`)} className="flex-1 py-2 rounded-lg border border-border bg-secondary text-secondary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-muted transition-colors cursor-pointer">
-            <Eye className="size-3" /> Tree
-          </button>
-        </div> */}
-
         <div className="flex justify-end gap-2">
           <div className="cursor-pointer text-foreground/70 rounded-xs hover:text-foreground px-2.5 py-2 border border-border"><Trash className="size-4" /></div>
           <div className="cursor-pointer text-foreground/70 rounded-xs hover:text-foreground px-2.5 py-2 border border-border"
