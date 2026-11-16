@@ -5,7 +5,7 @@ from fastapi import Header, HTTPException, Query, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 
-SECRET = os.environ.get("DINO_JWT_SECRET", "dino-guest-secret-key-2026-secure-32b")
+SECRET = os.environ.get("JWT_SECRET", "dino-guest-secret-key-2026-secure-32b")
 ALGO = "HS256"
 security = HTTPBearer(auto_error=False)
 

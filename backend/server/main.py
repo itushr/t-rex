@@ -8,6 +8,7 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
+from server.database.init_db import init_database
 from server.routes.auth import router as auth_router
 from server.routes.models import router as models_router
 from server.routes.onnx_models import router as onnx_router
@@ -20,6 +21,10 @@ from server.routes.train import router as train_router
 from server.routes.ws import router as ws_router
 
 app = FastAPI(title="Dino ML Orchestrator API", version="2.0.0")
+
+@app.on_event("startup")
+def on_startup():
+    init_database()
 
 app.add_middleware(
     CORSMiddleware,

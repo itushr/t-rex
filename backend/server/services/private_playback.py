@@ -1,24 +1,32 @@
-from datetime import datetime
+import io
 import json
+import time
+import uuid
 from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
 import joblib
+from sqlalchemy.orm import Session
 from ml.registry import get_game_adapter, get_model_adapter
-from server.services.user_storage import safe_user_file, sanitize_name
+from server.database.crud import create_playback, get_model
+from server.services.storage import get_storage, make_r2_key
+from server.services.user_storage import sanitize_name
 
 
 def save_user_playback(
+    db: Session,
     user_id: str,
     model_name: str,
     steps: List[Dict[str, Any]],
     playback_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     cmodel = sanitize_name(model_name)
-    mpath = safe_user_file(user_id, "models", f"{cmodel}.pkl")
-    if not mpath.exists():
+    rec = get_model(db, user_id, cmodel)
+    if not rec or not rec.r2_bundle_key:
         raise HTTPException(status_code=404, detail="Model bundle not found")
 
-    bundle = joblib.load(mpath)
+    storage = get_storage()
+    bundle_data = storage.get_bytes(rec.r2_bundle_key)
+    bundle = joblib.load(io.BytesIO(bundle_data))
     model, features, actions = bundle["model"], bundle["features"], bundle["actions"]
     ga = get_game_adapter("dino")
     ma = get_model_adapter(bundle.get("model_type", "decision_tree"))
@@ -49,18 +57,34 @@ def save_user_playback(
     duration = records[-1]["time"] if records else 0.0
     crashed = any(bool(s.get("crashed")) for s in steps)
     graph = ma.extract_graph(model, features, actions)
-    raw_pname = playback_name or f"playback_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    raw_pname = playback_name or f"playback_{time.strftime('%Y%m%d_%H%M%S')}"
     cpname = sanitize_name(raw_pname)
+    now_ts = time.time()
 
-    now_ts = datetime.now().timestamp()
     playback = {
         "model_name": cmodel, "model_type": bundle.get("model_type"), "n_estimators": 1,
-        "recorded_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "recorded_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "timestamp": now_ts, "created_at": now_ts,
         "duration": duration, "total_steps": len(records), "crashed": crashed,
         "forest": graph, "records": records,
     }
-    with open(safe_user_file(user_id, "playback", f"{cpname}.json"), "w") as f:
-        json.dump(playback, f)
+    pb_bytes = json.dumps(playback).encode("utf-8")
+    r2_key = make_r2_key(user_id, "dino", "playbacks", f"{cpname}.json")
+    storage.put_bytes(r2_key, pb_bytes, "application/json")
+
+    create_playback(
+        db,
+        id=f"pb_{uuid.uuid4().hex[:12]}",
+        user_id=user_id,
+        game_id="dino",
+        name=cpname,
+        filename=f"{cpname}.json",
+        model_name=cmodel,
+        model_type=bundle.get("model_type"),
+        r2_key=r2_key,
+        total_steps=len(records),
+        duration=duration,
+        created_at=now_ts,
+    )
 
     return {"ok": True, "name": cpname, "total_steps": len(records), "duration": duration}
