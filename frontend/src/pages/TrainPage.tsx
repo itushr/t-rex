@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { GameSample, TrainResult } from "../types/train";
 import { ALL_FEATURES } from "../components/train/featureList";
 import { TrimGameplayStep } from "../components/train/TrimGameplayStep";
@@ -8,6 +8,12 @@ import { FeatureSelectStep } from "../components/train/FeatureSelectStep";
 import { TrainResultCard } from "../components/train/TrainResultCard";
 import { getPrivateGameplay, trainPrivateModel } from "../services/privateApi";
 import Navbar from "../components/Navbar";
+
+function defaultTrim(len: number): [number, number] {
+  if (len <= 20) return [0, len];
+  const trim = Math.min(25, Math.max(2, Math.floor(len * 0.08)));
+  return [trim, len - trim];
+}
 
 export function TrainPage() {
   const [samples, setSamples] = useState<GameSample[]>([]);
@@ -21,11 +27,11 @@ export function TrainPage() {
   useEffect(() => {
     const raw = sessionStorage.getItem("dino_local_samples");
     const parsed: GameSample[] = raw ? JSON.parse(raw) : [];
-    if (parsed.length) { setSamples(parsed); setTrimRange([0, parsed.length]); return; }
+    if (parsed.length) { setSamples(parsed); setTrimRange(defaultTrim(parsed.length)); return; }
     const q = new URLSearchParams(window.location.search).get("gameplay");
     if (q) {
       getPrivateGameplay(q).then((d) => {
-        if (d?.samples) { setSamples(d.samples); setTrimRange([0, d.samples.length]); }
+        if (d?.samples) { setSamples(d.samples); setTrimRange(defaultTrim(d.samples.length)); }
       }).catch(() => {});
     }
   }, []);
@@ -66,23 +72,14 @@ export function TrainPage() {
   const activeCount = trimRange[1] - trimRange[0];
   return (
     <div className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12 flex flex-col items-center">
-
       <Navbar />
-
-      <div className="max-w-4xl w-full flex flex-col gap-10 mt-20">
-        {/* <div className="flex items-center justify-between border-b border-border pb-3">
-          <button onClick={() => nav("/dashboard")} className="text-xs font-mono text-muted-foreground hover:text-foreground flex items-center gap-1.5 cursor-pointer">
-            <ArrowLeft className="size-3.5" /> Dashboard
-          </button>
-          <span className="text-xs font-mono text-muted-foreground">{samples.length} frames</span>
-        </div> */}
-
+      <div className="max-w-4xl w-full flex flex-col gap-8 mt-20">
         <TrimGameplayStep samples={samples} trimRange={trimRange} onChange={setTrimRange} />
-        <ModelSelectStep modelType={modelType} onChange={setModelType} />
-        <FeatureSelectStep selected={features} onChange={setFeatures} />
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+          <ModelSelectStep modelType={modelType} onChange={setModelType} />
+          <FeatureSelectStep selected={features} onChange={setFeatures} />
+        </div>
         {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-mono">{error}</div>}
-
         <button
           type="button" onClick={handleTrain} disabled={loading || activeCount < 10 || features.length === 0}
           className="w-full py-3 px-6 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
@@ -90,7 +87,6 @@ export function TrainPage() {
           {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
           <span>{loading ? "Training..." : `Train ${modelType.replace("_", " ")} (${activeCount} frames)`}</span>
         </button>
-
         {result && <TrainResultCard result={result} onNavigate={nav} />}
       </div>
     </div>

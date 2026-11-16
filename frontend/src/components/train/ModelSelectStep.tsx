@@ -1,4 +1,4 @@
-import { Check, GitFork, Network } from "lucide-react";
+import { Check } from "lucide-react";
 
 export type SupportedModelType = "decision_tree" | "random_forest";
 
@@ -7,43 +7,34 @@ interface Props {
   onChange: (t: SupportedModelType) => void;
 }
 
-const MODELS = [
-  { id: "decision_tree" as const, name: "Decision Tree", desc: "Single tree, fast & interpretable", icon: GitFork },
-  { id: "random_forest" as const, name: "Random Forest", desc: "10-tree ensemble, higher generalization", icon: Network },
+const MODELS: { id: SupportedModelType; label: string }[] = [
+  { id: "decision_tree", label: "Decision Tree" },
+  { id: "random_forest", label: "Random Forest" },
 ];
 
 export function ModelSelectStep({ modelType, onChange }: Props) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between text-xs font-mono text-muted-foreground px-1">
-        <span>Architecture</span>
+        <span>Model</span>
         <span className="capitalize">{modelType.replace("_", " ")}</span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="p-3 rounded-xl border border-border bg-card flex flex-wrap content-start gap-1.5 h-full min-h-[96px]">
         {MODELS.map((m) => {
           const isSelected = modelType === m.id;
-          const Icon = m.icon;
           return (
             <button
               key={m.id}
               type="button"
               onClick={() => onChange(m.id)}
-              className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-3 ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all flex items-center gap-1 cursor-pointer ${
                 isSelected
-                  ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
-                  : "border-border bg-card text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground border border-border hover:border-foreground/30 hover:text-foreground"
               }`}
             >
-              <div className="flex items-center gap-2.5">
-                <div className={`p-2 rounded-lg ${isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                  <Icon className="size-4" />
-                </div>
-                <div>
-                  <span className="font-medium text-sm text-foreground block">{m.name}</span>
-                  <span className="text-xs text-muted-foreground">{m.desc}</span>
-                </div>
-              </div>
-              {isSelected && <Check className="size-4 text-primary shrink-0" />}
+              {isSelected && <Check className="size-3" />}
+              <span>{m.label}</span>
             </button>
           );
         })}
