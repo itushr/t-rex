@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { GameSample } from "../../types/train";
 
 interface Props {
@@ -6,88 +7,72 @@ interface Props {
   onChange: (range: [number, number]) => void;
 }
 
+const BARS = 64;
+
 export function TrimGameplayStep({ samples, trimRange, onChange }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState<"start" | "end" | null>(null);
   const total = samples.length;
   const [start, end] = trimRange;
-  const activeSamples = samples.slice(start, end);
-  const jumps = activeSamples.filter((s) => s.action === "jump").length;
-  const ducks = activeSamples.filter((s) => s.action === "duck").length;
-  const nones = activeSamples.length - jumps - ducks;
 
-  const handleStart = (val: number) => {
-    const s = Math.max(0, Math.min(val, end - 10));
-    onChange([s, end]);
+  const active = samples.slice(start, end);
+  const jumps = active.filter((s) => s.action === "jump").length;
+  const ducks = active.filter((s) => s.action === "duck").length;
+  const nones = active.length - jumps - ducks;
+
+  const barData = Array.from({ length: BARS }, (_, i) => {
+    const sIdx = Math.floor((i * total) / BARS);
+    const eIdx = Math.max(sIdx + 1, Math.floor(((i + 1) * total) / BARS));
+    const slice = samples.slice(sIdx, eIdx);
+    const h = slice.some((s) => s.action === "jump") ? 88 : slice.some((s) => s.action === "duck") ? 54 : 18;
+    return { h, inRange: sIdx >= start && sIdx <= end };
+  });
+
+  const updateFromPointer = (e: React.PointerEvent) => {
+    if (!dragging || !containerRef.current || total === 0) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const idx = Math.round(pct * total);
+    if (dragging === "start") onChange([Math.min(idx, end - 10), end]);
+    else onChange([start, Math.max(idx, start + 10)]);
   };
 
-  const handleEnd = (val: number) => {
-    const e = Math.min(total, Math.max(val, start + 10));
-    onChange([start, e]);
-  };
+  const startPct = total ? (start / total) * 100 : 0;
+  const endPct = total ? (end / total) * 100 : 100;
 
   return (
-    <div className="bg-white border border-[#DDD6CB] rounded-2xl p-6 md:p-8 flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#DDD6CB] pb-4">
-        <div>
-          <span className="text-xs font-mono uppercase tracking-wider text-[#6E6962]">Step 01</span>
-          <h2 className="text-xl font-medium tracking-tight text-black mt-1">Trim Gameplay Data</h2>
+    <div className="flex flex-col gap-2">
+      <div
+        ref={containerRef}
+        onPointerMove={updateFromPointer}
+        onPointerUp={() => setDragging(null)}
+        onPointerLeave={() => setDragging(null)}
+        className="relative h-20 bg-muted/40 border border-border rounded-xl flex items-center px-2 select-none overflow-hidden touch-none"
+      >
+        <div className="absolute inset-0 flex items-center justify-between px-3 pointer-events-none">
+          {barData.map((b, i) => (
+            <div key={i} style={{ height: `${b.h}%` }} className={`w-1 rounded-full ${b.inRange ? "bg-primary" : "bg-muted-foreground/25"}`} />
+          ))}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onChange([0, total])}
-            className="text-xs px-3 py-1.5 rounded-full border border-[#DDD6CB] bg-[#F7F4ED] text-black hover:border-black transition-colors"
-          >
-            All ({total})
-          </button>
-          <button
-            type="button"
-            onClick={() => onChange([Math.min(15, Math.floor(total * 0.1)), Math.max(20, total - 10)])}
-            className="text-xs px-3 py-1.5 rounded-full border border-[#DDD6CB] bg-[#F7F4ED] text-black hover:border-black transition-colors"
-          >
-            Trim Edges
-          </button>
+        <div style={{ left: `${startPct}%`, width: `${Math.max(0, endPct - startPct)}%` }} className="absolute inset-y-0 bg-primary/15 border-y-2 border-primary pointer-events-none">
+          <div className="absolute top-0 bottom-0 left-1/2 w-[1.5px] bg-foreground/50" />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
-        <div className="p-3 bg-[#F7F4ED]/60 rounded-xl border border-[#DDD6CB]/60">
-          <span className="text-[11px] font-mono uppercase text-[#6E6962]">Active Frames</span>
-          <p className="text-lg font-mono font-medium text-black mt-0.5">{activeSamples.length} / {total}</p>
+        <div onPointerDown={(e) => { e.stopPropagation(); setDragging("start"); }} style={{ left: `calc(${startPct}% - 6px)` }} className="absolute inset-y-1 w-3 bg-primary rounded-l-md cursor-ew-resize z-20 flex items-center justify-center shadow">
+          <div className="w-[1.5px] h-3 bg-primary-foreground/90 rounded-full" />
         </div>
-        <div className="p-3 bg-[#F7F4ED]/60 rounded-xl border border-[#DDD6CB]/60">
-          <span className="text-[11px] font-mono uppercase text-[#6E6962]">Jumps / Ducks</span>
-          <p className="text-lg font-mono font-medium text-black mt-0.5">{jumps} / {ducks}</p>
-        </div>
-        <div className="p-3 bg-[#F7F4ED]/60 rounded-xl border border-[#DDD6CB]/60">
-          <span className="text-[11px] font-mono uppercase text-[#6E6962]">Running (None)</span>
-          <p className="text-lg font-mono font-medium text-black mt-0.5">{nones}</p>
+        <div onPointerDown={(e) => { e.stopPropagation(); setDragging("end"); }} style={{ left: `calc(${endPct}% - 6px)` }} className="absolute inset-y-1 w-3 bg-primary rounded-r-md cursor-ew-resize z-20 flex items-center justify-center shadow">
+          <div className="w-[1.5px] h-3 bg-primary-foreground/90 rounded-full" />
         </div>
       </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between text-xs font-mono text-[#6E6962]">
-          <span>Frame {start} (Start)</span>
-          <span>Frame {end} (End)</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-mono text-[#6E6962] block mb-1">Start Offset</label>
-            <input
-              type="range" min={0} max={Math.max(0, end - 10)} value={start}
-              onChange={(e) => handleStart(Number(e.target.value))}
-              className="w-full accent-black cursor-pointer"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-mono text-[#6E6962] block mb-1">End Cutoff</label>
-            <input
-              type="range" min={Math.min(total, start + 10)} max={total} value={end}
-              onChange={(e) => handleEnd(Number(e.target.value))}
-              className="w-full accent-black cursor-pointer"
-            />
-          </div>
+      <div className="flex items-center justify-between text-xs font-mono text-muted-foreground px-1">
+        <span>{active.length} / {total} frames</span>
+        <div className="flex items-center gap-3">
+          <span><strong className="text-foreground">{jumps}</strong> jump</span>
+          <span><strong className="text-foreground">{ducks}</strong> duck</span>
+          <span><strong className="text-foreground">{nones}</strong> none</span>
         </div>
       </div>
     </div>
   );
 }
+export default TrimGameplayStep;

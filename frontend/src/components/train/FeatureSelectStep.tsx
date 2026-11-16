@@ -20,40 +20,25 @@ export function FeatureSelectStep({ selected, onChange }: Props) {
   const selectCore = () => onChange(["obstacle1_x", "speed", "jumping", "time_to_impact"]);
 
   return (
-    <div className="bg-white border border-[#DDD6CB] rounded-2xl p-6 md:p-8 flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#DDD6CB] pb-4">
-        <div>
-          <span className="text-xs font-mono uppercase tracking-wider text-[#6E6962]">Step 03</span>
-          <h2 className="text-xl font-medium tracking-tight text-black mt-1">Select Input Features</h2>
-        </div>
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center justify-between text-xs font-mono text-muted-foreground px-1">
+        <span>Sensory Inputs</span>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={selectAll}
-            className="text-xs px-3 py-1.5 rounded-full border border-[#DDD6CB] bg-[#F7F4ED] text-black hover:border-black transition-colors"
-          >
-            All ({ALL_FEATURES.length})
-          </button>
-          <button
-            type="button"
-            onClick={selectCore}
-            className="text-xs px-3 py-1.5 rounded-full border border-[#DDD6CB] bg-[#F7F4ED] text-black hover:border-black transition-colors"
-          >
-            Core 4
-          </button>
-          <span className="text-xs font-mono text-[#6E6962] ml-2">
-            {selected.length}/{ALL_FEATURES.length} Active
-          </span>
+          <button type="button" onClick={selectAll} className="hover:text-foreground cursor-pointer underline">All</button>
+          <span>•</span>
+          <button type="button" onClick={selectCore} className="hover:text-foreground cursor-pointer underline">Core 4</button>
+          <span>•</span>
+          <span>{selected.length}/{ALL_FEATURES.length} active</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {CATEGORIES.map((cat) => {
           const catFeatures = ALL_FEATURES.filter((f) => f.category === cat);
           return (
-            <div key={cat} className="p-4 rounded-xl border border-[#DDD6CB]/60 bg-[#F7F4ED]/50 flex flex-col gap-3">
-              <span className="text-xs font-mono uppercase text-[#6E6962] tracking-wider">{cat}</span>
-              <div className="flex flex-wrap gap-2">
+            <div key={cat} className="p-3 rounded-xl border border-border bg-card flex flex-col gap-2">
+              <span className="text-[11px] font-mono uppercase text-muted-foreground tracking-wider">{cat}</span>
+              <div className="flex flex-wrap gap-1.5">
                 {catFeatures.map((feat) => {
                   const isChecked = selected.includes(feat.id);
                   return (
@@ -61,14 +46,14 @@ export function FeatureSelectStep({ selected, onChange }: Props) {
                       key={feat.id}
                       type="button"
                       onClick={() => toggle(feat.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all flex items-center gap-1 cursor-pointer ${
                         isChecked
-                          ? "bg-black text-[#F7F4ED] shadow-sm"
-                          : "bg-white text-[#6E6962] border border-[#DDD6CB] hover:border-black hover:text-black"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "bg-muted text-muted-foreground border border-border hover:border-foreground/30 hover:text-foreground"
                       }`}
                       title={feat.desc}
                     >
-                      {isChecked && <Check className="size-3 stroke-[2.5]" />}
+                      {isChecked && <Check className="size-3" />}
                       <span>{feat.label}</span>
                     </button>
                   );
@@ -81,3 +66,4 @@ export function FeatureSelectStep({ selected, onChange }: Props) {
     </div>
   );
 }
+export default FeatureSelectStep;
