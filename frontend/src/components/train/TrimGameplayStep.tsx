@@ -67,9 +67,9 @@ export function TrimGameplayStep({ samples, trimRange, onChange }: Props) {
       <div className="flex items-center justify-between text-xs font-mono text-muted-foreground px-1">
         <span>{active.length} / {total} frames</span>
         <div className="flex items-center gap-3">
-          <span><strong className="text-foreground">{jumps}</strong> jump</span>
-          <span><strong className="text-foreground">{ducks}</strong> duck</span>
-          <span><strong className="text-foreground">{nones}</strong> none</span>
+          <span><span>{jumps}</span> jump</span>
+          <span><span>{ducks}</span> duck</span>
+          <span><span>{nones}</span> none</span>
         </div>
       </div>
     </div>
