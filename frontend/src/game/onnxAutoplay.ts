@@ -1,6 +1,6 @@
 import * as ort from "onnxruntime-web";
 import { extractFeatureVector, readObstacles } from "./dinoFeatureExtractor";
-import { authHeaders } from "../services/guestAuth";
+import { authFetch } from "../services/guestAuth";
 
 ort.env.wasm.wasmPaths = "/ort/";
 (window as any).ort = ort;
@@ -24,12 +24,11 @@ export class OnnxDinoAutoplay {
   async init(modelName: string, isPrivate = false): Promise<boolean> {
     try {
       const pfx = isPrivate ? "/api/private/onnx/models" : "/api/onnx/models";
-      const hdrs = isPrivate ? authHeaders() : {};
-      const metaRes = await fetch(`${pfx}/${modelName}/meta`, { headers: hdrs });
+      const metaRes = isPrivate ? await authFetch(`${pfx}/${modelName}/meta`) : await fetch(`${pfx}/${modelName}/meta`);
       if (!metaRes.ok) return false;
       const meta = await metaRes.json();
       this.features = meta.features || [];
-      const modelRes = await fetch(`${pfx}/${modelName}`, { headers: hdrs });
+      const modelRes = isPrivate ? await authFetch(`${pfx}/${modelName}`) : await fetch(`${pfx}/${modelName}`);
       if (!modelRes.ok) return false;
       const buffer = await modelRes.arrayBuffer();
       this.session = await ort.InferenceSession.create(buffer);
