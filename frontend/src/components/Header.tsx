@@ -21,10 +21,7 @@ export function Header({ onSetupClick }: HeaderProps) {
     <>
       <header className="bg-background w-full mx-auto max-w-3xl h-14 rounded-xl border border-border px-5 flex items-center justify-between shadow-2xs">
         <a href="/" className="flex items-center gap-2.5 font-bold text-sm tracking-tight hover:opacity-85 transition-opacity">
-          <div className="w-7 h-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-xs font-black">
-            TR
-          </div>
-          <span>T-Rex AI</span>
+          <img src="/dino.svg" className="w-6 opacity-70" />
         </a>
 
         <nav className="flex items-center gap-5 sm:gap-6">
@@ -34,13 +31,13 @@ export function Header({ onSetupClick }: HeaderProps) {
               path === "/try-web" ? "text-foreground font-semibold" : "text-muted-foreground"
             }`}
           >
-            try web
+            Try Web
           </a>
           <button
             onClick={handleSetup}
             className="text-xs sm:text-sm font-medium transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
           >
-            setup
+            Setup
           </button>
           <a
             href="/dashboard"
@@ -48,7 +45,7 @@ export function Header({ onSetupClick }: HeaderProps) {
               path.startsWith("/dashboard") ? "text-foreground font-semibold" : "text-muted-foreground"
             }`}
           >
-            dashboard
+            Dashboard
           </a>
         </nav>
       </header>
