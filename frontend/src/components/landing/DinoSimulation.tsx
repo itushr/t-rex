@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 
-export function DinoSimulation() {
+export type DinoAction = "JUMP" | "DUCK" | "RUN";
+
+export function DinoSimulation({ onAction }: { onAction?: (a: DinoAction) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -46,16 +48,16 @@ export function DinoSimulation() {
         }
       }
 
+      const act: DinoAction = isJumping ? "JUMP" : isDucking ? "DUCK" : "RUN";
+      onAction?.(act);
+
       if (img.complete) {
-        // Horizon ground
         for (let x = groundX; x < cvs.width + 600; x += 600) {
           ctx.drawImage(img, 2, 54, 600, 12, x, groundY - 4, 600, 12);
         }
-        // Clouds
         const c1X = ((cvs.width - tick * 0.4) % (cvs.width + 80)) - 40;
         ctx.drawImage(img, 86, 2, 46, 14, c1X, 60, 46, 14);
 
-        // Trex
         if (isJumping) {
           ctx.drawImage(img, 848, 2, 44, 47, 90, groundY - 47 + dinoY, 44, 47);
         } else if (isDucking) {
@@ -66,7 +68,6 @@ export function DinoSimulation() {
           ctx.drawImage(img, sx, 2, 44, 47, 90, groundY - 47, 44, 47);
         }
 
-        // Obstacles
         if (obsType === "small") {
           ctx.drawImage(img, 228, 2, 17, 35, obsX, groundY - 35, 17, 35);
         } else if (obsType === "large") {
@@ -77,16 +78,14 @@ export function DinoSimulation() {
         }
       }
 
-      // Retro score counter
       ctx.fillStyle = "#535353"; ctx.font = "bold 13px monospace";
       ctx.fillText(`HI 01420  ${String(Math.floor(score)).padStart(5, "0")}`, cvs.width - 150, 35);
-
       animId = requestAnimationFrame(loop);
     };
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, []);
+  }, [onAction]);
 
   return (
     <div className="relative w-full h-full min-h-[340px] flex items-center justify-center overflow-hidden">

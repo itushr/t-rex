@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Cpu, Sparkles } from "lucide-react";
-import { DinoSimulation } from "./DinoSimulation";
+import { DinoSimulation, DinoAction } from "./DinoSimulation";
+import { DecisionTreeOverlay } from "./DecisionTreeOverlay";
 
 export function DemoBox() {
+  const [action, setAction] = useState<DinoAction>("RUN");
+
   return (
     <div className="w-full h-full min-h-[460px] flex flex-col justify-between p-6 sm:p-8 text-zinc-900 select-none">
       {/* Top minimal status bar */}
@@ -23,9 +27,10 @@ export function DemoBox() {
         </div>
       </div>
 
-      {/* Large game canvas */}
-      <div className="flex-1 flex items-center justify-center py-4">
-        <DinoSimulation />
+      {/* Large game canvas with right-side Decision Tree overlay */}
+      <div className="flex-1 flex items-center justify-center py-4 relative">
+        <DinoSimulation onAction={setAction} />
+        <DecisionTreeOverlay activeAction={action} />
       </div>
 
       {/* Bottom minimal caption */}
