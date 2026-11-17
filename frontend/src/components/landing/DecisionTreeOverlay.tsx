@@ -1,73 +1,82 @@
-import { GitFork } from "lucide-react";
-
 export function DecisionTreeOverlay({ activeAction = "RUN" }: { activeAction?: "JUMP" | "DUCK" | "RUN" }) {
   const isJump = activeAction === "JUMP";
   const isDuck = activeAction === "DUCK";
   const isRun = activeAction === "RUN";
+  const isNear = isJump || isDuck;
 
   return (
-    <div className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 bg-white/92 backdrop-blur-md border border-zinc-200/90 shadow-xl rounded-2xl p-3.5 w-56 sm:w-64 select-none pointer-events-none">
-      <div className="flex items-center justify-between border-b border-zinc-100 pb-2 mb-2.5">
-        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-          <GitFork className="w-3.5 h-3.5 text-zinc-700" />
-          <span>Decision Tree</span>
-        </div>
-        <span className="text-[10px] font-mono text-zinc-400">Depth: 2</span>
-      </div>
+    <div className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10">
+      <svg width="340" height="230" viewBox="0 0 340 230" className="overflow-visible drop-shadow-xs">
+        {/* Links */}
+        <g strokeWidth={1.5} fill="none">
+          {/* Root to Node 1 (left) */}
+          <path
+            d="M 170 52 C 170 70, 95 70, 95 88"
+            stroke={isNear ? "#18181b" : "#d4d4d8"}
+            strokeWidth={isNear ? 2.5 : 1.5}
+          />
+          <text x="122" y="72" className="text-[10px] font-mono font-bold fill-zinc-500">&le;</text>
 
-      {/* Tree Visualization */}
-      <div className="flex flex-col items-center gap-1.5 text-center">
-        {/* Root Node */}
-        <div className={`px-2.5 py-1 rounded-lg border font-mono text-[11px] font-semibold transition-all ${
-          !isRun ? "bg-zinc-900 text-white border-zinc-900 shadow-xs" : "bg-zinc-50 text-zinc-700 border-zinc-200"
-        }`}>
-          dist &le; 115px
-        </div>
+          {/* Root to Node 2 (right / NONE) */}
+          <path
+            d="M 170 52 C 170 70, 255 70, 255 88"
+            stroke={isRun ? "#18181b" : "#d4d4d8"}
+            strokeWidth={isRun ? 2.5 : 1.5}
+          />
+          <text x="218" y="72" className="text-[10px] font-mono font-bold fill-zinc-500">&gt;</text>
 
-        {/* Level 1 Connectors */}
-        <div className="flex justify-between w-full px-3 text-[9px] font-semibold text-zinc-400">
-          <span>&larr; True</span>
-          <span>False &rarr;</span>
-        </div>
+          {/* Node 1 to Leaf 3 (JUMP) */}
+          <path
+            d="M 95 128 C 95 146, 50 146, 50 164"
+            stroke={isJump ? "#10b981" : "#d4d4d8"}
+            strokeWidth={isJump ? 2.5 : 1.5}
+          />
+          <text x="64" y="148" className="text-[9px] font-mono font-bold fill-zinc-400">0</text>
 
-        {/* Level 1 & Leaf Nodes */}
-        <div className="flex items-start justify-between w-full gap-2 pt-0.5">
-          {/* Left Branch: Obstacle Detection */}
-          <div className="flex flex-col items-center gap-1.5 flex-1">
-            <div className={`px-2 py-0.5 rounded-md border font-mono text-[10px] font-medium transition-all ${
-              isDuck || isJump ? "bg-zinc-100 border-zinc-300 text-zinc-800" : "bg-zinc-50/50 border-zinc-200/60 text-zinc-400"
-            }`}>
-              is_bird?
-            </div>
-            <div className="flex gap-1.5 mt-0.5">
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition-all ${
-                isJump ? "bg-emerald-500 text-white border-emerald-500 scale-105 shadow-xs" : "bg-zinc-50 text-zinc-400 border-zinc-200/60"
-              }`}>
-                JUMP
-              </span>
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition-all ${
-                isDuck ? "bg-blue-500 text-white border-blue-500 scale-105 shadow-xs" : "bg-zinc-50 text-zinc-400 border-zinc-200/60"
-              }`}>
-                DUCK
-              </span>
-            </div>
-          </div>
+          {/* Node 1 to Leaf 4 (DUCK) */}
+          <path
+            d="M 95 128 C 95 146, 145 146, 145 164"
+            stroke={isDuck ? "#f59e0b" : "#d4d4d8"}
+            strokeWidth={isDuck ? 2.5 : 1.5}
+          />
+          <text x="124" y="148" className="text-[9px] font-mono font-bold fill-zinc-400">1</text>
+        </g>
 
-          {/* Right Branch: Clear Path */}
-          <div className="flex flex-col items-center gap-1.5 pt-3">
-            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border transition-all ${
-              isRun ? "bg-zinc-800 text-white border-zinc-800 shadow-2xs" : "bg-zinc-50 text-zinc-400 border-zinc-200/60"
-            }`}>
-              RUN
-            </span>
-          </div>
-        </div>
-      </div>
+        {/* Node #0: Root Split */}
+        <g transform="translate(110, 10)">
+          <rect width="120" height="42" rx="6" fill="#ffffff" stroke={isNear ? "#18181b" : "#e4e4e7"} strokeWidth={isNear ? 2 : 1} />
+          <text x="8" y="16" className="text-[9px] font-mono fill-zinc-400 font-semibold">#0 split</text>
+          <text x="8" y="32" className="text-[11px] font-semibold fill-zinc-800">dist &le; 115px</text>
+        </g>
 
-      <div className="mt-3 pt-2 border-t border-zinc-100 flex items-center justify-between text-[9px] text-zinc-400">
-        <span>Trained on Telemetry</span>
-        <span className="font-mono text-emerald-600 font-semibold">&bull; Active</span>
-      </div>
+        {/* Node #1: Is Bird? */}
+        <g transform="translate(42, 88)">
+          <rect width="106" height="40" rx="6" fill="#ffffff" stroke={isNear ? "#18181b" : "#e4e4e7"} strokeWidth={isNear ? 2 : 1} />
+          <text x="8" y="15" className="text-[9px] font-mono fill-zinc-400 font-semibold">#1 split</text>
+          <text x="8" y="30" className="text-[11px] font-semibold fill-zinc-800">is_bird == 1</text>
+        </g>
+
+        {/* Node #2: Leaf NONE */}
+        <g transform="translate(210, 88)">
+          <rect width="90" height="40" rx="6" fill={isRun ? "#27272a" : "#ffffff"} stroke={isRun ? "#27272a" : "#e4e4e7"} strokeWidth={isRun ? 2 : 1} />
+          <text x="8" y="15" className={`text-[9px] font-mono ${isRun ? "fill-zinc-400" : "fill-zinc-400"}`}>#2 leaf</text>
+          <text x="8" y="30" className={`text-[11px] font-bold ${isRun ? "fill-white" : "fill-zinc-600"}`}>NONE</text>
+        </g>
+
+        {/* Node #3: Leaf JUMP */}
+        <g transform="translate(10, 164)">
+          <rect width="82" height="38" rx="6" fill={isJump ? "#10b981" : "#ffffff"} stroke="#10b981" strokeWidth={isJump ? 2.5 : 1.5} />
+          <text x="8" y="14" className={`text-[9px] font-mono ${isJump ? "fill-emerald-100" : "fill-zinc-400"}`}>#3 leaf</text>
+          <text x="8" y="29" className={`text-[11px] font-bold ${isJump ? "fill-white" : "fill-emerald-600"}`}>JUMP</text>
+        </g>
+
+        {/* Node #4: Leaf DUCK */}
+        <g transform="translate(106, 164)">
+          <rect width="82" height="38" rx="6" fill={isDuck ? "#f59e0b" : "#ffffff"} stroke="#f59e0b" strokeWidth={isDuck ? 2.5 : 1.5} />
+          <text x="8" y="14" className={`text-[9px] font-mono ${isDuck ? "fill-amber-100" : "fill-zinc-400"}`}>#4 leaf</text>
+          <text x="8" y="29" className={`text-[11px] font-bold ${isDuck ? "fill-white" : "fill-amber-600"}`}>DUCK</text>
+        </g>
+      </svg>
     </div>
   );
 }
