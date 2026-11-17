@@ -14,13 +14,13 @@ export function DinoSimulation({ onAction }: { onAction?: (a: DinoAction) => voi
     const img = new Image();
     img.src = "/assets/default_100_percent/100-offline-sprite.png";
 
-    let animId = 0, tick = 0, score = 0;
+    let animId = 0, tick = 0;
     let dinoY = 0, dinoVy = 0, isJumping = false, isDucking = false, duckTimer = 0;
     let obsX = 700, obsType: "small" | "large" | "bird" = "small";
     let speed = 6.8, groundX = 0;
 
     const loop = () => {
-      tick++; score += 0.15;
+      tick++;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       const groundY = 280;
 
@@ -78,8 +78,6 @@ export function DinoSimulation({ onAction }: { onAction?: (a: DinoAction) => voi
         }
       }
 
-      ctx.fillStyle = "#535353"; ctx.font = "bold 13px monospace";
-      ctx.fillText(`HI 01420  ${String(Math.floor(score)).padStart(5, "0")}`, cvs.width - 150, 35);
       animId = requestAnimationFrame(loop);
     };
 
