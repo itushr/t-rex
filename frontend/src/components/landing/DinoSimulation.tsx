@@ -1,12 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export interface SimState {
-  action: "NONE" | "JUMP" | "DUCK";
-  dist: number;
-  speed: number;
-}
-
-export function DinoSimulation({ onUpdate }: { onUpdate: (s: SimState) => void }) {
+export function DinoSimulation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -14,54 +8,79 @@ export function DinoSimulation({ onUpdate }: { onUpdate: (s: SimState) => void }
     if (!cvs) return;
     const ctx = cvs.getContext("2d");
     if (!ctx) return;
-    let animId: number, dinoY = 0, dinoVy = 0, isJumping = false, isDucking = false, duckTimer = 0;
-    let obsX = 650, obsType: "cactus" | "bird" = "cactus", speed = 6.5;
+
+    const img = new Image();
+    img.src = "/assets/default_100_percent/100-offline-sprite.png";
+
+    let animId = 0, tick = 0, score = 0;
+    let dinoY = 0, dinoVy = 0, isJumping = false, isDucking = false, duckTimer = 0;
+    let obsX = 700, obsType: "small" | "large" | "bird" = "small";
+    let speed = 6.8, groundX = 0;
 
     const loop = () => {
+      tick++; score += 0.15;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
-      const groundY = 175;
+      const groundY = 280;
+
       if (isJumping) {
-        dinoY += dinoVy; dinoVy += 0.85;
+        dinoY += dinoVy; dinoVy += 0.82;
         if (dinoY >= 0) { dinoY = 0; dinoVy = 0; isJumping = false; }
       }
       if (isDucking && --duckTimer <= 0) isDucking = false;
 
-      obsX -= speed;
-      if (obsX < -40) {
-        obsX = cvs.width + Math.random() * 120 + 80;
-        obsType = Math.random() > 0.4 ? "cactus" : "bird";
-        speed = Math.min(8.5, speed + 0.05);
-      }
-      const dist = Math.max(0, Math.round(obsX - 100));
-      let action: "NONE" | "JUMP" | "DUCK" = "NONE";
-      if (dist < 125 && dist > 15) {
-        if (obsType === "cactus" && !isJumping) { isJumping = true; dinoVy = -13; action = "JUMP"; }
-        else if (obsType === "bird" && !isJumping && !isDucking) { isDucking = true; duckTimer = 35; action = "DUCK"; }
-      }
-      if (isJumping) action = "JUMP"; else if (isDucking) action = "DUCK";
-      onUpdate({ action, dist, speed: Number(speed.toFixed(1)) });
-
-      ctx.strokeStyle = "#e4e4e7"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(cvs.width, groundY); ctx.stroke();
-
-      if (obsX > 100 && obsX < cvs.width) {
-        ctx.strokeStyle = action !== "NONE" ? "rgba(16, 185, 129, 0.7)" : "rgba(161, 161, 170, 0.4)";
-        ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
-        ctx.beginPath(); ctx.moveTo(100, groundY - 25 + dinoY);
-        ctx.lineTo(obsX, groundY - (obsType === "bird" ? 38 : 18));
-        ctx.stroke(); ctx.setLineDash([]);
+      obsX -= speed; groundX = (groundX - speed) % 600;
+      if (obsX < -60) {
+        obsX = cvs.width + Math.random() * 150 + 100;
+        const r = Math.random();
+        obsType = r < 0.4 ? "small" : r < 0.75 ? "large" : "bird";
+        speed = Math.min(9.5, speed + 0.02);
       }
 
-      ctx.fillStyle = "#18181b";
-      const dh = isDucking ? 22 : 40, dw = isDucking ? 42 : 30;
-      ctx.beginPath(); ctx.roundRect(70, groundY - dh + dinoY, dw, dh, 4); ctx.fill();
-
-      ctx.fillStyle = obsType === "cactus" ? "#059669" : "#2563eb";
-      if (obsType === "cactus") {
-        ctx.beginPath(); ctx.roundRect(obsX, groundY - 36, 20, 36, 3); ctx.fill();
-      } else {
-        ctx.beginPath(); ctx.roundRect(obsX, groundY - 48, 28, 16, 4); ctx.fill();
+      // Autonomous lightweight jumping/ducking
+      const dist = obsX - 90;
+      if (dist < 115 && dist > 15) {
+        if ((obsType === "small" || obsType === "large") && !isJumping) {
+          isJumping = true; dinoVy = obsType === "large" ? -13.5 : -12.5;
+        } else if (obsType === "bird" && !isJumping && !isDucking) {
+          isDucking = true; duckTimer = 34;
+        }
       }
+
+      if (img.complete) {
+        // Horizon ground
+        for (let x = groundX; x < cvs.width + 600; x += 600) {
+          ctx.drawImage(img, 2, 54, 600, 12, x, groundY - 4, 600, 12);
+        }
+        // Clouds
+        const c1X = ((cvs.width - tick * 0.4) % (cvs.width + 80)) - 40;
+        ctx.drawImage(img, 86, 2, 46, 14, c1X, 60, 46, 14);
+
+        // Trex
+        if (isJumping) {
+          ctx.drawImage(img, 848, 2, 44, 47, 90, groundY - 47 + dinoY, 44, 47);
+        } else if (isDucking) {
+          const sx = tick % 14 < 7 ? 1112 : 1171;
+          ctx.drawImage(img, sx, 19, 59, 30, 90, groundY - 30, 59, 30);
+        } else {
+          const sx = tick % 12 < 6 ? 936 : 980;
+          ctx.drawImage(img, sx, 2, 44, 47, 90, groundY - 47, 44, 47);
+        }
+
+        // Obstacles
+        if (obsType === "small") {
+          ctx.drawImage(img, 228, 2, 17, 35, obsX, groundY - 35, 17, 35);
+        } else if (obsType === "large") {
+          ctx.drawImage(img, 332, 2, 25, 50, obsX, groundY - 50, 25, 50);
+        } else {
+          const sx = tick % 16 < 8 ? 134 : 180;
+          ctx.drawImage(img, sx, 2, 46, 40, obsX, groundY - 58, 46, 40);
+        }
+      }
+
+      // Retro score counter
+      ctx.fillStyle = "#535353"; ctx.font = "bold 13px monospace";
+      ctx.fillText(`HI 01420  ${String(Math.floor(score)).padStart(5, "0")}`, cvs.width - 150, 35);
+
       animId = requestAnimationFrame(loop);
     };
 
@@ -70,8 +89,9 @@ export function DinoSimulation({ onUpdate }: { onUpdate: (s: SimState) => void }
   }, []);
 
   return (
-    <div className="relative w-full h-[200px] flex items-center justify-center bg-zinc-50/60 rounded-2xl border border-zinc-200/70 overflow-hidden">
-      <canvas ref={canvasRef} width={760} height={200} className="w-full h-full max-w-[760px]" />
+    <div className="relative w-full h-full min-h-[340px] flex items-center justify-center overflow-hidden">
+      <canvas ref={canvasRef} width={900} height={320} className="w-full h-auto max-w-[900px]" />
     </div>
   );
 }
+export default DinoSimulation;
