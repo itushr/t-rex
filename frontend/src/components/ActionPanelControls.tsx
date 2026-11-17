@@ -1,10 +1,14 @@
 import { Eye, Pause, Play, RotateCcw, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Kbd } from "@/components/ui/kbd";
+import { StopwatchTimer } from "./StopwatchTimer";
+import type { TimerData } from "../hooks/useActionPanelTimer";
 import type { GameStatus } from "../game/useGameRunnerControls";
 
 interface ControlsProps {
-  timerDisplay: string;
+  timer: TimerData;
+  isRecording?: boolean;
+  isRecordingPaused?: boolean;
   gameStatus: GameStatus;
   soundEnabled: boolean;
   showVisualize: boolean;
@@ -15,12 +19,18 @@ interface ControlsProps {
 }
 
 export function ActionPanelControls({
-  timerDisplay, gameStatus, soundEnabled, showVisualize,
-  onPlayToggle, onToggleSound, onForward, onVisualize,
+  timer, isRecording, isRecordingPaused, gameStatus, soundEnabled,
+  showVisualize, onPlayToggle, onToggleSound, onForward, onVisualize,
 }: ControlsProps) {
   return (
     <div className="flex gap-5 items-center">
-      <div className="text-3xl font-mono tabular-nums">{timerDisplay}</div>
+      <StopwatchTimer
+        mins={timer.mins}
+        secs={timer.secs}
+        ms={timer.ms}
+        isRecording={isRecording}
+        isRecordingPaused={isRecordingPaused}
+      />
       <Tooltip>
         <TooltipTrigger asChild>
           <button type="button" onClick={onPlayToggle} className="cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-white flex items-center">

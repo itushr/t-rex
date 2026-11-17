@@ -27,7 +27,7 @@ export function ActionPanel({
   onToggleRecord, onForward, showVisualize = false, onVisualize,
 }: ActionPanelProps) {
   const [hidden, setHidden] = useState(false);
-  const timerDisplay = useActionPanelTimer(isRecording, isRecordingPaused);
+  const timer = useActionPanelTimer(isRecording, isRecordingPaused);
 
   const handlePlayToggle = () => (gameStatus === "crashed" ? onRestart ?? onTogglePlayPause : onTogglePlayPause)?.();
   const toggleVisibility = () => setHidden((h) => !h);
@@ -64,7 +64,8 @@ export function ActionPanel({
           </Tooltip>
 
           <ActionPanelControls
-            timerDisplay={timerDisplay} gameStatus={gameStatus} soundEnabled={soundEnabled}
+            timer={timer} isRecording={isRecording} isRecordingPaused={isRecordingPaused}
+            gameStatus={gameStatus} soundEnabled={soundEnabled}
             showVisualize={showVisualize} onPlayToggle={handlePlayToggle}
             onToggleSound={onToggleSound} onForward={onForward} onVisualize={onVisualize}
           />

@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 
-export function useActionPanelTimer(isRecording = false, isRecordingPaused = false) {
+export interface TimerData {
+  mins: string;
+  secs: string;
+  ms: string;
+}
+
+export function useActionPanelTimer(isRecording = false, isRecordingPaused = false): TimerData {
   const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {
@@ -11,13 +17,18 @@ export function useActionPanelTimer(isRecording = false, isRecordingPaused = fal
     if (isRecordingPaused) return;
 
     const start = performance.now() - elapsedMs;
-    const timer = setInterval(() => setElapsedMs(performance.now() - start), 200);
-    return () => clearInterval(timer);
+    let animId: number;
+    const loop = () => {
+      setElapsedMs(performance.now() - start);
+      animId = requestAnimationFrame(loop);
+    };
+    animId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animId);
   }, [isRecording, isRecordingPaused]);
 
-  const totalSec = Math.floor(elapsedMs / 1000);
-  const hrs = String(Math.floor(totalSec / 3600)).padStart(2, "0");
-  const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
-  const secs = String(totalSec % 60).padStart(2, "0");
-  return `${hrs}:${mins}:${secs}`;
+  const mins = String(Math.floor(elapsedMs / 60000)).padStart(2, "0");
+  const secs = String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, "0");
+  const ms = String(Math.floor((elapsedMs % 1000) / 10)).padStart(2, "0");
+
+  return { mins, secs, ms };
 }
