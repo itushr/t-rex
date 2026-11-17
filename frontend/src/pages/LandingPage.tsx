@@ -22,7 +22,7 @@ export function LandingPage() {
         <img src="/heading.png" className="w-lg mx-auto translate-y-20 translate-x-20" alt="T-Rex AI" />
         
         {/* Demonstration White Box */}
-        <div className="w-full max-w-5xl h-auto min-h-[520px] bg-white mt-56 mx-auto rounded-4xl border border-zinc-200 shadow-2xl overflow-hidden">
+        <div className="w-full max-w-5xl h-auto min-h-130 bg-white mt-56 mx-auto rounded-4xl border border-zinc-200 shadow-2xl overflow-hidden">
           <DemoBox />
         </div>
 
