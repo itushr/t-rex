@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ensureGuestToken } from "../services/guestAuth";
 import { listPrivateGameplays, listPrivateModels, listPrivatePlaybacks } from "../services/privateApi";
 import { ModelCard, GameplayCard, PlaybackCard } from "../components/dashboard/BentoCards";
-import Navabar from "../components/Navbar";
+import Header from "../components/Header";
 
 const BENTO_PATTERN = [1, 3, 2, 3, 1, 2, 3, 3, 2, 3, 1, 3];
 
@@ -54,7 +54,7 @@ export function PrivateDashboardV2Page() {
 
   return (
     <div className="min-h-screen bg-accent-foreground text-foreground p-5">
-      <Navabar />
+      <Header />
 
       <div className="mt-20 max-w-275 mx-auto">
         <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 auto-rows-37.5 grid-flow-row-dense gap-2">

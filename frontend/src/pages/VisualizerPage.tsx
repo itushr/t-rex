@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Header } from "../components/Header";
+import { Header2 } from "../components/Header2";
 import { PlaybackView } from "../components/PlaybackView";
 import { ModelGraphView } from "../components/ModelGraphView";
 import { LiveStreamView } from "../components/LiveStreamView";
@@ -33,7 +33,7 @@ export function VisualizerPage() {
 
   return (
     <div className="visualizer-theme flex flex-col h-screen w-screen overflow-hidden text-foreground bg-background">
-      <Header
+      <Header2
         title="T-Rex"
         viewMode={viewMode}
         setViewMode={setViewMode}

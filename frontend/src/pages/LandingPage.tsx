@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Play, Terminal } from "lucide-react";
-import Navbar from "../components/Navbar";
+import Header from "../components/Header";
 import { DemoBox } from "../components/landing/DemoBox";
 import { SetupModal } from "../components/landing/SetupModal";
 
@@ -16,7 +16,7 @@ export function LandingPage() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <Navbar />
+      <Header onSetupClick={() => setSetupOpen(true)} />
 
       <main className="px-6 py-10 text-center">
         <img src="/heading.png" className="w-lg mx-auto translate-y-20 translate-x-20" alt="T-Rex AI" />

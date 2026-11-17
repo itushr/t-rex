@@ -1,7 +1,3 @@
-import React from 'react'
-
-export default function () {
-  return (
-    <div className="bg-background w-full mx-auto max-w-3xl h-14 rounded-xl border border-border"></div>
-  )
-}
+import Header from "./Header";
+export default Header;
+export { Header as Navbar };

@@ -7,7 +7,7 @@ import { ModelSelectStep, SupportedModelType } from "../components/train/ModelSe
 import { FeatureSelectStep } from "../components/train/FeatureSelectStep";
 import { TrainResultCard } from "../components/train/TrainResultCard";
 import { getPrivateGameplay, trainPrivateModel } from "../services/privateApi";
-import Navbar from "../components/Navbar";
+import Header from "../components/Header";
 
 function defaultTrim(len: number): [number, number] {
   if (len <= 20) return [0, len];
@@ -72,7 +72,7 @@ export function TrainPage() {
   const activeCount = trimRange[1] - trimRange[0];
   return (
     <div className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12 flex flex-col items-center">
-      <Navbar />
+      <Header />
       <div className="max-w-4xl w-full flex flex-col gap-10 mt-20">
         <TrimGameplayStep samples={samples} trimRange={trimRange} onChange={setTrimRange} />
         <div className="flex mt-">
