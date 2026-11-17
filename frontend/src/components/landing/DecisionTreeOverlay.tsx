@@ -1,80 +1,66 @@
 export function DecisionTreeOverlay({ activeAction = "RUN" }: { activeAction?: "JUMP" | "DUCK" | "RUN" }) {
-  const isJump = activeAction === "JUMP";
-  const isDuck = activeAction === "DUCK";
-  const isRun = activeAction === "RUN";
-  const isNear = isJump || isDuck;
+  const isJump = activeAction === "JUMP", isDuck = activeAction === "DUCK";
+  const isRun = activeAction === "RUN", isNear = isJump || isDuck;
 
   return (
-    <div className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10">
-      <svg width="340" height="230" viewBox="0 0 340 230" className="overflow-visible drop-shadow-xs">
-        {/* Links */}
-        <g strokeWidth={1.5} fill="none">
-          {/* Root to Node 1 (left) */}
-          <path
-            d="M 170 52 C 170 70, 95 70, 95 88"
-            stroke={isNear ? "#18181b" : "#d4d4d8"}
-            strokeWidth={isNear ? 2.5 : 1.5}
-          />
-          <text x="122" y="72" className="text-[10px] font-mono font-bold fill-zinc-500">&le;</text>
+    <div className="absolute right-3 sm:right-8 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10">
+      <style>{`
+        @keyframes predictTick { 0%, 82%, 100% { opacity: 1; } 88% { opacity: 0.25; } 93% { opacity: 0.85; } }
+        .predict-flicker { animation: predictTick 1s ease-in-out infinite; }
+      `}</style>
+      <svg width="320" height="200" viewBox="0 0 320 200" className="overflow-visible drop-shadow-2xs">
+        <g fill="none">
+          <path d="M 160 42 C 160 62, 82 62, 82 82" stroke={isNear ? "#18181b" : "#d4d4d8"} strokeWidth={isNear ? 2 : 1.5} className={isNear ? "predict-flicker" : ""} />
+          <text x="115" y="60" textAnchor="middle" dominantBaseline="central" className="text-[10px] font-mono fill-zinc-500 font-bold">&le;</text>
 
-          {/* Root to Node 2 (right / NONE) */}
-          <path
-            d="M 170 52 C 170 70, 255 70, 255 88"
-            stroke={isRun ? "#18181b" : "#d4d4d8"}
-            strokeWidth={isRun ? 2.5 : 1.5}
-          />
-          <text x="218" y="72" className="text-[10px] font-mono font-bold fill-zinc-500">&gt;</text>
+          <path d="M 160 42 C 160 62, 244 62, 244 82" stroke={isRun ? "#18181b" : "#d4d4d8"} strokeWidth={isRun ? 2 : 1.5} className={isRun ? "predict-flicker" : ""} />
+          <text x="208" y="60" textAnchor="middle" dominantBaseline="central" className="text-[10px] font-mono fill-zinc-500 font-bold">&gt;</text>
 
-          {/* Node 1 to Leaf 3 (JUMP) */}
-          <path
-            d="M 95 128 C 95 146, 50 146, 50 164"
-            stroke={isJump ? "#10b981" : "#d4d4d8"}
-            strokeWidth={isJump ? 2.5 : 1.5}
-          />
-          <text x="64" y="148" className="text-[9px] font-mono font-bold fill-zinc-400">0</text>
+          <path d="M 82 112 C 82 131, 48 131, 48 150" stroke={isJump ? "#18181b" : "#d4d4d8"} strokeWidth={isJump ? 2 : 1.5} className={isJump ? "predict-flicker" : ""} />
+          <text x="60" y="130" textAnchor="middle" dominantBaseline="central" className="text-[9px] font-mono fill-zinc-400 font-bold">N</text>
 
-          {/* Node 1 to Leaf 4 (DUCK) */}
-          <path
-            d="M 95 128 C 95 146, 145 146, 145 164"
-            stroke={isDuck ? "#f59e0b" : "#d4d4d8"}
-            strokeWidth={isDuck ? 2.5 : 1.5}
-          />
-          <text x="124" y="148" className="text-[9px] font-mono font-bold fill-zinc-400">1</text>
+          <path d="M 82 112 C 82 131, 132 131, 132 150" stroke={isDuck ? "#18181b" : "#d4d4d8"} strokeWidth={isDuck ? 2 : 1.5} className={isDuck ? "predict-flicker" : ""} />
+          <text x="114" y="130" textAnchor="middle" dominantBaseline="central" className="text-[9px] font-mono fill-zinc-400 font-bold">Y</text>
         </g>
 
-        {/* Node #0: Root Split */}
-        <g transform="translate(110, 10)">
-          <rect width="120" height="42" rx="6" fill="#ffffff" stroke={isNear ? "#18181b" : "#e4e4e7"} strokeWidth={isNear ? 2 : 1} />
-          <text x="8" y="16" className="text-[9px] font-mono fill-zinc-400 font-semibold">#0 split</text>
-          <text x="8" y="32" className="text-[11px] font-semibold fill-zinc-800">dist &le; 115px</text>
+        {/* Root Node */}
+        <g transform="translate(115, 10)" className={isNear ? "predict-flicker" : ""}>
+          <rect width="90" height="32" rx="4" fill={isNear ? "#18181b" : "#ffffff"} stroke="#18181b" strokeWidth={1.5} />
+          <text x="45" y="16" textAnchor="middle" dominantBaseline="central" className={`text-xs font-mono font-medium ${isNear ? "fill-white" : "fill-zinc-900"}`}>
+            dist &lt; 115
+          </text>
         </g>
 
-        {/* Node #1: Is Bird? */}
-        <g transform="translate(42, 88)">
-          <rect width="106" height="40" rx="6" fill="#ffffff" stroke={isNear ? "#18181b" : "#e4e4e7"} strokeWidth={isNear ? 2 : 1} />
-          <text x="8" y="15" className="text-[9px] font-mono fill-zinc-400 font-semibold">#1 split</text>
-          <text x="8" y="30" className="text-[11px] font-semibold fill-zinc-800">is_bird == 1</text>
+        {/* Node 1: bird? */}
+        <g transform="translate(44, 82)" className={isNear ? "predict-flicker" : ""}>
+          <rect width="76" height="30" rx="4" fill={isNear ? "#18181b" : "#ffffff"} stroke="#18181b" strokeWidth={1.5} />
+          <text x="38" y="15" textAnchor="middle" dominantBaseline="central" className={`text-xs font-mono font-medium ${isNear ? "fill-white" : "fill-zinc-900"}`}>
+            bird?
+          </text>
         </g>
 
-        {/* Node #2: Leaf NONE */}
-        <g transform="translate(210, 88)">
-          <rect width="90" height="40" rx="6" fill={isRun ? "#27272a" : "#ffffff"} stroke={isRun ? "#27272a" : "#e4e4e7"} strokeWidth={isRun ? 2 : 1} />
-          <text x="8" y="15" className={`text-[9px] font-mono ${isRun ? "fill-zinc-400" : "fill-zinc-400"}`}>#2 leaf</text>
-          <text x="8" y="30" className={`text-[11px] font-bold ${isRun ? "fill-white" : "fill-zinc-600"}`}>NONE</text>
+        {/* Leaf: Run */}
+        <g transform="translate(212, 82)" className={isRun ? "predict-flicker" : ""}>
+          <rect width="64" height="30" rx="4" fill={isRun ? "#18181b" : "#ffffff"} stroke="#18181b" strokeWidth={1.5} />
+          <text x="32" y="15" textAnchor="middle" dominantBaseline="central" className={`text-xs font-mono font-bold ${isRun ? "fill-white" : "fill-zinc-900"}`}>
+            Run
+          </text>
         </g>
 
-        {/* Node #3: Leaf JUMP */}
-        <g transform="translate(10, 164)">
-          <rect width="82" height="38" rx="6" fill={isJump ? "#10b981" : "#ffffff"} stroke="#10b981" strokeWidth={isJump ? 2.5 : 1.5} />
-          <text x="8" y="14" className={`text-[9px] font-mono ${isJump ? "fill-emerald-100" : "fill-zinc-400"}`}>#3 leaf</text>
-          <text x="8" y="29" className={`text-[11px] font-bold ${isJump ? "fill-white" : "fill-emerald-600"}`}>JUMP</text>
+        {/* Leaf: Jump */}
+        <g transform="translate(16, 150)" className={isJump ? "predict-flicker" : ""}>
+          <rect width="64" height="30" rx="4" fill={isJump ? "#18181b" : "#ffffff"} stroke="#18181b" strokeWidth={1.5} />
+          <text x="32" y="15" textAnchor="middle" dominantBaseline="central" className={`text-xs font-mono font-bold ${isJump ? "fill-white" : "fill-zinc-900"}`}>
+            Jump
+          </text>
         </g>
 
-        {/* Node #4: Leaf DUCK */}
-        <g transform="translate(106, 164)">
-          <rect width="82" height="38" rx="6" fill={isDuck ? "#f59e0b" : "#ffffff"} stroke="#f59e0b" strokeWidth={isDuck ? 2.5 : 1.5} />
-          <text x="8" y="14" className={`text-[9px] font-mono ${isDuck ? "fill-amber-100" : "fill-zinc-400"}`}>#4 leaf</text>
-          <text x="8" y="29" className={`text-[11px] font-bold ${isDuck ? "fill-white" : "fill-amber-600"}`}>DUCK</text>
+        {/* Leaf: Duck */}
+        <g transform="translate(100, 150)" className={isDuck ? "predict-flicker" : ""}>
+          <rect width="64" height="30" rx="4" fill={isDuck ? "#18181b" : "#ffffff"} stroke="#18181b" strokeWidth={1.5} />
+          <text x="32" y="15" textAnchor="middle" dominantBaseline="central" className={`text-xs font-mono font-bold ${isDuck ? "fill-white" : "fill-zinc-900"}`}>
+            Duck
+          </text>
         </g>
       </svg>
     </div>
