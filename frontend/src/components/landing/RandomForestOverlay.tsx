@@ -1,77 +1,54 @@
 import { useMemo } from "react";
-import { ReactFlow, Node, Edge } from "@xyflow/react";
+import { ReactFlow, Node, Edge, MarkerType } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { InputFlowNode, TreeFlowNode, ActionFlowNode } from "./rfNodes";
-import { SimState } from "./types";
+import { FeatureLabelNode, CircleNode, ActionLabelNode } from "./rfNodes";
+import { SimState, DinoAction } from "./types";
 
-const NODE_TYPES = { inputNode: InputFlowNode, treeNode: TreeFlowNode, actionNode: ActionFlowNode };
-const DEFAULT_VIEWPORT = { x: 5, y: 15, zoom: 0.95 };
+const NODE_TYPES = { feat: FeatureLabelNode, circle: CircleNode, act: ActionLabelNode };
+const VIEWPORT = { x: 10, y: 10, zoom: 0.98 };
+const FEATS = ["obs_distx", "obs_disty", "obs_type", "obs_size"];
+const DEF_VOTES: DinoAction[] = ["jump", "jump", "duck", "jump", "none"];
 
 export function RandomForestOverlay({ state }: { state?: SimState }) {
-  const currentAction = state?.action || "RUN";
-  const trees = state?.trees || [
-    { id: "1", name: "Tree #1", rule: "dist < 125", action: currentAction },
-    { id: "2", name: "Tree #2", rule: "obs == small", action: currentAction },
-    { id: "3", name: "Tree #3", rule: "tti < 0.65", action: currentAction },
-  ];
+  const votes = state?.votes || DEF_VOTES;
+  const currentAction = state?.action || "none";
 
   const nodes: Node[] = useMemo(() => [
-    {
-      id: "input",
-      type: "inputNode",
-      position: { x: 5, y: 95 },
-      data: { dist: state?.dist ?? 999, speed: state?.speed ?? 7.0, obsType: state?.obsType ?? "none" },
-    },
-    ...trees.map((t, idx) => ({
-      id: `tree-${t.id}`,
-      type: "treeNode",
-      position: { x: 160, y: 15 + idx * 88 },
-      data: { label: t.name, rule: t.rule, action: t.action, active: t.action === currentAction },
+    ...FEATS.map((label, i) => ({
+      id: `feat-${i}`, type: "feat", position: { x: 10, y: 30 + i * 70 }, data: { label },
     })),
-    ...trees.map((t, idx) => ({
-      id: `action-${t.id}`,
-      type: "actionNode",
-      position: { x: 325, y: 18 + idx * 88 },
-      data: { action: t.action, active: t.action === currentAction && currentAction !== "RUN" },
+    { id: "hub", type: "circle", position: { x: 160, y: 135 }, data: {} },
+    ...votes.map((_, i) => ({
+      id: `tree-${i}`, type: "circle", position: { x: 275, y: 15 + i * 60 }, data: {},
     })),
-  ], [state?.dist, state?.speed, state?.obsType, currentAction, trees]);
+    ...votes.map((action, i) => ({
+      id: `act-${i}`, type: "act", position: { x: 375, y: 15 + i * 60 },
+      data: { action, active: action === currentAction && currentAction !== "none" },
+    })),
+  ], [votes, currentAction]);
 
-  const edges: Edge[] = useMemo(() => {
-    const list: Edge[] = [];
-    const strokeColor = currentAction === "JUMP" ? "#10b981" : currentAction === "DUCK" ? "#f59e0b" : "#a1a1aa";
-    const isSpecial = currentAction !== "RUN";
-    trees.forEach((t) => {
-      list.push({
-        id: `e-in-tree-${t.id}`,
-        source: "input",
-        target: `tree-${t.id}`,
-        animated: isSpecial,
-        style: { stroke: strokeColor, strokeWidth: isSpecial ? 2.5 : 1.5 },
-      });
-      list.push({
-        id: `e-tree-${t.id}-act`,
-        source: `tree-${t.id}`,
-        target: `action-${t.id}`,
-        animated: isSpecial,
-        style: { stroke: strokeColor, strokeWidth: isSpecial ? 2.5 : 1.5 },
-      });
-    });
-    return list;
-  }, [trees, currentAction]);
+  const edges: Edge[] = useMemo(() => [
+    ...FEATS.map((_, i) => ({
+      id: `e-in-${i}`, source: `feat-${i}`, target: "hub",
+      style: { stroke: "#27272a", strokeWidth: 1.3 },
+    })),
+    ...votes.map((_, i) => ({
+      id: `e-hub-tree-${i}`, source: "hub", target: `tree-${i}`,
+      style: { stroke: "#27272a", strokeWidth: 1.3 },
+    })),
+    ...votes.map((_, i) => ({
+      id: `e-tree-act-${i}`, source: `tree-${i}`, target: `act-${i}`, type: "straight",
+      markerEnd: { type: MarkerType.Arrow, color: "#27272a", width: 14, height: 14 },
+      style: { stroke: "#27272a", strokeWidth: 1.3 },
+    })),
+  ], [votes]);
 
   return (
-    <div className="w-full max-w-[450px] h-[300px] select-none bg-transparent pointer-events-none">
+    <div className="w-full max-w-[460px] h-[340px] select-none bg-transparent pointer-events-none">
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={NODE_TYPES}
-        defaultViewport={DEFAULT_VIEWPORT}
-        panOnDrag={false}
-        zoomOnScroll={false}
-        zoomOnPinch={false}
-        nodesDraggable={false}
-        elementsSelectable={false}
-        proOptions={{ hideAttribution: true }}
+        nodes={nodes} edges={edges} nodeTypes={NODE_TYPES} defaultViewport={VIEWPORT}
+        panOnDrag={false} zoomOnScroll={false} zoomOnPinch={false} nodesDraggable={false}
+        elementsSelectable={false} proOptions={{ hideAttribution: true }}
       />
     </div>
   );

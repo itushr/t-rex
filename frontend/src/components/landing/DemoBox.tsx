@@ -14,16 +14,13 @@ export function DemoBox() {
           <div className="w-3 h-3 rounded-full bg-zinc-200" />
           <div className="w-3 h-3 rounded-full bg-zinc-200" />
         </div>
-        <div className="text-[11px] font-mono text-zinc-400">
-          Random Forest Ensemble • Live Decision Paths
-        </div>
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row items-center justify-between gap-4 py-2 px-2">
-        <div className="w-full lg:w-[58%] flex items-center justify-center">
+        <div className="w-full lg:w-[56%] flex items-center justify-center">
           <DinoSimulation onStateChange={setSimState} />
         </div>
-        <div className="w-full lg:w-[42%] flex items-center justify-center">
+        <div className="w-full lg:w-[44%] flex items-center justify-center">
           <RandomForestOverlay state={simState} />
         </div>
       </div>
