@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { Play, Terminal } from "lucide-react";
 import Header from "../components/Header";
 import { DemoBox } from "../components/landing/DemoBox";
 import { SetupModal } from "../components/landing/SetupModal";
+import { HeroActionButtons } from "../components/landing/HeroActionButtons";
+import { LandingStats } from "../components/landing/LandingStats";
+import { LandingBentoGrid } from "../components/landing/LandingBentoGrid";
+import { LandingWorkflow } from "../components/landing/LandingWorkflow";
+import { LandingFooter } from "../components/landing/LandingFooter";
 
 export function LandingPage() {
   const [setupOpen, setSetupOpen] = useState(false);
@@ -26,24 +30,15 @@ export function LandingPage() {
           <DemoBox />
         </div>
 
-        {/* Buttons below the white box */}
-        <div className="flex items-center justify-center gap-4 mt-8">
-          <a
-            href="/try-web"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-sm cursor-pointer"
-          >
-            <Play className="w-4 h-4 fill-primary-foreground" />
-            <span>Try Web</span>
-          </a>
-          <button
-            onClick={() => setSetupOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors shadow-2xs cursor-pointer"
-          >
-            <Terminal className="w-4 h-4 text-muted-foreground" />
-            <span>Setup</span>
-          </button>
-        </div>
+        {/* Buttons with arrow annotations & explanations */}
+        <HeroActionButtons onSetupClick={() => setSetupOpen(true)} />
       </main>
+
+      {/* Aceternity & React Bits inspired landing sections */}
+      <LandingStats />
+      <LandingBentoGrid />
+      <LandingWorkflow />
+      <LandingFooter onSetupClick={() => setSetupOpen(true)} />
 
       <SetupModal open={setupOpen} onClose={() => setSetupOpen(false)} />
     </div>
