@@ -3,8 +3,9 @@ import Header from "../components/Header";
 import { DemoBox } from "../components/landing/DemoBox";
 import { SetupModal } from "../components/landing/SetupModal";
 import { HeroActionButtons } from "../components/landing/HeroActionButtons";
+import { LandingStats } from "../components/landing/LandingStats";
 import { LandingBentoGrid } from "../components/landing/LandingBentoGrid";
-import { LandingTimeline } from "../components/landing/LandingTimeline";
+import { LandingWorkflow } from "../components/landing/LandingWorkflow";
 import { LandingFooter } from "../components/landing/LandingFooter";
 
 export function LandingPage() {
@@ -33,9 +34,10 @@ export function LandingPage() {
         <HeroActionButtons onSetupClick={() => setSetupOpen(true)} />
       </main>
 
-      {/* Aceternity UI Bento Grid & Timeline */}
+      {/* Aceternity & React Bits inspired landing sections */}
+      <LandingStats />
       <LandingBentoGrid />
-      <LandingTimeline />
+      <LandingWorkflow />
       <LandingFooter onSetupClick={() => setSetupOpen(true)} />
 
       <SetupModal open={setupOpen} onClose={() => setSetupOpen(false)} />
