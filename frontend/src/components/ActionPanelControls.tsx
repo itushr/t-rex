@@ -56,18 +56,18 @@ export function ActionPanelControls({
               <SkipForward strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top">Train <Kbd>T</Kbd></TooltipContent>
+          <TooltipContent side="top">Start Training <Kbd>T</Kbd></TooltipContent>
         </Tooltip>
       )}
 
       {showVisualize && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <button type="button" onClick={onVisualize} className="cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-cyan-400 flex items-center">
+            <button type="button" onClick={onVisualize} className="h-full cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-cyan-400 flex items-center">
               <Eye strokeWidth={1.8} className="size-7 text-cyan-400" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top">visualize <Kbd>V</Kbd></TooltipContent>
+          <TooltipContent side="top">Open Visualizer <Kbd>V</Kbd></TooltipContent>
         </Tooltip>
       )}
     </div>
