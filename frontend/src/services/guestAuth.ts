@@ -1,51 +1,28 @@
-const TOKEN_KEY = "dino_guest_token";
-const USER_KEY = "dino_guest_user_id";
-
-let refreshPromise: Promise<{ token: string; userId: string }> | null = null;
+import { useAuthStore } from "../stores/authStore";
 
 export function getGuestToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return useAuthStore.getState().token;
 }
 
 export function getGuestUserId(): string | null {
-  return localStorage.getItem(USER_KEY);
+  return useAuthStore.getState().userId;
 }
 
 export function clearGuestSession(): void {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  useAuthStore.getState().clearSession();
 }
 
 export async function createNewGuestSession(): Promise<{ token: string; userId: string }> {
-  if (refreshPromise) return refreshPromise;
-  refreshPromise = (async () => {
-    clearGuestSession();
-    const res = await fetch("/api/auth/guest", { method: "POST" });
-    if (!res.ok) throw new Error("Failed to initialize guest session");
-    const data = await res.json();
-    localStorage.setItem(TOKEN_KEY, data.token);
-    localStorage.setItem(USER_KEY, data.user_id);
-    return { token: data.token, userId: data.user_id };
-  })().finally(() => {
-    refreshPromise = null;
-  });
-  return refreshPromise;
+  useAuthStore.getState().clearSession();
+  const res = await fetch("/api/auth/guest", { method: "POST" });
+  if (!res.ok) throw new Error("Failed to initialize guest session");
+  const data = await res.json();
+  useAuthStore.getState().setSession(data.token, data.user_id);
+  return { token: data.token, userId: data.user_id };
 }
 
 export async function ensureGuestToken(): Promise<{ token: string; userId: string }> {
-  const existingToken = getGuestToken();
-  const existingUser = getGuestUserId();
-  if (existingToken && existingUser) {
-    try {
-      const check = await fetch("/api/auth/me", {
-        headers: { Authorization: `Bearer ${existingToken}` },
-      });
-      if (check.ok) return { token: existingToken, userId: existingUser };
-    } catch {
-      // Network error, proceed to refresh
-    }
-  }
-  return createNewGuestSession();
+  return useAuthStore.getState().ensureToken();
 }
 
 export function authHeaders(): Record<string, string> {
