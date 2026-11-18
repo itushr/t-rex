@@ -4,6 +4,7 @@ interface ActionPanelShortcutsOptions {
   onToggleRecord?: () => void;
   onTogglePlayPause?: () => void;
   onToggleSound?: () => void;
+  onForward?: () => void;
   onToggleCollapse?: () => void;
   onVisualize?: () => void;
   showVisualize?: boolean;
@@ -13,6 +14,7 @@ export function useActionPanelShortcuts({
   onToggleRecord,
   onTogglePlayPause,
   onToggleSound,
+  onForward,
   onToggleCollapse,
   onVisualize,
   showVisualize = false,
@@ -40,6 +42,9 @@ export function useActionPanelShortcuts({
       } else if (key === "m") {
         e.preventDefault();
         onToggleSound?.();
+      } else if (key === "t" && !showVisualize) {
+        e.preventDefault();
+        onForward?.();
       } else if (key === "c") {
         e.preventDefault();
         onToggleCollapse?.();
@@ -55,6 +60,7 @@ export function useActionPanelShortcuts({
     onToggleRecord,
     onTogglePlayPause,
     onToggleSound,
+    onForward,
     onToggleCollapse,
     onVisualize,
     showVisualize,

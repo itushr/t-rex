@@ -56,7 +56,7 @@ export function ActionPanelControls({
               <SkipForward strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top">train</TooltipContent>
+          <TooltipContent side="top">Train <Kbd>T</Kbd></TooltipContent>
         </Tooltip>
       )}
 

@@ -28,7 +28,7 @@ export function ActionPanel({
 
   useActionPanelShortcuts({
     onToggleRecord, onTogglePlayPause: handlePlayToggle, onToggleSound,
-    onToggleCollapse: toggleVisibility, onVisualize, showVisualize,
+    onForward, onToggleCollapse: toggleVisibility, onVisualize, showVisualize,
   });
 
   if (hidden) return null;
