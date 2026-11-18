@@ -26,12 +26,12 @@ export function DinoSimulation({ onAction, onStateChange }: Props) {
     const img = new Image();
     img.src = "/assets/default_100_percent/100-offline-sprite.png";
 
-    let animId = 0, tick = 0, lastVoteTime = 0, currentTarget: DinoAction = "none";
-    let votes = generateVotes("none");
+    let animId = 0, tick = 0, lastVoteTime = 0;
     let dinoY = 0, dinoVy = 0, isJumping = false, isDucking = false, duckTimer = 0;
-    let obsX = 750, obsType: "small" | "large" | "bird" = "small";
-    let speed = 7.0, groundX = 0;
+    let speed = 7.0, groundX = 0, obsType: "small" | "large" | "bird" = "small";
     const S = 1.95, GY = 350, DX = 60, intervalMs = PREDICTION_INTERVAL_SEC * 1000;
+    const stepDist = (intervalMs / 1000) * 60 * speed;
+    let obsX = DX + 190 + stepDist;
 
     const loop = (now: number) => {
       tick++;
@@ -44,28 +44,26 @@ export function DinoSimulation({ onAction, onStateChange }: Props) {
 
       obsX -= speed; groundX = (groundX - speed) % 600;
       if (obsX < -100) {
-        obsX = cvs.width + Math.random() * 180 + 80;
+        obsX = DX + 190 + (Math.random() < 0.5 ? 2 : 3) * stepDist;
         const r = Math.random();
         obsType = r < 0.4 ? "small" : r < 0.75 ? "large" : "bird";
-        speed = Math.min(10.0, speed + 0.02);
       }
 
       const dist = Math.max(0, Math.round(obsX - DX));
-      const targetAct: DinoAction = (dist < 155 && dist > 20)
-        ? (obsType === "bird" ? "duck" : "jump") : "none";
 
-      if (targetAct !== currentTarget || now - lastVoteTime >= intervalMs) {
-        currentTarget = targetAct;
+      // STRICT 1-SECOND TIMER - NEVER UPDATE IN BETWEEN
+      if (now - lastVoteTime >= intervalMs) {
         lastVoteTime = now;
-        votes = generateVotes(targetAct);
+        const targetAct: DinoAction = (dist < 240 && dist > 15) ? (obsType === "bird" ? "duck" : "jump") : "none";
+        const votes = generateVotes(targetAct);
         onAction?.(targetAct);
         onStateChange?.({ action: targetAct, votes, dist, speed: Number(speed.toFixed(1)), obsType });
-      }
 
-      if (targetAct === "jump" && !isJumping) {
-        isJumping = true; dinoVy = obsType === "large" ? -19.5 : -18.0;
-      } else if (targetAct === "duck" && !isJumping && !isDucking) {
-        isDucking = true; duckTimer = 34;
+        if (targetAct === "jump" && !isJumping) {
+          isJumping = true; dinoVy = obsType === "large" ? -19.5 : -18.0;
+        } else if (targetAct === "duck" && !isJumping && !isDucking) {
+          isDucking = true; duckTimer = Math.round(36 * (intervalMs / 1000));
+        }
       }
 
       if (img.complete) {
