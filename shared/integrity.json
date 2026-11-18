@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "globalGames": ["trex", "dino"],
+  "globalModels": ["decision_tree", "random_forest"],
+  "apps": {
+    "frontend": {
+      "supportedGames": ["trex"],
+      "supportedModels": ["decision_tree", "random_forest"],
+      "dataStorageTarget": "api_cloud",
+      "disallowedStorage": ["filesystem"]
+    },
+    "server": {
+      "supportedGames": ["trex", "dino"],
+      "supportedModels": ["decision_tree", "random_forest"],
+      "dataStorageTarget": "r2_db",
+      "disallowedStorage": ["filesystem_production"]
+    },
+    "driver": {
+      "supportedGames": ["dino"],
+      "supportedModels": ["decision_tree", "random_forest"],
+      "dataStorageTarget": "filesystem_only",
+      "disallowedStorage": ["r2", "database"]
+    }
+  }
+}
