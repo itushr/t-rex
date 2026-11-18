@@ -71,3 +71,6 @@ export function VisualizerIndexPage() {
     </div>
   );
 }
+
+export default VisualizerIndexPage;
+

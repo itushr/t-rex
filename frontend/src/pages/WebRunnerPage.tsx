@@ -82,3 +82,6 @@ export function WebRunnerPage() {
     </div>
   );
 }
+
+export default WebRunnerPage;
+

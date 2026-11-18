@@ -1,74 +1,32 @@
-import { useState, useEffect } from "react";
-import { WebRunnerPage } from "./pages/WebRunnerPage";
-import { TryWebAutoplayPage } from "./pages/TryWebAutoplayPage";
-import { ModelVisualizePage } from "./pages/ModelVisualizePage";
-import { PlaybackVisualizePage } from "./pages/PlaybackVisualizePage";
-import { VisualizerIndexPage } from "./pages/VisualizerIndexPage";
-import { TrainPage } from "./pages/TrainPage";
-import { PrivateDashboardV2Page } from "./pages/PrivateDashboardV2Page";
-import { LandingPage } from "./pages/LandingPage";
+import { useState, useEffect, lazy, Suspense } from "react";
+import { parseRoute } from "./router/routeParser";
+import { RouteInfo } from "./router/types";
 
-interface RouteInfo {
-  type: "landing" | "dashboard" | "dashboard-local" | "try-web" | "train" | "autoplay" | "model-viz" | "playback-viz";
-  modelName?: string; isPrivate?: boolean; treeIndex?: number;
-  playbackName?: string; predictionStep?: number; treeNo?: number;
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const PrivateDashboardV2Page = lazy(() => import("./pages/PrivateDashboardV2Page"));
+const VisualizerIndexPage = lazy(() => import("./pages/VisualizerIndexPage"));
+const TrainPage = lazy(() => import("./pages/TrainPage"));
+const TryWebAutoplayPage = lazy(() => import("./pages/TryWebAutoplayPage"));
+const WebRunnerPage = lazy(() => import("./pages/WebRunnerPage"));
+const ModelVisualizePage = lazy(() => import("./pages/ModelVisualizePage"));
+const PlaybackVisualizePage = lazy(() => import("./pages/PlaybackVisualizePage"));
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 }
 
-function parseRoute(): RouteInfo {
-  const p = window.location.pathname;
-  if (p === "/") return { type: "landing" };
-  if (p === "/dashboard" || p === "/dashboardv2") return { type: "dashboard" };
-  if (p === "/dashboard/local") return { type: "dashboard-local" };
-  if (p === "/try-web" || p === "/web") return { type: "try-web" };
-  if (p === "/train") return { type: "train" };
-
-  const autoP = p.match(/^\/try-web\/autoplay\/private\/([^/]+)\/?$/);
-  if (autoP) return { type: "autoplay", modelName: decodeURIComponent(autoP[1]), isPrivate: true };
-  const autoN = p.match(/^\/try-web\/autoplay\/([^/]+)\/?$/);
-  if (autoN) return { type: "autoplay", modelName: decodeURIComponent(autoN[1]), isPrivate: false };
-
-  const mTreeP = p.match(/^\/(?:try-web\/visualize\/private\/model|visualize\/mod(?:el|al)?\/private)\/([^/]+)\/tree\/(\d+)\/?$/);
-  if (mTreeP) return { type: "model-viz", isPrivate: true, modelName: decodeURIComponent(mTreeP[1]), treeIndex: parseInt(mTreeP[2], 10) };
-  const mTreeN = p.match(/^\/visualize\/mod(?:el|al)?\/([^/]+)\/tree\/(\d+)\/?$/);
-  if (mTreeN) return { type: "model-viz", isPrivate: false, modelName: decodeURIComponent(mTreeN[1]), treeIndex: parseInt(mTreeN[2], 10) };
-
-  const mP = p.match(/^\/(?:try-web\/visualize\/private\/(?:model\/)?|visualize\/mod(?:el|al)?\/private\/)([^/]+)\/?$/);
-  if (mP) return { type: "model-viz", isPrivate: true, modelName: decodeURIComponent(mP[1]) };
-  const mN = p.match(/^\/visualize\/mod(?:el|al)?\/([^/]+)\/?$/);
-  if (mN) return { type: "model-viz", isPrivate: false, modelName: decodeURIComponent(mN[1]) };
-
-  const pbTreeP = p.match(/^\/(?:try-web\/visualize\/private\/playback|visualize\/playback\/private)\/([^/]+)\/prediction\/(\d+)\/tree\/(\d+)\/?$/);
-  if (pbTreeP) return { type: "playback-viz", isPrivate: true, playbackName: decodeURIComponent(pbTreeP[1]), predictionStep: parseInt(pbTreeP[2], 10), treeNo: parseInt(pbTreeP[3], 10) };
-  const pbTreeN = p.match(/^\/visualize\/playback\/([^/]+)\/prediction\/(\d+)\/tree\/(\d+)\/?$/);
-  if (pbTreeN) return { type: "playback-viz", isPrivate: false, playbackName: decodeURIComponent(pbTreeN[1]), predictionStep: parseInt(pbTreeN[2], 10), treeNo: parseInt(pbTreeN[3], 10) };
-
-  const pbStepP = p.match(/^\/(?:try-web\/visualize\/private\/playback|visualize\/playback\/private)\/([^/]+)\/prediction\/(\d+)\/?$/);
-  if (pbStepP) return { type: "playback-viz", isPrivate: true, playbackName: decodeURIComponent(pbStepP[1]), predictionStep: parseInt(pbStepP[2], 10) };
-  const pbStepN = p.match(/^\/visualize\/playback\/([^/]+)\/prediction\/(\d+)\/?$/);
-  if (pbStepN) return { type: "playback-viz", isPrivate: false, playbackName: decodeURIComponent(pbStepN[1]), predictionStep: parseInt(pbStepN[2], 10) };
-
-  const pbP = p.match(/^\/(?:try-web\/visualize\/private\/playback\/|visualize\/playback\/private\/)([^/]+)\/?$/);
-  if (pbP) return { type: "playback-viz", isPrivate: true, playbackName: decodeURIComponent(pbP[1]), predictionStep: 1 };
-  const pbN = p.match(/^\/visualize\/playback\/([^/]+)\/?$/);
-  if (pbN) return { type: "playback-viz", isPrivate: false, playbackName: decodeURIComponent(pbN[1]), predictionStep: 1 };
-
-  return { type: "landing" };
-}
-
-export function App() {
-  const [route, setRoute] = useState<RouteInfo>(parseRoute);
-
-  useEffect(() => {
-    const handlePop = () => setRoute(parseRoute());
-    window.addEventListener("popstate", handlePop);
-    return () => window.removeEventListener("popstate", handlePop);
-  }, []);
-
+function RouteView({ route }: { route: RouteInfo }) {
   if (route.type === "landing") return <LandingPage />;
   if (route.type === "dashboard") return <PrivateDashboardV2Page />;
   if (route.type === "dashboard-local") return <VisualizerIndexPage />;
-  if (route.type === "train") return <TrainPage />;
-  if (route.type === "autoplay" && route.modelName) return <TryWebAutoplayPage modelName={route.modelName} isPrivate={route.isPrivate} />;
+  if (route.type === "train") return <TrainPage gameId={route.gameId} />;
+  if (route.type === "autoplay" && route.modelName) {
+    return <TryWebAutoplayPage modelName={route.modelName} isPrivate={route.isPrivate} />;
+  }
   if (route.type === "try-web") return <WebRunnerPage />;
   if (route.type === "model-viz" && route.modelName) {
     return <ModelVisualizePage modelName={route.modelName} treeIndex={route.treeIndex} isPrivate={route.isPrivate} />;
@@ -78,4 +36,21 @@ export function App() {
   }
   return <LandingPage />;
 }
+
+export function App() {
+  const [route, setRoute] = useState<RouteInfo>(() => parseRoute());
+
+  useEffect(() => {
+    const handlePop = () => setRoute(parseRoute());
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, []);
+
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <RouteView route={route} />
+    </Suspense>
+  );
+}
+
 export default App;
