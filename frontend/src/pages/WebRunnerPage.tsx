@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AUDIO_PRESS, AUDIO_HIT, AUDIO_REACHED } from "./runnerAudio";
+import { AUDIO_PRESS, AUDIO_HIT, AUDIO_REACHED } from "../games/trex/audio/runnerAudio";
 import { ActionPanel } from "../components/ActionPanel";
 import { patchRunner } from "../game/runnerAudioPatch";
 import { soundManager } from "../game/soundManager";
