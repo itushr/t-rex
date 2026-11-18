@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import { GameSample, TrainResult } from "../types/train";
-import { ALL_FEATURES } from "../components/train/featureList";
 import { TrimGameplayStep } from "../components/train/TrimGameplayStep";
-import { ModelSelectStep, SupportedModelType } from "../components/train/ModelSelectStep";
+import { ModelSelectStep } from "../components/train/ModelSelectStep";
 import { FeatureSelectStep } from "../components/train/FeatureSelectStep";
 import { TrainResultCard } from "../components/train/TrainResultCard";
 import { getPrivateGameplay, trainPrivateModel } from "../services/privateApi";
+import { getGameFeatures, getGameModels } from "../games";
 import Header from "../components/Header";
 
 function defaultTrim(len: number): [number, number] {
@@ -15,17 +15,19 @@ function defaultTrim(len: number): [number, number] {
   return [trim, len - trim];
 }
 
-export function TrainPage() {
+export function TrainPage({ gameId = "trex" }: { gameId?: string }) {
+  const gameFeatures = useMemo(() => getGameFeatures(gameId), [gameId]);
+  const gameModels = useMemo(() => getGameModels(gameId), [gameId]);
   const [samples, setSamples] = useState<GameSample[]>([]);
   const [trimRange, setTrimRange] = useState<[number, number]>([0, 0]);
-  const [modelType, setModelType] = useState<SupportedModelType>("decision_tree");
-  const [features, setFeatures] = useState<string[]>(ALL_FEATURES.map((f) => f.id));
+  const [modelType, setModelType] = useState<string>(gameModels[0] || "decision_tree");
+  const [features, setFeatures] = useState<string[]>(() => gameFeatures.map((f) => f.id));
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TrainResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("dino_local_samples");
+    const raw = sessionStorage.getItem(`${gameId}_local_samples`) || sessionStorage.getItem("dino_local_samples");
     const parsed: GameSample[] = raw ? JSON.parse(raw) : [];
     if (parsed.length) { setSamples(parsed); setTrimRange(defaultTrim(parsed.length)); return; }
     const q = new URLSearchParams(window.location.search).get("gameplay");
@@ -34,7 +36,7 @@ export function TrainPage() {
         if (d?.samples) { setSamples(d.samples); setTrimRange(defaultTrim(d.samples.length)); }
       }).catch(() => {});
     }
-  }, []);
+  }, [gameId]);
 
   const nav = (url: string) => {
     window.history.pushState(null, "", url);
@@ -61,7 +63,7 @@ export function TrainPage() {
           <h2 className="text-lg font-medium">No Gameplay Data</h2>
           <p className="text-xs text-muted-foreground">Record a session on /try-web or choose a saved run from your dashboard.</p>
           <div className="flex gap-2">
-            <button onClick={() => nav("/try-web")} className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium cursor-pointer">/try-web</button>
+            <button onClick={() => nav(gameId === "trex" ? "/try-web" : `/try-web/${gameId}`)} className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium cursor-pointer">/try-web</button>
             <button onClick={() => nav("/dashboard")} className="flex-1 py-2 rounded-lg border border-border bg-secondary text-secondary-foreground text-xs font-medium cursor-pointer">Dashboard</button>
           </div>
         </div>
@@ -75,16 +77,16 @@ export function TrainPage() {
       <Header />
       <div className="max-w-4xl w-full flex flex-col gap-10 mt-20">
         <TrimGameplayStep samples={samples} trimRange={trimRange} onChange={setTrimRange} />
-        <div className="flex mt-">
-          <ModelSelectStep modelType={modelType} onChange={setModelType} />
-          <FeatureSelectStep selected={features} onChange={setFeatures} />
+        <div className="flex">
+          <ModelSelectStep modelType={modelType} models={gameModels} onChange={setModelType} />
+          <FeatureSelectStep selected={features} features={gameFeatures} onChange={setFeatures} />
         </div>
         {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-mono">{error}</div>}
         <button
           type="button" onClick={handleTrain} disabled={loading || activeCount < 10 || features.length === 0}
           className="w-full py-3 px-6 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
         >
-          {loading && <Loader2 className="size-4 animate-spin" /> }
+          {loading && <Loader2 className="size-4 animate-spin" />}
           <span>{loading ? "Training..." : `Train ${modelType.replace("_", " ")} (${activeCount} frames)`}</span>
         </button>
         {result && <TrainResultCard result={result} onNavigate={nav} />}

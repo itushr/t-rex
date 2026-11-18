@@ -1,26 +1,29 @@
 import { Check } from "lucide-react";
+import { getModelDefinition } from "../../constants/models";
 
-export type SupportedModelType = "decision_tree" | "random_forest";
+export type SupportedModelType = string;
 
 interface Props {
-  modelType: SupportedModelType;
-  onChange: (t: SupportedModelType) => void;
+  modelType: string;
+  models?: readonly string[];
+  onChange: (t: any) => void;
 }
 
-const MODELS: { id: SupportedModelType; label: string }[] = [
-  { id: "decision_tree", label: "Decision Tree Clasifier" },
-  { id: "random_forest", label: "Random Forest Classifier" },
-];
+const DEFAULT_MODELS = ["decision_tree", "random_forest"];
 
-export function ModelSelectStep({ modelType, onChange }: Props) {
+export function ModelSelectStep({ modelType, models = DEFAULT_MODELS, onChange }: Props) {
+  const modelOptions = models.map((id) => {
+    const def = getModelDefinition(id);
+    return { id, label: def ? def.name : id.replace("_", " ") };
+  });
+
   return (
     <div className="flex flex-col gap-2.5 w-full">
       <div className="flex items-center justify-between text-xs font-mono text-muted-foreground px-1">
         <span>Model</span>
-        {/* <span className="capitalize">{modelType.replace("_", " ")}</span> */}
       </div>
       <div className="flex flex-col flex-wrap content-start gap-2 h-full min-h-24">
-        {MODELS.map((m) => {
+        {modelOptions.map((m) => {
           const isSelected = modelType === m.id;
           return (
             <button

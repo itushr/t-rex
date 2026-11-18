@@ -1,12 +1,14 @@
 import { Check } from "lucide-react";
 import { ALL_FEATURES } from "./featureList";
+import { FeatureOption } from "../../types/train";
 
 interface Props {
   selected: string[];
+  features?: FeatureOption[];
   onChange: (features: string[]) => void;
 }
 
-export function FeatureSelectStep({ selected, onChange }: Props) {
+export function FeatureSelectStep({ selected, features = ALL_FEATURES, onChange }: Props) {
   const toggle = (id: string) => {
     if (selected.includes(id)) {
       if (selected.length <= 1) return;
@@ -16,23 +18,13 @@ export function FeatureSelectStep({ selected, onChange }: Props) {
     }
   };
 
-  const selectAll = () => onChange(ALL_FEATURES.map((f) => f.id));
-  const selectCore = () => onChange(["obstacle1_x", "speed", "jumping", "time_to_impact"]);
-
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between text-xs font-mono text-muted-foreground px-1">
         <span>Inputs</span>
-        {/* <div className="flex items-center gap-2">
-          <button type="button" onClick={selectAll} className="hover:text-foreground cursor-pointer underline">All</button>
-          <span>•</span>
-          <button type="button" onClick={selectCore} className="hover:text-foreground cursor-pointer underline">Core 4</button>
-          <span>•</span>
-          <span>{selected.length}/{ALL_FEATURES.length}</span>
-        </div> */}
       </div>
       <div className="rounded-xl flex flex-wrap justify-between gap-2 h-full min-h-24">
-        {ALL_FEATURES.map((feat) => {
+        {features.map((feat) => {
           const isChecked = selected.includes(feat.id);
           return (
             <button
