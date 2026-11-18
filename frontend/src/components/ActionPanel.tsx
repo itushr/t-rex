@@ -33,12 +33,6 @@ export function ActionPanel({
 
   if (hidden) return null;
 
-  const camBg = isRecording
-    ? isRecordingPaused
-      ? "border-amber-500 bg-amber-500/20"
-      : "border-red-500 bg-red-500/20"
-    : "border-border/20";
-
   const isRotating = isRecording && !isRecordingPaused;
 
   return (
@@ -50,14 +44,14 @@ export function ActionPanel({
               <button
                 type="button"
                 onClick={onToggleRecord}
-                className={`rounded-full border p-3 cursor-pointer transition-colors ${camBg}`}
+                className="rounded-full border border-border/20 p-3 cursor-pointer transition-colors"
               >
                 <motion.div
                   animate={isRotating ? { rotate: 360 } : { rotate: 0 }}
                   transition={isRotating ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
                   className="flex items-center justify-center"
                 >
-                  <Aperture strokeWidth={1.5} fill={isRecording ? (isRecordingPaused ? "#f59e0b" : "#ef4444") : "white"} nonScalingStroke className="size-8 stroke-black" />
+                  <Aperture strokeWidth={1.5} fill="white" nonScalingStroke className="size-8 stroke-black" />
                 </motion.div>
               </button>
             </TooltipTrigger>
