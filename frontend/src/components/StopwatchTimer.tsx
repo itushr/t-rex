@@ -10,14 +10,14 @@ interface StopwatchTimerProps {
 
 function Digit({ char }: { char: string }) {
   return (
-    <span className="relative inline-flex h-[1.15em] w-[0.62em] overflow-hidden justify-center items-center">
+    <span className="relative inline-flex h-[1.25em] w-[1.05em] overflow-hidden justify-center items-center">
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.span
           key={char}
-          initial={{ y: "60%", opacity: 0 }}
+          initial={{ y: "70%", opacity: 0 }}
           animate={{ y: "0%", opacity: 1 }}
-          exit={{ y: "-60%", opacity: 0 }}
-          transition={{ duration: 0.16, ease: "easeOut" }}
+          exit={{ y: "-70%", opacity: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           className="absolute"
         >
           {char}
@@ -37,7 +37,10 @@ export function StopwatchTimer({
   const isPulsing = isRecording && !isRecordingPaused;
 
   return (
-    <div className="flex items-baseline font-mono text-3xl font-semibold tracking-tight text-white tabular-nums select-none">
+    <div
+      className="flex items-center text-white tabular-nums select-none tracking-normal text-base sm:text-lg"
+      style={{ fontFamily: "'Press Start 2P', monospace" }}
+    >
       <div className="flex items-center">
         <Digit char={mins[0] || "0"} />
         <Digit char={mins[1] || "0"} />
@@ -46,7 +49,7 @@ export function StopwatchTimer({
       <motion.span
         animate={isPulsing ? { opacity: [1, 0.25, 1] } : { opacity: 1 }}
         transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
-        className="px-0.5 text-zinc-500 font-bold"
+        className="px-0.5 text-zinc-400"
       >
         :
       </motion.span>
@@ -56,7 +59,7 @@ export function StopwatchTimer({
         <Digit char={secs[1] || "0"} />
       </div>
 
-      <span className="text-zinc-400 text-xl font-normal tabular-nums ml-0.5">
+      <span className="text-zinc-400 text-xs sm:text-sm ml-1">
         .{ms}
       </span>
     </div>

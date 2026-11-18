@@ -55,12 +55,11 @@ export function ActionPanel({
                 type="button"
                 onClick={onToggleRecord}
                 className={`rounded-full border p-3 cursor-pointer transition-colors ${camBg}`}
-                title={isRecording ? (isRecordingPaused ? "Resume Recording" : "Pause Recording") : "Start Recording"}
               >
                 <Camera strokeWidth={1.5} fill={isRecording ? (isRecordingPaused ? "#f59e0b" : "#ef4444") : "white"} nonScalingStroke className="size-8 stroke-black" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top">record <Kbd>R</Kbd></TooltipContent>
+            <TooltipContent side="top">{isRecording ? (isRecordingPaused ? "Resume Recording" : "Pause Recording") : "Start Recording"} <Kbd>R</Kbd></TooltipContent>
           </Tooltip>
 
           <ActionPanelControls
@@ -82,7 +81,7 @@ export function ActionPanel({
               <X className="size-5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top">toggle width <Kbd>C</Kbd></TooltipContent>
+          <TooltipContent side="top">Close Panel <Kbd>C</Kbd></TooltipContent>
         </Tooltip>
       </div>
     </TooltipProvider>

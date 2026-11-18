@@ -34,19 +34,19 @@ export function ActionPanelControls({
       <Tooltip>
         <TooltipTrigger asChild>
           <button type="button" onClick={onPlayToggle} className="cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-white flex items-center">
-            {gameStatus === "crashed" ? <RotateCcw strokeWidth={2} className="size-7" /> : gameStatus === "playing" ? <Pause strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" /> : <Play strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" />}
+            {gameStatus === "crashed" ? <Play strokeWidth={1.5} nonScalingStroke fill="white" className="size-7" /> : gameStatus === "playing" ? <Pause strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" /> : <Play strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" />}
           </button>
         </TooltipTrigger>
-        <TooltipContent side="top">play <Kbd>P</Kbd></TooltipContent>
+        <TooltipContent side="top">{gameStatus === "crashed" ? "Restart" : gameStatus === "playing" ? "Pause" : "Play"} <Kbd>P</Kbd></TooltipContent>
       </Tooltip>
 
       <Tooltip>
         <TooltipTrigger asChild>
           <button type="button" onClick={onToggleSound} className="cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-white flex items-center">
-            {soundEnabled ? <Volume2 strokeWidth={1.5} fill="white" nonScalingStroke className="size-8 text-white" /> : <VolumeX strokeWidth={1.5} className="size-8 text-white opacity-60" />}
+            {soundEnabled ? <Volume2 strokeWidth={1.5} fill="white" nonScalingStroke className="size-8 text-white" /> : <VolumeX strokeWidth={1.5} fill="white" nonScalingStroke  className="size-8 text-white" />}
           </button>
         </TooltipTrigger>
-        <TooltipContent side="top">mute <Kbd>M</Kbd></TooltipContent>
+        <TooltipContent side="top">{soundEnabled ? "Mute" : "Unmute"} <Kbd>M</Kbd></TooltipContent>
       </Tooltip>
 
       {!showVisualize && onForward && (
