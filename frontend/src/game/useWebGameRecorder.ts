@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { GameRecorder } from "./gameRecorder";
 import { savePrivateGameplay } from "../services/privateApi";
+import { getGameAdapter } from "../games";
 import type { GameStatus } from "./useGameRunnerControls";
 
-export function useWebGameRecorder(gameStatus: GameStatus) {
-  const recRef = useRef(new GameRecorder());
+export function useWebGameRecorder(gameStatus: GameStatus, gameId: string = "trex") {
+  const adapter = getGameAdapter(gameId);
+  const recRef = useRef(new GameRecorder(adapter));
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
 
@@ -21,13 +23,12 @@ export function useWebGameRecorder(gameStatus: GameStatus) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const r = (window as any).Runner?.instance_;
-      const k = e.key;
-      if (e.type === "keydown") {
-        if (k === "ArrowUp" || k === " " || e.code === "Space") recRef.current.recordKey(r, "jump");
-        else if (k === "ArrowDown") recRef.current.recordKey(r, "duck");
-      } else if (e.type === "keyup" && k === "ArrowDown") {
-        recRef.current.releaseKey("duck");
+      const r = adapter.getRunnerInstance();
+      const action = adapter.mapKeyEventToAction(e);
+      if (e.type === "keydown" && action) {
+        recRef.current.recordKey(r, action);
+      } else if (e.type === "keyup" && action) {
+        recRef.current.releaseKey(action);
       }
     };
     window.addEventListener("keydown", onKey, true);
@@ -37,7 +38,7 @@ export function useWebGameRecorder(gameStatus: GameStatus) {
       window.removeEventListener("keyup", onKey, true);
       recRef.current.stop();
     };
-  }, []);
+  }, [adapter]);
 
   const toggleRecord = () => {
     const rec = recRef.current;
@@ -54,11 +55,11 @@ export function useWebGameRecorder(gameStatus: GameStatus) {
     const samples = recRef.current.getSamples();
     recRef.current.stop();
     setIsRecording(false);
-    sessionStorage.setItem("dino_local_samples", JSON.stringify(samples));
-    if (samples.length >= 10) {
-      savePrivateGameplay(samples).catch(() => {});
-    }
-    window.history.pushState(null, "", "/train");
+    sessionStorage.setItem(`${gameId}_local_samples`, JSON.stringify(samples));
+    if (gameId === "trex") sessionStorage.setItem("dino_local_samples", JSON.stringify(samples));
+    if (samples.length >= 10) savePrivateGameplay(samples).catch(() => {});
+    const targetUrl = gameId === "trex" ? "/train" : `/train/${gameId}`;
+    window.history.pushState(null, "", targetUrl);
     window.dispatchEvent(new PopStateEvent("popstate"));
   };
 
