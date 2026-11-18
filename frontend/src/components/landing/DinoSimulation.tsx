@@ -1,44 +1,38 @@
 import { useEffect, useRef } from "react";
 import { DinoAction, SimState } from "./types";
 
-interface Props {
-  onAction?: (a: DinoAction) => void;
-  onStateChange?: (s: SimState) => void;
-}
+interface Props { onAction?: (a: DinoAction) => void; onStateChange?: (s: SimState) => void; }
 
-function getVotes(dist: number, obsType: string): DinoAction[] {
-  if (dist < 155 && dist > 20) {
-    return obsType === "bird" ? ["duck", "duck", "jump", "duck", "none"] : ["jump", "jump", "duck", "jump", "none"];
+const ACTIONS: DinoAction[] = ["jump", "duck", "none"];
+
+function generateVotes(target: DinoAction): DinoAction[] {
+  const targetCount = Math.random() < 0.65 ? 3 : 4;
+  const res: DinoAction[] = Array(targetCount).fill(target);
+  while (res.length < 5) res.push(ACTIONS[Math.floor(Math.random() * ACTIONS.length)]);
+  for (let i = res.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [res[i], res[j]] = [res[j], res[i]];
   }
-  return ["none", "none", "none", "jump", "none"];
-}
-
-function getMaxFreq(votes: DinoAction[]): DinoAction {
-  const counts: Record<string, number> = {};
-  votes.forEach((v) => { counts[v] = (counts[v] || 0) + 1; });
-  let best = votes[0], maxC = 0;
-  for (const [k, c] of Object.entries(counts)) { if (c > maxC) { maxC = c; best = k as DinoAction; } }
-  return best;
+  return res;
 }
 
 export function DinoSimulation({ onAction, onStateChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const ctx = cvs.getContext("2d");
-    if (!ctx) return;
+    const cvs = canvasRef.current; if (!cvs) return;
+    const ctx = cvs.getContext("2d"); if (!ctx) return;
     const img = new Image();
     img.src = "/assets/default_100_percent/100-offline-sprite.png";
 
-    let animId = 0, tick = 0, lastReportTick = 0, lastAct: DinoAction = "none";
+    let animId = 0, tick = 0, lastVoteTime = 0, currentTarget: DinoAction = "none";
+    let votes = generateVotes("none");
     let dinoY = 0, dinoVy = 0, isJumping = false, isDucking = false, duckTimer = 0;
     let obsX = 750, obsType: "small" | "large" | "bird" = "small";
     let speed = 7.0, groundX = 0;
     const S = 1.95, GY = 350, DX = 60;
 
-    const loop = () => {
+    const loop = (now: number) => {
       tick++;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       if (isJumping) {
@@ -56,19 +50,21 @@ export function DinoSimulation({ onAction, onStateChange }: Props) {
       }
 
       const dist = Math.max(0, Math.round(obsX - DX));
-      const votes = getVotes(dist, obsType);
-      const act = getMaxFreq(votes);
+      const targetAct: DinoAction = (dist < 155 && dist > 20)
+        ? (obsType === "bird" ? "duck" : "jump") : "none";
 
-      if (act === "jump" && !isJumping) {
-        isJumping = true; dinoVy = obsType === "large" ? -19.5 : -18.0;
-      } else if (act === "duck" && !isJumping && !isDucking) {
-        isDucking = true; duckTimer = 34;
+      if (targetAct !== currentTarget || now - lastVoteTime >= 1000) {
+        currentTarget = targetAct;
+        lastVoteTime = now;
+        votes = generateVotes(targetAct);
+        onAction?.(targetAct);
+        onStateChange?.({ action: targetAct, votes, dist, speed: Number(speed.toFixed(1)), obsType });
       }
 
-      if (act !== lastAct || tick - lastReportTick >= 10) {
-        lastAct = act; lastReportTick = tick;
-        onAction?.(act);
-        onStateChange?.({ action: act, votes, dist, speed: Number(speed.toFixed(1)), obsType: dist < 320 ? obsType : "none" });
+      if (targetAct === "jump" && !isJumping) {
+        isJumping = true; dinoVy = obsType === "large" ? -19.5 : -18.0;
+      } else if (targetAct === "duck" && !isJumping && !isDucking) {
+        isDucking = true; duckTimer = 34;
       }
 
       if (img.complete) {

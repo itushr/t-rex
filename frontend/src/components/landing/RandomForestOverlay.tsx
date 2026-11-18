@@ -11,7 +11,6 @@ const DEF_VOTES: DinoAction[] = ["jump", "jump", "duck", "jump", "none"];
 
 export function RandomForestOverlay({ state }: { state?: SimState }) {
   const votes = state?.votes || DEF_VOTES;
-  const currentAction = state?.action || "none";
 
   const nodes: Node[] = useMemo(() => [
     ...FEATS.map((label, i) => ({
@@ -22,10 +21,9 @@ export function RandomForestOverlay({ state }: { state?: SimState }) {
       id: `tree-${i}`, type: "circle", position: { x: 275, y: 15 + i * 60 }, data: {},
     })),
     ...votes.map((action, i) => ({
-      id: `act-${i}`, type: "act", position: { x: 375, y: 15 + i * 60 },
-      data: { action, active: action === currentAction && currentAction !== "none" },
+      id: `act-${i}`, type: "act", position: { x: 375, y: 15 + i * 60 }, data: { action },
     })),
-  ], [votes, currentAction]);
+  ], [votes]);
 
   const edges: Edge[] = useMemo(() => [
     ...FEATS.map((_, i) => ({
