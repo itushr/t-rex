@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { DinoAction, SimState } from "./types";
+import { PREDICTION_INTERVAL_SEC } from "./constants";
 
 interface Props { onAction?: (a: DinoAction) => void; onStateChange?: (s: SimState) => void; }
 
@@ -30,7 +31,7 @@ export function DinoSimulation({ onAction, onStateChange }: Props) {
     let dinoY = 0, dinoVy = 0, isJumping = false, isDucking = false, duckTimer = 0;
     let obsX = 750, obsType: "small" | "large" | "bird" = "small";
     let speed = 7.0, groundX = 0;
-    const S = 1.95, GY = 350, DX = 60;
+    const S = 1.95, GY = 350, DX = 60, intervalMs = PREDICTION_INTERVAL_SEC * 1000;
 
     const loop = (now: number) => {
       tick++;
@@ -53,7 +54,7 @@ export function DinoSimulation({ onAction, onStateChange }: Props) {
       const targetAct: DinoAction = (dist < 155 && dist > 20)
         ? (obsType === "bird" ? "duck" : "jump") : "none";
 
-      if (targetAct !== currentTarget || now - lastVoteTime >= 1000) {
+      if (targetAct !== currentTarget || now - lastVoteTime >= intervalMs) {
         currentTarget = targetAct;
         lastVoteTime = now;
         votes = generateVotes(targetAct);
