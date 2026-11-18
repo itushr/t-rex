@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Camera, X } from "lucide-react";
+import { Aperture, X } from "lucide-react";
+import { motion } from "framer-motion";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { Kbd } from "@/components/ui/kbd";
 import { ActionPanelControls } from "./ActionPanelControls";
@@ -8,17 +9,10 @@ import { useActionPanelShortcuts } from "../hooks/useActionPanelShortcuts";
 import type { GameStatus } from "../game/useGameRunnerControls";
 
 interface ActionPanelProps {
-  soundEnabled?: boolean;
-  onToggleSound?: () => void;
-  gameStatus?: GameStatus;
-  onTogglePlayPause?: () => void;
-  onRestart?: () => void;
-  isRecording?: boolean;
-  isRecordingPaused?: boolean;
-  onToggleRecord?: () => void;
-  onForward?: () => void;
-  showVisualize?: boolean;
-  onVisualize?: () => void;
+  soundEnabled?: boolean; onToggleSound?: () => void;
+  gameStatus?: GameStatus; onTogglePlayPause?: () => void; onRestart?: () => void;
+  isRecording?: boolean; isRecordingPaused?: boolean; onToggleRecord?: () => void;
+  onForward?: () => void; showVisualize?: boolean; onVisualize?: () => void;
 }
 
 export function ActionPanel({
@@ -42,8 +36,10 @@ export function ActionPanel({
   const camBg = isRecording
     ? isRecordingPaused
       ? "border-amber-500 bg-amber-500/20"
-      : "border-red-500 bg-red-500/20 animate-pulse"
+      : "border-red-500 bg-red-500/20"
     : "border-border/20";
+
+  const isRotating = isRecording && !isRecordingPaused;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -56,7 +52,13 @@ export function ActionPanel({
                 onClick={onToggleRecord}
                 className={`rounded-full border p-3 cursor-pointer transition-colors ${camBg}`}
               >
-                <Camera strokeWidth={1.5} fill={isRecording ? (isRecordingPaused ? "#f59e0b" : "#ef4444") : "white"} nonScalingStroke className="size-8 stroke-black" />
+                <motion.div
+                  animate={isRotating ? { rotate: 360 } : { rotate: 0 }}
+                  transition={isRotating ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                  className="flex items-center justify-center"
+                >
+                  <Aperture strokeWidth={1.5} fill={isRecording ? (isRecordingPaused ? "#f59e0b" : "#ef4444") : "white"} nonScalingStroke className="size-8 stroke-black" />
+                </motion.div>
               </button>
             </TooltipTrigger>
             <TooltipContent side="top">{isRecording ? (isRecordingPaused ? "Resume Recording" : "Pause Recording") : "Start Recording"} <Kbd>R</Kbd></TooltipContent>
