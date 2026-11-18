@@ -37,23 +37,25 @@ export function ActionPanel({
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="action-panel fixed bottom-10 bg-black/95 text-white rounded-full flex items-center scale-y-90 pointer-events-auto select-none z-50">
-        <div className="flex gap-5 items-center bg-black rounded-full p-2 pr-7 border border-border/20 scale-y-110">
+      <div className="action-panel fixed bottom-10 bg-black/95 text-white rounded-l-[50%] rounded-r-[30px] flex items-center scale-y-80 pointer-events-auto select-none z-50">
+        <div className="flex gap-2 items-center bg-black rounded-full border border-border/20 scale-y-120">
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={onToggleRecord}
-                className="rounded-full border border-border/20 p-3 cursor-pointer transition-colors"
-              >
-                <motion.div
-                  animate={isRotating ? { rotate: 360 } : { rotate: 0 }}
-                  transition={isRotating ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
-                  className="flex items-center justify-center"
+              <div className="p-2">
+                <button
+                  type="button"
+                  onClick={onToggleRecord}
+                  className="rounded-full border border-border/20 p-3 cursor-pointer transition-colors"
                 >
-                  <Aperture strokeWidth={1.5} fill="white" nonScalingStroke className="size-8 stroke-black" />
-                </motion.div>
-              </button>
+                  <motion.div
+                    animate={isRotating ? { rotate: 360 } : { rotate: 0 }}
+                    transition={isRotating ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                    className="flex items-center justify-center"
+                  >
+                    <Aperture strokeWidth={1.5} fill="white" nonScalingStroke className="size-8 stroke-black" />
+                  </motion.div>
+                </button>
+              </div>
             </TooltipTrigger>
             <TooltipContent side="top">{isRecording ? (isRecordingPaused ? "Resume Recording" : "Pause Recording") : "Start Recording"} <Kbd>R</Kbd></TooltipContent>
           </Tooltip>
@@ -71,13 +73,12 @@ export function ActionPanel({
             <button
               type="button"
               onClick={() => setHidden(true)}
-              className="pl-2.5 pr-5 cursor-pointer bg-transparent border-0 text-white flex items-center p-0 m-0"
-              title="Close panel"
+              className="cursor-pointer text-white flex items-center justify-center pl-1 pr-3"
             >
               <X className="size-5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top">Close Panel <Kbd>C</Kbd></TooltipContent>
+          <TooltipContent side="right">Close Panel <Kbd>C</Kbd></TooltipContent>
         </Tooltip>
       </div>
     </TooltipProvider>
