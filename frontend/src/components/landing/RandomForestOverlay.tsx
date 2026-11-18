@@ -41,13 +41,15 @@ export function RandomForestOverlay({ state }: { state?: SimState }) {
     stateRef.current = state;
   }, [state]);
 
-  // STRICTLY TIME-SPECIFIC UPDATES - NEVER IN BETWEEN
+  // STRICTLY TIME-SPECIFIC UPDATES (synced while hidden between 70% and 100%)
   useEffect(() => {
-    const timer = setInterval(() => {
-      const act = resolveAction(stateRef.current);
-      setVotes(generateVotes(act));
-    }, PREDICTION_INTERVAL_SEC * 1000);
-    return () => clearInterval(timer);
+    let t: NodeJS.Timeout;
+    const to = setTimeout(() => {
+      const run = () => setVotes(generateVotes(resolveAction(stateRef.current)));
+      run();
+      t = setInterval(run, PREDICTION_INTERVAL_SEC * 1000);
+    }, PREDICTION_INTERVAL_SEC * 850);
+    return () => { clearTimeout(to); clearInterval(t); };
   }, []);
 
   const nodes: Node[] = useMemo(() => [
@@ -59,9 +61,9 @@ export function RandomForestOverlay({ state }: { state?: SimState }) {
       id: `tree-${i}`, type: "circle", position: { x: 275, y: 15 + i * 60 }, data: {},
     })),
     ...votes.map((action, i) => ({
-      id: `act-${i}`, type: "act", position: { x: 375, y: 15 + i * 60 }, data: { action },
+      id: `act-${i}`, type: "act", position: { x: 375, y: 15 + i * 60 }, data: { action, dur },
     })),
-  ], [votes]);
+  ], [votes, dur]);
 
   const edges: Edge[] = useMemo(() => [
     ...FEATS.map((_, i) => ({
