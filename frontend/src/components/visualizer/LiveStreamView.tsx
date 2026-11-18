@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { PlaybackStep } from "../types/playback";
-import { StepHUD } from "./StepHUD";
+import { PlaybackStep } from "../../types/playback";
+import { StepHUD } from "../games/trex/StepHUD";
 
 export const LiveStreamView: React.FC = () => {
   const [connected, setConnected] = useState<boolean>(false);

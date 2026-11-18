@@ -1,6 +1,6 @@
 import React, { useRef, useState, useMemo } from "react";
-import { TreeNode } from "../types/tree";
-import { layoutTree } from "../services/treeLayout";
+import { TreeNode } from "../../types/tree";
+import { layoutTree } from "../../services/treeLayout";
 import { TreeSvgNode } from "./TreeSvgNode";
 
 interface TreeViewerProps {

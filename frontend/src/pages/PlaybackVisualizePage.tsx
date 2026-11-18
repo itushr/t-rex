@@ -2,11 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import { fetchPlaybackMeta, fetchPlaybackStep, fetchPlaybackStepTree } from "../services/api";
 import { getPrivatePlaybackMeta, getPrivatePlaybackStep } from "../services/privateApi";
 import { PlaybackMetaResponse } from "../types/playback";
-import { PlaybackHeader } from "../components/PlaybackHeader";
-import { PlaybackPredictionSidebar } from "../components/PlaybackPredictionSidebar";
-import { PlaybackTreesTable } from "../components/PlaybackTreesTable";
-import { TreeViewer } from "../components/TreeViewer";
-import { NodeModal } from "../components/NodeModal";
+import { PlaybackHeader } from "../components/visualizer/PlaybackHeader";
+import { PlaybackPredictionSidebar } from "../components/visualizer/PlaybackPredictionSidebar";
+import { PlaybackTreesTable } from "../components/visualizer/PlaybackTreesTable";
+import { TreeViewer } from "../components/visualizer/TreeViewer";
+import { NodeModal } from "../components/visualizer/NodeModal";
 import { navigateTo } from "../utils/navigation";
 
 export function PlaybackVisualizePage({ playbackName, predictionStep = 1, treeNo, isPrivate = false }: {

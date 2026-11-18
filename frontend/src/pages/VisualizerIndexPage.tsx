@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchModels, fetchPlaybacks } from "../services/api";
 import { ModelSummary } from "../types/model";
 import { PlaybackSession } from "../types/playback";
-import { DinoIcon } from "../components/DinoIcon";
+import { DinoIcon } from "../components/games/trex/DinoIcon";
 import { navigateTo } from "../utils/navigation";
 
 export function VisualizerIndexPage() {

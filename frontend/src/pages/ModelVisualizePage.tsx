@@ -3,9 +3,9 @@ import { fetchModelInfo, fetchModelSingleTree } from "../services/api";
 import { getPrivateModelInfo, getPrivateModelSingleTree } from "../services/privateApi";
 import { ModelInfo } from "../types/model";
 import { TreeNode } from "../types/tree";
-import { TreeViewer } from "../components/TreeViewer";
-import { NodeModal } from "../components/NodeModal";
-import { DinoIcon } from "../components/DinoIcon";
+import { TreeViewer } from "../components/visualizer/TreeViewer";
+import { NodeModal } from "../components/visualizer/NodeModal";
+import { DinoIcon } from "../components/games/trex/DinoIcon";
 import { navigateTo } from "../utils/navigation";
 
 export function ModelVisualizePage({ modelName, treeIndex, isPrivate = false }: { modelName: string; treeIndex?: number; isPrivate?: boolean }) {

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { PlaybackMetaStep } from "../types/playback";
+import { PlaybackMetaStep } from "../../types/playback";
 
 interface Props {
   modelType: string;

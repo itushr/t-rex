@@ -1,5 +1,5 @@
 import React from "react";
-import { PlaybackStep } from "../types/playback";
+import { PlaybackStep } from "../../../types/playback";
 
 interface StepHUDProps {
   step: PlaybackStep | null;

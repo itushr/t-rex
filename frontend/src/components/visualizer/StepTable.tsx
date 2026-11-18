@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { PlaybackStep } from "../types/playback";
+import { PlaybackStep } from "../../types/playback";
 
 interface StepTableProps {
   records: PlaybackStep[];

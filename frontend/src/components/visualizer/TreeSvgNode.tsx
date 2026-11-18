@@ -1,6 +1,6 @@
 import React from "react";
-import { TreeNode } from "../types/tree";
-import { NODE_W, NODE_H } from "../services/treeLayout";
+import { TreeNode } from "../../types/tree";
+import { NODE_W, NODE_H } from "../../services/treeLayout";
 
 interface TreeSvgNodeProps {
   node: TreeNode;

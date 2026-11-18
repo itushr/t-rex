@@ -1,5 +1,5 @@
 import React from "react";
-import { PlaybackTreeTableRow } from "../types/playback";
+import { PlaybackTreeTableRow } from "../../types/playback";
 
 interface Props {
   trees: PlaybackTreeTableRow[];

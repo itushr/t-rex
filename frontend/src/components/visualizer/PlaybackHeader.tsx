@@ -1,6 +1,6 @@
 import React from "react";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
-import { DinoIcon } from "./DinoIcon";
+import { DinoIcon } from "../games/trex/DinoIcon";
 
 interface Props {
   playbackName: string;

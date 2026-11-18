@@ -1,5 +1,5 @@
 import React from "react";
-import { TreeNode } from "../types/tree";
+import { TreeNode } from "../../types/tree";
 
 interface NodeModalProps {
   node: TreeNode | null;

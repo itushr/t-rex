@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Header2 } from "../components/Header2";
-import { PlaybackView } from "../components/PlaybackView";
-import { ModelGraphView } from "../components/ModelGraphView";
-import { LiveStreamView } from "../components/LiveStreamView";
+import { PlaybackView } from "../components/visualizer/PlaybackView";
+import { ModelGraphView } from "../components/visualizer/ModelGraphView";
+import { LiveStreamView } from "../components/visualizer/LiveStreamView";
 import { fetchPlaybacks, fetchPlaybackDetail } from "../services/api";
 import { PlaybackSession } from "../types/playback";
 import { usePlaybackScrubber } from "../hooks/usePlaybackScrubber";

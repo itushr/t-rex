@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { fetchModels, fetchModelGraph } from "../services/api";
-import { ModelSummary } from "../types/model";
-import { TreeNode } from "../types/tree";
+import { fetchModels, fetchModelGraph } from "../../services/api";
+import { ModelSummary } from "../../types/model";
+import { TreeNode } from "../../types/tree";
 import { TreeViewer } from "./TreeViewer";
 import { ForestSelector } from "./ForestSelector";
 import { NodeModal } from "./NodeModal";

@@ -1,5 +1,5 @@
 import React from "react";
-import { TreePathResult } from "../types/playback";
+import { TreePathResult } from "../../types/playback";
 
 interface ForestSelectorProps {
   nEstimators: number;

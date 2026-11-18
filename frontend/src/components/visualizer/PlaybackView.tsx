@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { PlaybackSession } from "../types/playback";
-import { TreeNode } from "../types/tree";
-import { usePlaybackScrubber } from "../hooks/usePlaybackScrubber";
+import { PlaybackSession } from "../../types/playback";
+import { TreeNode } from "../../types/tree";
+import { usePlaybackScrubber } from "../../hooks/usePlaybackScrubber";
 import { StepTable } from "./StepTable";
-import { StepHUD } from "./StepHUD";
+import { StepHUD } from "../games/trex/StepHUD";
 import { ForestSelector } from "./ForestSelector";
 import { TreeViewer } from "./TreeViewer";
 import { NodeModal } from "./NodeModal";
