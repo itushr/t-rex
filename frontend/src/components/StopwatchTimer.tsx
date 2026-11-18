@@ -46,18 +46,20 @@ export function StopwatchTimer({
         <Digit char={mins[1] || "0"} />
       </div>
 
-      <span
+      <motion.span
+        animate={isPulsing ? { opacity: [1, 0.25, 1] } : { opacity: 1 }}
+        transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
         className="px-0.5 text-zinc-400"
       >
         :
-      </span>
+      </motion.span>
 
       <div className="flex items-center">
         <Digit char={secs[0] || "0"} />
         <Digit char={secs[1] || "0"} />
       </div>
 
-      <span className="text-zinc-400">
+      <span className="text-zinc-400 text-xs sm:text-sm ml-1">
         .{ms}
       </span>
     </div>
