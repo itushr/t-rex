@@ -53,11 +53,11 @@ export function PrivateDashboardV2Page() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-accent-foreground text-foreground p-5">
+    <div className="min-h-screen bg-background text-foreground px-5 py-10">
       <Header />
 
       <div className="mt-20 max-w-275 mx-auto">
-        <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 auto-rows-37.5 grid-flow-row-dense gap-2">
+        <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 auto-rows-25 grid-flow-row-dense gap-2">
           {items.map((it) => {
             if (it.kind === "model") return <ModelCard key={it.id} model={it} />;
             if (it.kind === "gameplay") return <GameplayCard key={it.id} gameplay={it} />;

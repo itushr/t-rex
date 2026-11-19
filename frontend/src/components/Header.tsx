@@ -19,7 +19,7 @@ export function Header({ onSetupClick }: HeaderProps) {
 
   return (
     <>
-      <header className="bg-background w-full mx-auto max-w-3xl h-14 rounded-xl border border-border px-5 flex items-center justify-between shadow-2xs">
+      <header className="bg-card w-full mx-auto max-w-3xl h-14 rounded-xl border border-border px-5 flex items-center justify-between shadow-sm">
         <a href="/" className="flex items-center gap-2.5 font-bold text-sm tracking-tight hover:opacity-85 transition-opacity">
           <img src="/dino.svg" className="w-6 opacity-70" />
         </a>
