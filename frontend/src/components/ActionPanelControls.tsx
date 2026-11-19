@@ -1,4 +1,4 @@
-import { Eye, Pause, Play, RotateCcw, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { DiagramFlowVertical, Eye, Pause, Play, RotateCcw, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Kbd } from "@/components/ui/kbd";
 import { StopwatchTimer } from "./StopwatchTimer";
@@ -31,19 +31,33 @@ export function ActionPanelControls({
         isRecording={isRecording}
         isRecordingPaused={isRecordingPaused}
       />
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button type="button" onClick={onPlayToggle} className="h-full cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-white flex items-center">
-            {gameStatus === "crashed" ? <Play strokeWidth={1.5} nonScalingStroke fill="white" className="size-7" /> : gameStatus === "playing" ? <Pause strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" /> : <Play strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" />}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="top">{gameStatus === "crashed" ? "Restart Game" : gameStatus === "playing" ? "Pause Game" : "Play Game"} <Kbd>P</Kbd></TooltipContent>
-      </Tooltip>
+
+      {!showVisualize && onForward && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" onClick={onPlayToggle} className="h-full cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-white flex items-center">
+              {gameStatus === "crashed" ? <Play strokeWidth={1.5} nonScalingStroke fill="white" className="size-7" /> : gameStatus === "playing" ? <Pause strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" /> : <Play strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{gameStatus === "crashed" ? "Restart Game" : gameStatus === "playing" ? "Pause Game" : "Play Game"} <Kbd>P</Kbd></TooltipContent>
+        </Tooltip>
+      )}
+
+      {showVisualize && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" onClick={onPlayToggle} className="h-full cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-white flex items-center">
+              {gameStatus === "crashed" ? <Play strokeWidth={1.5} nonScalingStroke fill="white" className="size-7" /> : gameStatus === "playing" ? <Pause strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" /> : <Play strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{gameStatus === "crashed" ? "Restart Autoplay" : gameStatus === "playing" ? "Pause Autoplay" : "Start Autoplay"} <Kbd>P</Kbd></TooltipContent>
+        </Tooltip>
+      )}
 
       <Tooltip>
         <TooltipTrigger asChild>
           <button type="button" onClick={onToggleSound} className="h-full cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-white flex items-center">
-            {soundEnabled ? <Volume2 strokeWidth={1.5} fill="white" nonScalingStroke className="size-8 text-white" /> : <VolumeX strokeWidth={1.5} fill="white" nonScalingStroke  className="size-8 text-white" />}
+            {soundEnabled ? <Volume2 strokeWidth={1.5} fill="white" nonScalingStroke className="size-8 text-white" /> : <VolumeX strokeWidth={1.5} fill="white" nonScalingStroke className="size-8 text-white" />}
           </button>
         </TooltipTrigger>
         <TooltipContent side="top">{soundEnabled ? "Mute" : "Unmute"} <Kbd>M</Kbd></TooltipContent>
@@ -63,8 +77,8 @@ export function ActionPanelControls({
       {showVisualize && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <button type="button" onClick={onVisualize} className="h-full cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 text-cyan-400 flex items-center">
-              <Eye strokeWidth={1.8} className="size-7 text-cyan-400" />
+            <button type="button" onClick={onVisualize} className="h-full cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 flex items-center">
+              <DiagramFlowVertical strokeWidth={1.5} fill="white" className="size-6" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="top">Open Visualizer <Kbd>V</Kbd></TooltipContent>
