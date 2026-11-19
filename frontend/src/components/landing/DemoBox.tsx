@@ -20,7 +20,7 @@ export function DemoBox() {
         <div className="w-full lg:w-[56%] flex items-center justify-center">
           <DinoSimulation onStateChange={setSimState} />
         </div>
-        <div className="w-full lg:w-[44%] flex items-center justify-center">
+        <div className="w-full lg:w-[44%] flex items-center justify-center bg-transparent">
           <RandomForestOverlay state={simState} />
         </div>
       </div>

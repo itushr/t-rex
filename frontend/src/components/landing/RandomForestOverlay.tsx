@@ -85,6 +85,8 @@ export function RandomForestOverlay({ state }: { state?: SimState }) {
         nodes={nodes} edges={edges} nodeTypes={NODE_TYPES} edgeTypes={EDGE_TYPES}
         defaultViewport={VIEWPORT} panOnDrag={false} zoomOnScroll={false} zoomOnPinch={false}
         nodesDraggable={false} elementsSelectable={false} proOptions={{ hideAttribution: true }}
+        style={{ background: "transparent", backgroundColor: "transparent" }}
+        className="!bg-transparent"
       />
     </div>
   );

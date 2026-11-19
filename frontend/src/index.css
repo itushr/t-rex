@@ -73,3 +73,11 @@
     @apply font-sans;
   }
 }
+
+.react-flow,
+.react-flow__pane,
+.react-flow__renderer,
+.react-flow__viewport {
+  background: transparent !important;
+  background-color: transparent !important;
+}
