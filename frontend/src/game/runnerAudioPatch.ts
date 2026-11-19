@@ -28,6 +28,28 @@ export function patchRunner(Runner: any): void {
     return origStop?.apply(this, arguments as any);
   };
 
+  proto.play = function () {
+    if (this.crashed) return;
+    this.playing = true; this.paused = false; this.time = performance.now();
+    if (this.raqId) { cancelAnimationFrame(this.raqId); this.raqId = 0; }
+    this.updatePending = false; this.update();
+  };
+
+  const origKeyUp = proto.onKeyUp;
+  proto.onKeyUp = function (e: any) {
+    if (this.paused) {
+      if (Runner.keycodes?.JUMP?.[e.keyCode]) this.play();
+      return;
+    }
+    return origKeyUp?.apply(this, arguments as any);
+  };
+
+  const origKeyDown = proto.onKeyDown;
+  proto.onKeyDown = function (e: any) {
+    if (this.paused) return;
+    return origKeyDown?.apply(this, arguments as any);
+  };
+
   const origRestart = proto.restart;
   proto.restart = function () {
     this.paused = false;

@@ -19,6 +19,8 @@ export class OnnxDinoAutoplay {
   private active = false;
   private isBusy = false;
   private startTime = 0;
+  private pausedTime = 0;
+  private lastPause = 0;
   public onStep?: (step: AutoplayStep) => void;
 
   async init(modelName: string, isPrivate = false): Promise<boolean> {
@@ -47,7 +49,11 @@ export class OnnxDinoAutoplay {
     this.intervalId = window.setInterval(async () => {
       const runner = (window as any).Runner?.instance_;
       if (!runner?.tRex || !this.session || this.isBusy) return;
-      if (!runner.playing || runner.paused || runner.crashed) return;
+      if (!runner.playing || runner.paused || runner.crashed) {
+        if (runner.paused && !this.lastPause) this.lastPause = Date.now();
+        return;
+      }
+      if (this.lastPause) { this.pausedTime += Date.now() - this.lastPause; this.lastPause = 0; }
 
       this.isBusy = true;
       try {
@@ -60,7 +66,7 @@ export class OnnxDinoAutoplay {
           const [obs1, obs2] = readObstacles(runner);
           const spd = Number(runner.currentSpeed) || 0;
           this.onStep({
-            time: Number(((Date.now() - this.startTime) / 1000).toFixed(2)),
+            time: Number(((Date.now() - this.startTime - this.pausedTime) / 1000).toFixed(2)),
             speed: spd, jumping: Boolean(runner.tRex?.jumping), ducking: Boolean(runner.tRex?.ducking),
             obs1, obs2, action, time_to_impact: obs1.x > 0 && spd > 0 ? Number((obs1.x / spd).toFixed(3)) : -1,
             crashed: Boolean(runner.crashed),
@@ -87,7 +93,7 @@ export class OnnxDinoAutoplay {
   }
 
   stop(): void {
-    this.active = false;
+    this.active = false; this.pausedTime = 0; this.lastPause = 0;
     if (this.intervalId !== null) { clearInterval(this.intervalId); this.intervalId = null; }
   }
 }

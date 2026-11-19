@@ -31,18 +31,21 @@ export function useGameRunnerControls() {
       r.stop?.();
       setGameStatus("paused");
     } else {
-      if (!r.playing) {
+      if (r.paused || r.runningTime > 0) {
+        if (typeof r.play === "function") r.play();
+        else {
+          r.playing = true; r.paused = false; r.time = performance.now();
+          if (r.raqId) { cancelAnimationFrame(r.raqId); r.raqId = 0; }
+          r.updatePending = false; r.update?.();
+        }
+      } else {
         r.loadSounds?.();
-        r.playing = true;
-        r.activated = true;
-        r.paused = false;
+        r.playing = true; r.activated = true; r.paused = false;
+        r.time = performance.now();
         if (r.raqId) { cancelAnimationFrame(r.raqId); r.raqId = 0; }
-        r.updatePending = false;
-        r.update?.();
+        r.updatePending = false; r.update?.();
         r.tRex?.startJump?.(r.currentSpeed);
         r.playSound?.(r.soundFx?.BUTTON_PRESS || "BUTTON_PRESS");
-      } else {
-        r.play?.();
       }
       setGameStatus("playing");
     }
