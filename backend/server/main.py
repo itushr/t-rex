@@ -1,8 +1,11 @@
+import logging
 import sys
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import DBAPIError, OperationalError, SQLAlchemyError
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(BACKEND_DIR) not in sys.path:
@@ -21,11 +24,27 @@ from server.routes.train import router as train_router
 from server.routes.ws import router as ws_router
 from server.routes.games import router as games_router
 
+logger = logging.getLogger("server.main")
 app = FastAPI(title="Dino ML Orchestrator API", version="2.0.0")
+
 
 @app.on_event("startup")
 def on_startup():
     init_database()
+
+
+@app.exception_handler(OperationalError)
+@app.exception_handler(DBAPIError)
+async def handle_db_connectivity(request: Request, exc: Exception):
+    logger.error("Database connectivity error on %s: %s", request.url.path, exc)
+    return JSONResponse(status_code=503, content={"detail": "Database temporarily unreachable."})
+
+
+@app.exception_handler(SQLAlchemyError)
+async def handle_db_error(request: Request, exc: Exception):
+    logger.error("Database error on %s: %s", request.url.path, exc)
+    return JSONResponse(status_code=500, content={"detail": "Database error occurred."})
+
 
 app.add_middleware(
     CORSMiddleware,
