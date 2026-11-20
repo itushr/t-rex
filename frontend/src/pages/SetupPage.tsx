@@ -1,60 +1,50 @@
+import { useState } from "react";
 import { Header } from "../components/Header";
-import { Timeline } from "../components/ui/timeline";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CodeCard } from "../components/setup/CodeCard";
-import { PROMPT_SETUP_TEXT, TIMELINE_DATA } from "../components/setup/setupData";
-
-function SetupNavCard({ title, desc, targetId }: { title: string; desc: string; targetId: string }) {
-  const handleClick = () => {
-    document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  return (
-    <div
-      onClick={handleClick}
-      className="w-full sm:w-80 border-2 border-border rounded-xl text-card-foreground p-1 hover:border-muted-foreground/40 transition-all hover:scale-[1.02] cursor-pointer"
-    >
-      <div className="bg-card rounded-xl shadow-sm p-6 flex flex-col justify-between h-full">
-        <h3 className="font-bold text-base text-foreground mb-1">{title}</h3>
-        <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-      </div>
-    </div>
-  );
-}
+import { ManualSetupSteps } from "../components/setup/ManualSetupSteps";
+import { PROMPT_SETUP_TEXT, MANUAL_STEPS } from "../components/setup/setupData";
 
 export function SetupPage() {
+  const [tab, setTab] = useState<string>(() => {
+    return typeof window !== "undefined" && window.location.hash === "#manual" ? "manual" : "prompt";
+  });
+
   return (
     <div className="min-h-screen bg-background text-foreground px-5 py-10 flex flex-col">
       <Header />
 
-      <main className="max-w-4xl mx-auto w-full mt-10 flex flex-col gap-14 pb-24">
-        <div className="flex flex-col sm:flex-row gap-6 items-center justify-center w-full">
-          <SetupNavCard
-            title="Using prompt"
-            desc="paste a setup prompt into any aget"
-            targetId="using-prompt"
-          />
-          <SetupNavCard
-            title="Manual setup"
-            desc="setups manually using terminal commands"
-            targetId="manual-setup"
-          />
-        </div>
+      <main className="max-w-3xl mx-auto w-full mt-10 pb-20 flex flex-col items-center">
+        <Tabs value={tab} onValueChange={setTab} className="w-full flex flex-col items-center">
+          <TabsList className="grid w-64 grid-cols-2 mb-8">
+            <TabsTrigger value="prompt" className="cursor-pointer">Prompt</TabsTrigger>
+            <TabsTrigger value="manual" className="cursor-pointer">Manual</TabsTrigger>
+          </TabsList>
 
-        <section id="using-prompt" className="scroll-mt-24">
-          <h2 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">Using prompt</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-3">
-            Paste this setup prompt into any agent:
-          </p>
-          <CodeCard title="Prompt" code={PROMPT_SETUP_TEXT} />
-        </section>
+          <TabsContent value="prompt" className="w-full">
+            <div className="border-2 border-border rounded-xl text-card-foreground p-1 w-full shadow-xs">
+              <div className="bg-card rounded-xl p-6 sm:p-8">
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">Using prompt</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-4">
+                  Paste this setup prompt into any agent:
+                </p>
+                <CodeCard title="Prompt" code={PROMPT_SETUP_TEXT} />
+              </div>
+            </div>
+          </TabsContent>
 
-        <section id="manual-setup" className="scroll-mt-24">
-          <h2 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">Manual setup</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-6">
-            Your agent can do this for you. To do it yourself, or to check what it did:
-          </p>
-          <Timeline data={TIMELINE_DATA} />
-        </section>
+          <TabsContent value="manual" className="w-full">
+            <div className="border-2 border-border rounded-xl text-card-foreground p-1 w-full shadow-xs">
+              <div className="bg-card rounded-xl p-6 sm:p-8">
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">Set up your project by hand</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-6">
+                  Your agent can do this for you. To do it yourself, or to check what it did:
+                </p>
+                <ManualSetupSteps steps={MANUAL_STEPS} />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
