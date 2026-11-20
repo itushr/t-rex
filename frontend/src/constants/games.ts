@@ -16,6 +16,14 @@ export const SUPPORTED_GAMES: GameDefinition[] = [
     isAvailable: true,
     supportedModels: ["decision_tree", "random_forest"],
   },
+  {
+    id: "flappy-bird",
+    name: "Flappy Bird",
+    description: "Classic flapping bird pipe navigation game",
+    icon: "bird",
+    isAvailable: true,
+    supportedModels: [],
+  },
 ];
 
 export const DEFAULT_GAME_ID = "trex";
