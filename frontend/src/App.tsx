@@ -3,6 +3,7 @@ import { parseRoute } from "./router/routeParser";
 import { RouteInfo } from "./router/types";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
+const LandingPage2 = lazy(() => import("./pages/LandingPage2"));
 const PrivateDashboardV2Page = lazy(() => import("./pages/PrivateDashboardV2Page"));
 const VisualizerIndexPage = lazy(() => import("./pages/VisualizerIndexPage"));
 const TrainPage = lazy(() => import("./pages/TrainPage"));
@@ -20,6 +21,7 @@ function LoadingFallback() {
 }
 
 function RouteView({ route }: { route: RouteInfo }) {
+  if (route.type === "landing2") return <LandingPage2 />;
   if (route.type === "landing") return <LandingPage />;
   if (route.type === "dashboard") return <PrivateDashboardV2Page />;
   if (route.type === "dashboard-local") return <VisualizerIndexPage />;

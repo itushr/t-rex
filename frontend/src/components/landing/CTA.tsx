@@ -2,6 +2,7 @@ import { Play, Terminal } from "lucide-react";
 
 interface CTAProps {
   onSetupClick: () => void;
+  contrast?: "default" | "high";
 }
 
 function ArrowSvg({ className }: { className?: string }) {
@@ -19,41 +20,45 @@ function ArrowSvg({ className }: { className?: string }) {
   );
 }
 
-export function CTA({ onSetupClick }: CTAProps) {
+export function CTA({ onSetupClick, contrast = "default" }: CTAProps) {
+  const isHigh = contrast === "high";
+  const txtCls = isHigh ? "text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]" : "text-foreground/80";
+  const arrCls = isHigh ? "text-white/80 drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]" : "text-foreground/60";
+
   return (
-    <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center pt-8 pb-36">
+    <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center pt-6 pb-28">
       <div className="relative flex flex-col sm:flex-row items-center justify-center gap-24 sm:gap-6 z-10 w-full">
-        {/* Try Web Button & Annotation Below & Outwards to Left */}
+        {/* Try Web */}
         <div className="relative flex flex-col items-center">
           <a
             href="/try-web"
-            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-lg cursor-pointer"
           >
             <Play className="w-4 h-4 fill-primary-foreground" />
             <span>Try Web</span>
           </a>
 
           <div className="sm:absolute top-10 sm:top-12 sm:-left-44 md:-left-56 w-52 md:w-60 pointer-events-none flex flex-col items-center mt-3 sm:mt-0">
-            <ArrowSvg className="w-14 sm:w-16 h-20 sm:h-24 text-foreground/60 rotate-180 sm:self-end sm:mr-4" />
-            <span className="text-base sm:text-lg font-handwriting text-foreground/80 tracking-wide text-center leading-tight -mt-1 sm:-mt-2 select-none">
+            <ArrowSvg className={`w-14 sm:w-16 h-20 sm:h-24 ${arrCls} rotate-180 sm:self-end sm:mr-4`} />
+            <span className={`text-base sm:text-lg font-handwriting ${txtCls} tracking-wide text-center leading-tight -mt-1 sm:-mt-2 select-none`}>
               plays cloned version<br />games in website
             </span>
           </div>
         </div>
 
-        {/* Setup Button & Annotation Below & Outwards to Right */}
+        {/* Setup */}
         <div className="relative flex flex-col items-center">
           <button
             onClick={onSetupClick}
-            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors shadow-lg cursor-pointer"
           >
             <Terminal className="w-4 h-4 text-muted-foreground" />
             <span>Setup</span>
           </button>
 
           <div className="sm:absolute top-10 sm:top-12 sm:-right-44 md:-right-56 w-52 md:w-60 pointer-events-none flex flex-col items-center mt-3 sm:mt-0">
-            <ArrowSvg className="w-14 sm:w-16 h-20 sm:h-24 text-foreground/60 rotate-180 scale-x-[-1] sm:self-start sm:ml-4" />
-            <span className="text-base sm:text-lg font-handwriting text-foreground/80 tracking-wide text-center leading-tight -mt-1 sm:-mt-2 select-none">
+            <ArrowSvg className={`w-14 sm:w-16 h-20 sm:h-24 ${arrCls} rotate-180 scale-x-[-1] sm:self-start sm:ml-4`} />
+            <span className={`text-base sm:text-lg font-handwriting ${txtCls} tracking-wide text-center leading-tight -mt-1 sm:-mt-2 select-none`}>
               plays official games<br />through automation
             </span>
           </div>
