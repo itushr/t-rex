@@ -1,76 +1,78 @@
 import { useEffect, useState } from "react";
 import { fetchModels, fetchPlaybacks } from "../services/api";
-import { ModelSummary } from "../types/model";
-import { PlaybackSession } from "../types/playback";
-import { DinoIcon } from "../components/games/trex/DinoIcon";
+import { ModelCard, PlaybackCard } from "../components/dashboard/BentoCards";
+import { Header2 } from "../components/Header2";
 import { navigateTo } from "../utils/navigation";
 
+const BENTO_PATTERN = [1, 3, 3, 1, 3, 1, 3, 3];
+
+function arrangeLocalBento(models: any[], playbacks: any[]): any[] {
+  const m = [...models].sort((a, b) => Number(b.timestamp || b.modified || 0) - Number(a.timestamp || a.modified || 0));
+  const p = [...playbacks].sort((a, b) => Number(b.timestamp || b.modified || 0) - Number(a.timestamp || a.modified || 0));
+  const result: any[] = [];
+  let patIdx = 0;
+
+  while (m.length > 0 || p.length > 0) {
+    const target = BENTO_PATTERN[patIdx % BENTO_PATTERN.length];
+    let picked: any = null;
+    if (target === 1 && m.length > 0) picked = m.shift();
+    else if (target === 3 && p.length > 0) picked = p.shift();
+    else picked = m.shift() || p.shift();
+
+    if (picked) result.push(picked);
+    patIdx++;
+  }
+  return result;
+}
+
 export function VisualizerIndexPage() {
-  const [models, setModels] = useState<ModelSummary[]>([]);
-  const [playbacks, setPlaybacks] = useState<PlaybackSession[]>([]);
+  const [items, setItems] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchModels().then(setModels);
-    fetchPlaybacks().then(setPlaybacks);
+    Promise.all([fetchModels().catch(() => []), fetchPlaybacks().catch(() => [])])
+      .then(([md, pb]) => {
+        const mList = md.map((m: any) => ({ ...m, kind: "model", id: `m_${m.name}` }));
+        const pList = pb.map((p: any) => ({ ...p, kind: "playback", id: `p_${p.filename || p.name}` }));
+        setItems(arrangeLocalBento(mList, pList));
+      });
   }, []);
 
   return (
-    <div className="visualizer-theme min-h-screen bg-background text-foreground flex flex-col">
-      <header className="border-b border-border px-4 py-2.5 flex items-center justify-between bg-background">
-        <div className="flex items-center gap-3">
-          <DinoIcon />
-          <span className="font-semibold text-base">T-Rex Visualizer (Driver Local)</span>
-        </div>
-        <button onClick={() => navigateTo("/dashboard")} className="px-3 py-1 text-xs border border-border rounded hover:bg-card cursor-pointer">
-          Private Studio →
-        </button>
-      </header>
+    <div className="min-h-screen bg-background text-foreground px-5 py-10">
+      <Header2 />
 
-      <div className="p-8 max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
-        <div>
-          <h2 className="text-sm font-semibold mb-3 uppercase tracking-wider text-muted-foreground">Models</h2>
-          <div className="border border-border rounded bg-card divide-y divide-border overflow-hidden">
-            {models.map((m) => (
-              <div
-                key={m.name}
-                onClick={() => navigateTo(`/visualize/model/${m.name}`)}
-                className="p-3.5 hover:bg-accent/40 cursor-pointer flex items-center justify-between transition-colors"
-              >
-                <div>
-                  <div className="font-medium text-sm">{m.name}</div>
-                  <div className="text-xs text-muted-foreground">{m.model_type} • {m.features_count} features</div>
-                </div>
-                <span className="text-xs font-mono font-medium">View Tree →</span>
-              </div>
-            ))}
+      <div className="mt-20 max-w-275 mx-auto">
+        {items.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground text-sm">
+            No local models or playbacks recorded yet. Run the driver to start recording!
           </div>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-semibold mb-3 uppercase tracking-wider text-muted-foreground">Playbacks</h2>
-          <div className="border border-border rounded bg-card divide-y divide-border overflow-hidden">
-            {playbacks.map((p) => {
-              const fname = p.filename ?? "";
+        ) : (
+          <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 auto-rows-25 grid-flow-row-dense gap-2">
+            {items.map((it) => {
+              if (it.kind === "model") {
+                return (
+                  <ModelCard
+                    key={it.id}
+                    model={it}
+                    isLocal
+                    onClick={() => navigateTo(`/visualize/model/${it.name}`)}
+                  />
+                );
+              }
               return (
-                <div
-                  key={fname}
-                  onClick={() => navigateTo(`/visualize/playback/${fname}`)}
-                  className="p-3.5 hover:bg-accent/40 cursor-pointer flex items-center justify-between transition-colors"
-                >
-                  <div>
-                    <div className="font-medium text-sm">{p.model_name}</div>
-                    <div className="text-xs text-muted-foreground">{p.model_type} • {p.total_steps} steps</div>
-                  </div>
-                  <span className="text-xs font-mono font-medium">Inspect →</span>
-                </div>
+                <PlaybackCard
+                  key={it.id}
+                  playback={it}
+                  isLocal
+                  onClick={() => navigateTo(`/visualize/playback/${it.filename || it.name}`)}
+                />
               );
             })}
-          </div>
-        </div>
+          </main>
+        )}
       </div>
     </div>
   );
 }
 
 export default VisualizerIndexPage;
-

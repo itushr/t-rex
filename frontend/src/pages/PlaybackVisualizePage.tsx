@@ -53,7 +53,7 @@ export function PlaybackVisualizePage({ playbackName, predictionStep = 1, treeNo
   const activePath = isDt ? stepData?.path : treeData?.path;
 
   return (
-    <div className="visualizer-theme flex flex-col h-screen w-screen overflow-hidden text-foreground bg-background">
+    <div className="flex flex-col h-screen w-screen overflow-hidden text-foreground bg-background">
       <PlaybackHeader
         playbackName={playbackName} modelType={meta?.model_type ?? ""} stepNo={predictionStep}
         totalSteps={meta?.total_steps ?? 0} isPlaying={isPlaying} onTogglePlay={() => setIsPlaying(!isPlaying)}

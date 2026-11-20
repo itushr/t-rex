@@ -36,7 +36,7 @@ export function ModelVisualizePage({ modelName, treeIndex, isPrivate = false }: 
   const isForestList = info?.model_type === "random_forest" && !treeIndex;
 
   return (
-    <div className="visualizer-theme flex flex-col h-screen w-screen overflow-hidden text-foreground bg-background">
+    <div className="flex flex-col h-screen w-screen overflow-hidden text-foreground bg-background">
       <header className="border-b border-border px-2 py-2.5 flex items-center justify-between flex-wrap gap-3 z-30 bg-background text-foreground">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-2"><DinoIcon /><span className="font-semibold text-sm">{modelName}</span></span>
