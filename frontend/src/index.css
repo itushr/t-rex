@@ -3,6 +3,10 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+.font-handwriting {
+  font-family: 'Caveat', cursive;
+}
+
 @font-face {
   font-family: 'Press Start 2P';
   src: url('/fonts/Press_Start_2P/PressStart2P-Regular.ttf') format('truetype');

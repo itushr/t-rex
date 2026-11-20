@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Play, Terminal } from "lucide-react";
 import Header from "../components/Header";
 import { DemoBox } from "../components/landing/DemoBox";
 import { SetupModal } from "../components/landing/SetupModal";
+import { CTA } from "../components/landing/CTA";
 
 export function LandingPage() {
   const [setupOpen, setSetupOpen] = useState(false);
@@ -18,31 +18,24 @@ export function LandingPage() {
     >
       <Header onSetupClick={() => setSetupOpen(true)} />
 
-      <main className="px-6 py-10 text-center">
+      <main className="py-10 text-center">
         <img src="/heading.png" className="w-lg mx-auto translate-y-20 translate-x-20" alt="T-Rex AI" />
-        
+
         {/* Demonstration White Box */}
-        <div className="w-full max-w-6xl h-auto min-h-135 bg-white mt-56 mx-auto rounded-4xl border border-zinc-200 shadow-2xl overflow-hidden">
+        <div className="w-full max-w-6xl h-auto min-h-135 bg-card shadow-sm mt-40 mx-auto rounded-4xl overflow-hidden">
           <DemoBox />
         </div>
 
-        {/* Buttons below the white box */}
-        <div className="flex items-center justify-center gap-4 mt-8">
-          <a
-            href="/try-web"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-sm cursor-pointer"
-          >
-            <Play className="w-4 h-4 fill-primary-foreground" />
-            <span>Try Web</span>
-          </a>
-          <button
-            onClick={() => setSetupOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors shadow-2xs cursor-pointer"
-          >
-            <Terminal className="w-4 h-4 text-muted-foreground" />
-            <span>Setup</span>
-          </button>
+        <div className="bg-background mt-20 py-20 text-2xl text-center">
+          Explore machine learning through games. 
+          <br />
+          Experiment with algorithms, train different models, 
+          <br />
+          and discover how they learn to play.
         </div>
+
+        {/* CTA Section */}
+        <CTA onSetupClick={() => setSetupOpen(true)} />
       </main>
 
       <SetupModal open={setupOpen} onClose={() => setSetupOpen(false)} />
