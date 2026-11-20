@@ -5,6 +5,7 @@ export function parseRoute(path = window.location.pathname): RouteInfo {
   if (path === "/lander2" || path === "/landing2") return { type: "landing2" };
   if (path === "/dashboard" || path === "/dashboardv2") return { type: "dashboard" };
   if (path === "/dashboard/local") return { type: "dashboard-local" };
+  if (path === "/setup") return { type: "setup" };
 
   const tryMatch = path.match(/^\/try-web(?:\/([a-zA-Z0-9_-]+))?\/?$/);
   if (tryMatch) return { type: "try-web", gameId: tryMatch[1] };

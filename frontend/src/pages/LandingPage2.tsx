@@ -1,28 +1,20 @@
-import { useState } from "react";
 import Header from "../components/Header";
-import { SetupModal } from "../components/landing/SetupModal";
 import { CTA } from "../components/landing/CTA";
 import { BottomDinoRunner } from "../components/landing/BottomDinoRunner";
 
 export function LandingPage2() {
-  const [setupOpen, setSetupOpen] = useState(false);
-
   return (
     <div className="relative min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
-      {/* 100vh Hero Section */}
       <section
         className="relative h-screen min-h-screen w-full flex flex-col justify-between overflow-hidden bg-cover bg-no-repeat bg-position-[center_top]"
         style={{ backgroundImage: "url('/hero2.png')" }}
       >
-        {/* Contrast Overlay */}
         <div className="absolute inset-0 bg-linear-to-b from-black/55 via-black/30 to-background/95 pointer-events-none" />
 
-        {/* Header */}
         <div className="relative z-20 pt-10">
-          <Header onSetupClick={() => setSetupOpen(true)} />
+          <Header />
         </div>
 
-        {/* Hero Content (Heading + Text + CTA Buttons) */}
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 text-center mt-2">
           <img
             src="/heading.png"
@@ -39,17 +31,14 @@ export function LandingPage2() {
           </div>
 
           <div className="mt-4 w-full">
-            <CTA onSetupClick={() => setSetupOpen(true)} contrast="high" />
+            <CTA contrast="high" />
           </div>
         </div>
 
-        {/* Autoplaying Dino Game at the Bottom Edge of Hero */}
         <div className="relative z-20 w-full">
           <BottomDinoRunner />
         </div>
       </section>
-
-      <SetupModal open={setupOpen} onClose={() => setSetupOpen(false)} />
     </div>
   );
 }

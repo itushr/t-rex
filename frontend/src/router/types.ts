@@ -1,5 +1,5 @@
 export interface RouteInfo {
-  type: "landing" | "landing2" | "dashboard" | "dashboard-local" | "try-web" | "train" | "autoplay" | "model-viz" | "playback-viz";
+  type: "landing" | "landing2" | "dashboard" | "dashboard-local" | "try-web" | "train" | "autoplay" | "model-viz" | "playback-viz" | "setup";
   gameId?: string;
   modelName?: string;
   isPrivate?: boolean;

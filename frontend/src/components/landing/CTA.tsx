@@ -1,7 +1,7 @@
 import { Play, Terminal } from "lucide-react";
 
 interface CTAProps {
-  onSetupClick: () => void;
+  onSetupClick?: () => void;
   contrast?: "default" | "high";
 }
 
@@ -48,13 +48,13 @@ export function CTA({ onSetupClick, contrast = "default" }: CTAProps) {
 
         {/* Setup */}
         <div className="relative flex flex-col items-center">
-          <button
-            onClick={onSetupClick}
+          <a
+            href="/setup"
             className="inline-flex items-center gap-2.5 px-7 py-2.5 rounded-full border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors shadow-sm cursor-pointer"
           >
             <Terminal className="w-4 h-4 text-muted-foreground" />
             <span>Setup</span>
-          </button>
+          </a>
 
           <div className="sm:absolute top-10 sm:top-12 sm:-right-44 md:-right-56 w-52 md:w-60 pointer-events-none flex flex-col items-center mt-3 sm:mt-0">
             <ArrowSvg className={`w-14 sm:w-16 h-20 sm:h-24 ${arrCls} rotate-180 scale-x-[-1] sm:self-start sm:ml-4`} />
