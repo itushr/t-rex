@@ -16,7 +16,7 @@ export class FlappyEngine {
     const s = Math.max(0.6, this.height / 600);
     return {
       bird: { x: Math.max(60, this.width * 0.18), y: this.height * 0.45, width: 34 * s, height: 24 * s, vy: 0 },
-      pipes: [], score: 0, bestScore: best, started: false, over: false,
+      pipes: [], score: 0, bestScore: best, started: false, paused: false, over: false,
     };
   }
 
@@ -24,43 +24,46 @@ export class FlappyEngine {
     this.width = w; this.height = h;
     const s = Math.max(0.6, h / 600);
     this.state.bird.x = Math.max(60, w * 0.18);
-    this.state.bird.width = 34 * s;
-    this.state.bird.height = 24 * s;
+    this.state.bird.width = 34 * s; this.state.bird.height = 24 * s;
   }
 
   public jump(): void {
-    if (this.state.over) {
-      const best = Math.max(this.state.bestScore, Math.floor(this.state.score));
-      this.state = this.createInitialState(best);
-      this.lastPipeTime = performance.now();
-      return;
-    }
-    const s = Math.max(0.6, this.height / 600);
-    this.state.bird.vy = -7.2 * s;
+    if (this.state.over) { this.restart(); return; }
+    if (this.state.paused) this.state.paused = false;
+    this.state.bird.vy = -7.2 * Math.max(0.6, this.height / 600);
     this.state.started = true;
   }
 
+  public restart(): void {
+    const best = Math.max(this.state.bestScore, Math.floor(this.state.score));
+    this.state = this.createInitialState(best);
+    this.lastPipeTime = performance.now();
+  }
+
+  public togglePlayPause(): void {
+    if (this.state.over) { this.restart(); this.jump(); return; }
+    if (!this.state.started) { this.jump(); return; }
+    this.state.paused = !this.state.paused;
+    if (!this.state.paused) this.lastPipeTime = performance.now();
+  }
+
+  public getStatus(): "playing" | "paused" | "crashed" {
+    if (this.state.over) return "crashed";
+    return this.state.started && !this.state.paused ? "playing" : "paused";
+  }
+
   public update(now: number): void {
-    if (!this.state.started || this.state.over) return;
+    if (!this.state.started || this.state.over || this.state.paused) return;
     const s = Math.max(0.6, this.height / 600);
     const b = this.state.bird;
-    b.vy += 0.68 * s;
-    b.y += b.vy;
+    b.vy += 0.68 * s; b.y += b.vy;
     if (b.y < 0) { b.y = 0; b.vy = 0; }
+    if (now - this.lastPipeTime > 1650) { this.spawnPipe(s); this.lastPipeTime = now; }
 
-    if (now - this.lastPipeTime > 1650) {
-      this.spawnPipe(s);
-      this.lastPipeTime = now;
-    }
-
-    const pw = 64 * s;
-    const speed = 3.2 * s;
+    const pw = 64 * s; const speed = 3.2 * s;
     for (const p of this.state.pipes) {
       p.x -= speed;
-      if (!p.passed && b.x > p.x + pw) {
-        p.passed = true;
-        this.state.score += 1;
-      }
+      if (!p.passed && b.x > p.x + pw) { p.passed = true; this.state.score += 1; }
       if (this.checkCollision(b, p)) this.endGame();
     }
     this.state.pipes = this.state.pipes.filter((p) => p.x > -pw * 2);
@@ -68,11 +71,8 @@ export class FlappyEngine {
   }
 
   private spawnPipe(s: number): void {
-    const pw = 64 * s; const ph = 512 * s;
-    const gap = Math.max(140 * s, this.height * 0.28);
-    const groundY = this.height * 0.9;
-    const minTop = -ph + 60 * s;
-    const maxTop = groundY - gap - ph - 60 * s;
+    const pw = 64 * s; const ph = 512 * s; const gap = Math.max(140 * s, this.height * 0.28);
+    const minTop = -ph + 60 * s; const maxTop = this.height * 0.9 - gap - ph - 60 * s;
     const topY = minTop + Math.random() * (maxTop - minTop);
     this.state.pipes.push({ x: this.width + 10, topY, bottomY: topY + ph + gap, width: pw, height: ph, passed: false });
   }
@@ -87,8 +87,7 @@ export class FlappyEngine {
     this.state.over = true;
     const cur = Math.floor(this.state.score);
     if (cur > this.state.bestScore) {
-      this.state.bestScore = cur;
-      localStorage.setItem("flappy_best", String(cur));
+      this.state.bestScore = cur; localStorage.setItem("flappy_best", String(cur));
     }
   }
 }

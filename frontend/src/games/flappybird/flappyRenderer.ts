@@ -43,6 +43,13 @@ export class FlappyRenderer {
       ctx.font = `bold ${Math.max(22, Math.round(h * 0.045))}px 'Press Start 2P', system-ui, sans-serif`;
       ctx.strokeText("Press SPACE or UP ARROW to start", w / 2, h * 0.4);
       ctx.fillText("Press SPACE or UP ARROW to start", w / 2, h * 0.4);
+    } else if (s.paused && !s.over) {
+      ctx.font = `bold ${Math.max(26, Math.round(h * 0.06))}px 'Press Start 2P', system-ui, sans-serif`;
+      ctx.strokeText("PAUSED", w / 2, h * 0.38);
+      ctx.fillText("PAUSED", w / 2, h * 0.38);
+      ctx.font = `bold ${Math.max(16, Math.round(h * 0.03))}px system-ui, sans-serif`;
+      ctx.strokeText("Press P or SPACE to resume", w / 2, h * 0.46);
+      ctx.fillText("Press P or SPACE to resume", w / 2, h * 0.46);
     }
 
     if (s.over) {

@@ -21,5 +21,6 @@ export interface FlappyState {
   score: number;
   bestScore: number;
   started: boolean;
+  paused: boolean;
   over: boolean;
 }

@@ -13,12 +13,14 @@ interface ActionPanelProps {
   gameStatus?: GameStatus; onTogglePlayPause?: () => void; onRestart?: () => void;
   isRecording?: boolean; isRecordingPaused?: boolean; onToggleRecord?: () => void;
   onForward?: () => void; showVisualize?: boolean; onVisualize?: () => void;
+  soundDisabled?: boolean; trainDisabled?: boolean; recordDisabled?: boolean;
 }
 
 export function ActionPanel({
   soundEnabled = true, onToggleSound, gameStatus = "paused",
   onTogglePlayPause, onRestart, isRecording = false, isRecordingPaused = false,
   onToggleRecord, onForward, showVisualize = false, onVisualize,
+  soundDisabled = false, trainDisabled = false, recordDisabled = false,
 }: ActionPanelProps) {
   const [hidden, setHidden] = useState(false);
   const timer = useActionPanelTimer(isRecording, isRecordingPaused);
@@ -27,12 +29,14 @@ export function ActionPanel({
   const toggleVisibility = () => setHidden((h) => !h);
 
   useActionPanelShortcuts({
-    onToggleRecord, onTogglePlayPause: handlePlayToggle, onToggleSound,
-    onForward, onToggleCollapse: toggleVisibility, onVisualize, showVisualize,
+    onToggleRecord: recordDisabled ? undefined : onToggleRecord,
+    onTogglePlayPause: handlePlayToggle,
+    onToggleSound: soundDisabled ? undefined : onToggleSound,
+    onForward: trainDisabled ? undefined : onForward,
+    onToggleCollapse: toggleVisibility, onVisualize, showVisualize,
   });
 
   if (hidden) return null;
-
   const isRotating = isRecording && !isRecordingPaused;
 
   return (
@@ -44,8 +48,9 @@ export function ActionPanel({
               <div className="p-2">
                 <button
                   type="button"
-                  onClick={onToggleRecord}
-                  className="rounded-full border border-border/20 p-3 cursor-pointer transition-colors"
+                  disabled={recordDisabled}
+                  onClick={recordDisabled ? undefined : onToggleRecord}
+                  className={`rounded-full border border-border/20 p-3 transition-colors ${recordDisabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
                 >
                   <motion.div
                     animate={isRotating ? { rotate: 360 } : { rotate: 0 }}
@@ -57,24 +62,20 @@ export function ActionPanel({
                 </button>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top">{isRecording ? (isRecordingPaused ? "Resume Recording" : "Pause Recording") : "Start Recording"} <Kbd>R</Kbd></TooltipContent>
+            <TooltipContent side="top">{recordDisabled ? "Recording not available" : isRecording ? (isRecordingPaused ? "Resume Recording" : "Pause Recording") : "Start Recording"} {!recordDisabled && <Kbd>R</Kbd>}</TooltipContent>
           </Tooltip>
 
           <ActionPanelControls
             timer={timer} isRecording={isRecording} isRecordingPaused={isRecordingPaused}
             gameStatus={gameStatus} soundEnabled={soundEnabled}
-            showVisualize={showVisualize} onPlayToggle={handlePlayToggle}
-            onToggleSound={onToggleSound} onForward={onForward} onVisualize={onVisualize}
+            showVisualize={showVisualize} soundDisabled={soundDisabled} trainDisabled={trainDisabled}
+            onPlayToggle={handlePlayToggle} onToggleSound={onToggleSound} onForward={onForward} onVisualize={onVisualize}
           />
         </div>
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={() => setHidden(true)}
-              className="cursor-pointer text-white flex items-center justify-center pl-1 pr-3"
-            >
+            <button type="button" onClick={() => setHidden(true)} className="cursor-pointer text-white flex items-center justify-center pl-1 pr-3">
               <X className="size-5" />
             </button>
           </TooltipTrigger>
