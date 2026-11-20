@@ -7,7 +7,7 @@ export function parseRoute(path = window.location.pathname): RouteInfo {
   if (path === "/dashboard/local") return { type: "dashboard-local" };
 
   const tryMatch = path.match(/^\/try-web(?:\/([a-zA-Z0-9_-]+))?\/?$/);
-  if (tryMatch) return { type: "try-web", gameId: tryMatch[1] || "trex" };
+  if (tryMatch) return { type: "try-web", gameId: tryMatch[1] };
   if (path === "/web") return { type: "try-web", gameId: "trex" };
 
   const trainMatch = path.match(/^\/train(?:\/([a-zA-Z0-9_-]+))?\/?$/);
@@ -41,5 +41,6 @@ export function parseRoute(path = window.location.pathname): RouteInfo {
   const pbBase = path.match(/^\/(?:try-web\/visualize|visualize|visualizer\/[a-zA-Z0-9_-]+)\/playback\/(private\/)?([^/]+)\/?$/);
   if (pbBase) return { type: "playback-viz", isPrivate: Boolean(pbBase[1]), playbackName: decodeURIComponent(pbBase[2]), predictionStep: 1 };
 
+  if (path.startsWith("/try-web")) return { type: "try-web", gameId: "not-found" };
   return { type: "landing" };
 }

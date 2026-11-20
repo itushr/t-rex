@@ -10,6 +10,8 @@ const TrainPage = lazy(() => import("./pages/TrainPage"));
 const TryWebAutoplayPage = lazy(() => import("./pages/TryWebAutoplayPage"));
 const WebRunnerPage = lazy(() => import("./pages/WebRunnerPage"));
 const FlappyBirdPage = lazy(() => import("./pages/FlappyBirdPage"));
+const TryWebSelectPage = lazy(() => import("./pages/TryWebSelectPage"));
+const GameNotFoundPage = lazy(() => import("./pages/GameNotFoundPage"));
 const ModelVisualizePage = lazy(() => import("./pages/ModelVisualizePage"));
 const PlaybackVisualizePage = lazy(() => import("./pages/PlaybackVisualizePage"));
 
@@ -31,8 +33,10 @@ function RouteView({ route }: { route: RouteInfo }) {
     return <TryWebAutoplayPage modelName={route.modelName} isPrivate={route.isPrivate} />;
   }
   if (route.type === "try-web") {
-    if (route.gameId === "flappy-bird") return <FlappyBirdPage />;
-    return <WebRunnerPage />;
+    if (!route.gameId) return <TryWebSelectPage />;
+    if (route.gameId === "dino" || route.gameId === "trex") return <WebRunnerPage />;
+    if (route.gameId === "flappy-bird" || route.gameId === "flappy-brird") return <FlappyBirdPage />;
+    return <GameNotFoundPage />;
   }
   if (route.type === "model-viz" && route.modelName) {
     return <ModelVisualizePage modelName={route.modelName} treeIndex={route.treeIndex} isPrivate={route.isPrivate} />;
