@@ -21,16 +21,10 @@ function ArrowSvg({ className }: { className?: string }) {
 
 export function CTA({ onSetupClick }: CTAProps) {
   return (
-    <div className="relative w-full max-w-4xl mx-auto flex flex-col items-center pt-24 pb-32">
-      <div className="relative flex flex-col sm:flex-row items-center justify-center gap-16 sm:gap-6 z-10 w-full">
-        {/* Try Web */}
+    <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center pt-8 pb-36">
+      <div className="relative flex flex-col sm:flex-row items-center justify-center gap-24 sm:gap-6 z-10 w-full">
+        {/* Try Web Button & Annotation Below & Outwards to Left */}
         <div className="relative flex flex-col items-center">
-          <div className="sm:absolute sm:-top-28 sm:-left-36 md:-left-44 w-48 md:w-56 pointer-events-none flex flex-col sm:items-end items-center mb-1 sm:mb-0">
-            <span className="text-base sm:text-lg font-handwriting text-foreground/80 tracking-wide text-center sm:text-right leading-tight select-none">
-              plays cloned version<br className="hidden sm:block" /> games in website
-            </span>
-            <ArrowSvg className="w-14 h-20 text-foreground/60 mt-1 transform scale-x-[-1] -rotate-6 sm:-rotate-12 translate-x-2 sm:translate-x-6" />
-          </div>
           <a
             href="/try-web"
             className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-sm cursor-pointer"
@@ -38,16 +32,17 @@ export function CTA({ onSetupClick }: CTAProps) {
             <Play className="w-4 h-4 fill-primary-foreground" />
             <span>Try Web</span>
           </a>
+
+          <div className="sm:absolute top-10 sm:top-12 sm:-left-44 md:-left-56 w-52 md:w-60 pointer-events-none flex flex-col items-center mt-3 sm:mt-0">
+            <ArrowSvg className="w-14 sm:w-16 h-20 sm:h-24 text-foreground/60 rotate-180 sm:self-end sm:mr-4" />
+            <span className="text-base sm:text-lg font-handwriting text-foreground/80 tracking-wide text-center leading-tight -mt-1 sm:-mt-2 select-none">
+              plays cloned version<br />games in website
+            </span>
+          </div>
         </div>
 
-        {/* Setup */}
+        {/* Setup Button & Annotation Below & Outwards to Right */}
         <div className="relative flex flex-col items-center">
-          <div className="sm:absolute sm:-top-28 sm:-right-36 md:-right-44 w-48 md:w-56 pointer-events-none flex flex-col sm:items-start items-center mb-1 sm:mb-0">
-            <span className="text-base sm:text-lg font-handwriting text-foreground/80 tracking-wide text-center sm:text-left leading-tight select-none">
-              plays official games<br className="hidden sm:block" /> through automation
-            </span>
-            <ArrowSvg className="w-14 h-20 text-foreground/60 mt-1 transform rotate-6 sm:rotate-12 -translate-x-2 sm:-translate-x-6" />
-          </div>
           <button
             onClick={onSetupClick}
             className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors shadow-2xs cursor-pointer"
@@ -55,6 +50,13 @@ export function CTA({ onSetupClick }: CTAProps) {
             <Terminal className="w-4 h-4 text-muted-foreground" />
             <span>Setup</span>
           </button>
+
+          <div className="sm:absolute top-10 sm:top-12 sm:-right-44 md:-right-56 w-52 md:w-60 pointer-events-none flex flex-col items-center mt-3 sm:mt-0">
+            <ArrowSvg className="w-14 sm:w-16 h-20 sm:h-24 text-foreground/60 rotate-180 scale-x-[-1] sm:self-start sm:ml-4" />
+            <span className="text-base sm:text-lg font-handwriting text-foreground/80 tracking-wide text-center leading-tight -mt-1 sm:-mt-2 select-none">
+              plays official games<br />through automation
+            </span>
+          </div>
         </div>
       </div>
     </div>
