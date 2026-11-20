@@ -11,11 +11,11 @@ export function BottomDinoRunner() {
     const img = new Image();
     img.src = "/assets/default_100_percent/100-offline-sprite.png";
 
-    const updateSize = () => { cvs.width = window.innerWidth; cvs.height = 100; };
+    const updateSize = () => { cvs.width = window.innerWidth; cvs.height = 200; };
     updateSize();
     window.addEventListener("resize", updateSize);
 
-    const S = 1.25, GY = 82, DX = 120;
+    const S = 1.25, GY = 175, DX = 120;
     let animId = 0, tick = 0, groundX = 0, speed = 7.5;
     let dinoY = 0, dinoVy = 0, isJumping = false, isDucking = false, duckTimer = 0;
     let obstacles: Obstacle[] = [
@@ -27,7 +27,7 @@ export function BottomDinoRunner() {
       ctx.clearRect(0, 0, cvs.width, cvs.height);
 
       if (isJumping) {
-        dinoY += dinoVy; dinoVy += 1.0;
+        dinoY += dinoVy; dinoVy += 0.75;
         if (dinoY >= 0) { dinoY = 0; dinoVy = 0; isJumping = false; }
       }
       if (isDucking && --duckTimer <= 0) isDucking = false;
@@ -52,7 +52,7 @@ export function BottomDinoRunner() {
           if (nextObs.type === "bird" && !isJumping && !isDucking) {
             isDucking = true; duckTimer = 34;
           } else if (nextObs.type !== "bird" && !isJumping) {
-            isJumping = true; dinoVy = nextObs.type === "large" ? -17.5 : -16.0;
+            isJumping = true; dinoVy = nextObs.type === "large" ? -11.8 : -10.5;
           }
         }
       }
@@ -67,7 +67,7 @@ export function BottomDinoRunner() {
           if (obs.x > -80 && obs.x < cvs.width + 100) {
             if (obs.type === "small") ctx.drawImage(img, 228, 2, 17, 35, obs.x, GY - 35 * S, 17 * S, 35 * S);
             else if (obs.type === "large") ctx.drawImage(img, 332, 2, 25, 50, obs.x, GY - 50 * S, 25 * S, 50 * S);
-            else ctx.drawImage(img, tick % 16 < 8 ? 134 : 180, 2, 46, 40, obs.x, GY - 54 * S, 46 * S, 40 * S);
+            else ctx.drawImage(img, tick % 16 < 8 ? 134 : 180, 2, 46, 40, obs.x, GY - 82 * S, 46 * S, 40 * S);
           }
         }
       }
@@ -80,7 +80,7 @@ export function BottomDinoRunner() {
 
   return (
     <div className="w-full relative overflow-hidden">
-      <canvas ref={canvasRef} height={100} className="w-full block" />
+      <canvas ref={canvasRef} height={200} className="w-full block" />
     </div>
   );
 }
