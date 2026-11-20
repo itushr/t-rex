@@ -19,30 +19,33 @@ export function FeatureSelectStep({ selected, features = ALL_FEATURES, onChange 
   };
 
   return (
-    <div className="flex flex-col gap-2.5">
-      <div className="flex items-center justify-between text-xs font-mono text-muted-foreground px-1">
-        <span>Inputs</span>
-      </div>
-      <div className="rounded-xl flex flex-wrap justify-between gap-2 h-full min-h-24">
-        {features.map((feat) => {
-          const isChecked = selected.includes(feat.id);
-          return (
-            <button
-              key={feat.id}
-              type="button"
-              onClick={() => toggle(feat.id)}
-              className={`px-2.5 py-1 rounded-full font-mono transition-all flex items-center gap-2 cursor-pointer ${
-                isChecked
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted text-muted-foreground border border-border hover:border-foreground/30 hover:text-foreground"
-              }`}
-              title={feat.desc}
-            >
-              {isChecked && <Check className="size-4" />}
-              <span>{feat.label}</span>
-            </button>
-          );
-        })}
+    <div className="w-full border-2 border-border rounded-xl text-card-foreground p-1 block">
+      <div className="bg-card rounded-xl shadow-sm p-8 flex items-center justify-center gap-5">
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between text-xs font-mono text-muted-foreground px-1">
+            <span>Inputs</span>
+          </div>
+          <div className="rounded-xl flex flex-wrap gap-2 h-full min-h-24">
+            {features.map((feat) => {
+              const isChecked = selected.includes(feat.id);
+              return (
+                <button
+                  key={feat.id}
+                  type="button"
+                  onClick={() => toggle(feat.id)}
+                  className={`px-2.5 py-1 rounded-full font-mono transition-all flex items-center gap-2 cursor-pointer ${isChecked
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground border border-border hover:border-foreground/30 hover:text-foreground"
+                    }`}
+                  title={feat.desc}
+                >
+                  {isChecked && <Check className="size-4" />}
+                  <span>{feat.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

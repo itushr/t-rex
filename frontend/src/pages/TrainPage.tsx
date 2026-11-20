@@ -34,7 +34,7 @@ export function TrainPage({ gameId = "trex" }: { gameId?: string }) {
     if (q) {
       getPrivateGameplay(q).then((d) => {
         if (d?.samples) { setSamples(d.samples); setTrimRange(defaultTrim(d.samples.length)); }
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [gameId]);
 
@@ -75,13 +75,14 @@ export function TrainPage({ gameId = "trex" }: { gameId?: string }) {
   return (
     <div className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12 flex flex-col items-center">
       <Header />
-      <div className="max-w-4xl w-full flex flex-col gap-10 mt-20">
+      <div className="max-w-4xl w-full flex flex-col gap-2 mt-20">
         <TrimGameplayStep samples={samples} trimRange={trimRange} onChange={setTrimRange} />
-        <div className="flex">
+        <div className="flex gap-2">
           <ModelSelectStep modelType={modelType} models={gameModels} onChange={setModelType} />
           <FeatureSelectStep selected={features} features={gameFeatures} onChange={setFeatures} />
         </div>
         {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-mono">{error}</div>}
+        {result && <TrainResultCard result={result} onNavigate={nav} />}
         <button
           type="button" onClick={handleTrain} disabled={loading || activeCount < 10 || features.length === 0}
           className="w-full py-3 px-6 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
@@ -89,7 +90,6 @@ export function TrainPage({ gameId = "trex" }: { gameId?: string }) {
           {loading && <Loader2 className="size-4 animate-spin" />}
           <span>{loading ? "Training..." : `Train ${modelType.replace("_", " ")} (${activeCount} frames)`}</span>
         </button>
-        {result && <TrainResultCard result={result} onNavigate={nav} />}
       </div>
     </div>
   );
