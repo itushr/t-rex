@@ -32,7 +32,7 @@ export function CTA({ onSetupClick, contrast = "default" }: CTAProps) {
         <div className="relative flex flex-col items-center">
           <a
             href="/try-web"
-            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-lg cursor-pointer"
+            className="inline-flex items-center gap-2.5 px-7 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-sm cursor-pointer"
           >
             <Play className="w-4 h-4 fill-primary-foreground" />
             <span>Try Web</span>
@@ -50,7 +50,7 @@ export function CTA({ onSetupClick, contrast = "default" }: CTAProps) {
         <div className="relative flex flex-col items-center">
           <button
             onClick={onSetupClick}
-            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors shadow-lg cursor-pointer"
+            className="inline-flex items-center gap-2.5 px-7 py-2.5 rounded-full border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors shadow-sm cursor-pointer"
           >
             <Terminal className="w-4 h-4 text-muted-foreground" />
             <span>Setup</span>

@@ -79,14 +79,8 @@ export function BottomDinoRunner() {
   }, []);
 
   return (
-    <div className="w-full relative border-t border-border/40 bg-background/70 backdrop-blur-md overflow-hidden">
-      <div className="absolute top-2 left-6 flex items-center gap-2 z-10 select-none">
-        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        <span className="font-mono text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-          AI Autoplay &bull; ONNX / Decision Tree Agent
-        </span>
-      </div>
-      <canvas ref={canvasRef} height={100} className="w-full h-[100px] block" />
+    <div className="w-full relative overflow-hidden">
+      <canvas ref={canvasRef} height={100} className="w-full block" />
     </div>
   );
 }

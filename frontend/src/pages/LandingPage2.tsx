@@ -11,14 +11,14 @@ export function LandingPage2() {
     <div className="relative min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
       {/* 100vh Hero Section */}
       <section
-        className="relative h-screen min-h-screen w-full flex flex-col justify-between overflow-hidden bg-cover bg-no-repeat bg-[center_top]"
-        style={{ backgroundImage: "url('/hero.png')" }}
+        className="relative h-screen min-h-screen w-full flex flex-col justify-between overflow-hidden bg-cover bg-no-repeat bg-position-[center_top]"
+        style={{ backgroundImage: "url('/hero2.png')" }}
       >
         {/* Contrast Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-background/95 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-b from-black/55 via-black/30 to-background/95 pointer-events-none" />
 
         {/* Header */}
-        <div className="relative z-20">
+        <div className="relative z-20 pt-10">
           <Header onSetupClick={() => setSetupOpen(true)} />
         </div>
 
