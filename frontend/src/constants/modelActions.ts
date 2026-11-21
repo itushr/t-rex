@@ -24,7 +24,7 @@ export const MODEL_ACTIONBAR_REGISTRY: Record<string, ModelActionbarConfig> = {
   reinforcement: {
     leadSlot: "config",
     counterSlot: "tries",
-    actions: ["config", "tries", "playPause", "sound", "repeat"],
+    actions: ["config", "tries", "playPause", "sound", "repeat", "visualize"],
   },
   autoplay: {
     leadSlot: "camera",

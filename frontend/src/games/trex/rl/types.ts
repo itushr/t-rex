@@ -8,16 +8,7 @@ export interface RewardConfig {
 }
 
 export interface RLConfig {
-  features: string[];
   rewards: RewardConfig;
   enabledRewards: Record<keyof RewardConfig, boolean>;
   actions: DinoAction[];
-}
-
-export interface Transition {
-  state: number[];
-  actionIdx: number;
-  reward: number;
-  nextState: number[];
-  done: boolean;
 }

@@ -1,18 +1,16 @@
 import type { DinoAction, RLConfig } from "./types";
 
-export interface FeatureMeta {
+export interface StateDef {
   key: string;
   label: string;
+  desc: string;
+  type: string;
 }
 
-export const AVAILABLE_FEATURES: FeatureMeta[] = [
-  { key: "speed", label: "Game Speed" },
-  { key: "obstacle1_x", label: "Obstacle Distance" },
-  { key: "obstacle1_y", label: "Obstacle Height (Y)" },
-  { key: "obstacle1_size", label: "Obstacle Size" },
-  { key: "obstacle2_x", label: "Next Obstacle Dist" },
-  { key: "jumping", label: "Dino Jumping" },
-  { key: "ducking", label: "Dino Ducking" },
+export const FIXED_DINO_STATES: StateDef[] = [
+  { key: "is_obst_close", label: "is_obst_close", desc: "TTI <= 18 danger window", type: "boolean" },
+  { key: "obst_type", label: "obst_type", desc: "CACTUS_SMALL / LARGE / PTERODACTYL", type: "categorical" },
+  { key: "obst_y", label: "obst_y", desc: "Obstacle Y elevation level", type: "numeric" },
 ];
 
 export const AVAILABLE_ACTIONS: { key: DinoAction; label: string }[] = [
@@ -22,7 +20,6 @@ export const AVAILABLE_ACTIONS: { key: DinoAction; label: string }[] = [
 ];
 
 export const DEFAULT_RL_CONFIG: RLConfig = {
-  features: ["speed", "obstacle1_x", "obstacle1_y", "obstacle1_size", "jumping", "ducking"],
   rewards: {
     survive: 0.1,
     jump_penalty: -0.5,

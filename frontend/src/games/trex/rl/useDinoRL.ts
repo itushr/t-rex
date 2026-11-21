@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { DQNTrainer } from "./dqnTrainer";
+import { QLearningAgent } from "../../../rl/qlearning";
 import { DEFAULT_RL_CONFIG } from "./constants";
-import { extractNormalizedRLFeatures } from "./featureExtractor";
+import { extractDinoRLState, serializeDinoState, DinoRLState } from "./state";
 import { dispatchDinoAction } from "./dinoActuator";
 import type { DinoAction, RLConfig } from "./types";
 
@@ -9,20 +9,25 @@ export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart:
   const [tries, setTries] = useState(1);
   const [repeat, setRepeat] = useState(true);
   const [config, setConfig] = useState<RLConfig>(DEFAULT_RL_CONFIG);
-  const trainerRef = useRef<DQNTrainer>(new DQNTrainer(DEFAULT_RL_CONFIG));
-  const prevRef = useRef<{ state: number[]; actionIdx: number; lastObsX: number } | null>(null);
+  const agentRef = useRef<QLearningAgent<DinoRLState, DinoAction>>(
+    new QLearningAgent({ actions: DEFAULT_RL_CONFIG.actions, serializeState: serializeDinoState })
+  );
+  const prevRef = useRef<{ state: DinoRLState; action: DinoAction; lastObsX: number } | null>(null);
   const restartTimerRef = useRef<any>(null);
   const crashedHandledRef = useRef(false);
 
   const updateConfig = useCallback((nextConfig: RLConfig) => {
     setConfig(nextConfig);
-    trainerRef.current.reconfigure(nextConfig);
+    agentRef.current.actions = nextConfig.actions;
     prevRef.current = null;
   }, []);
 
+  const getQTableEntries = useCallback(() => agentRef.current.getTableEntries(), []);
+  const getEpsilon = useCallback(() => agentRef.current.epsilon, []);
+
   useEffect(() => {
-    const trainer = trainerRef.current;
-    const interval = setInterval(async () => {
+    const agent = agentRef.current;
+    const interval = setInterval(() => {
       const runner = (window as any).Runner?.instance_;
       if (!runner?.tRex) return;
 
@@ -30,26 +35,20 @@ export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart:
         if (!crashedHandledRef.current) {
           crashedHandledRef.current = true;
           if (prevRef.current) {
-            const penalty = config.enabledRewards.crash_penalty ? config.rewards.crash_penalty : 0;
-            if (config.enabledRewards.crash_penalty) console.log(penalty);
-            trainer.storeTransition({
-              state: prevRef.current.state, actionIdx: prevRef.current.actionIdx,
-              reward: penalty, nextState: prevRef.current.state, done: true,
-            });
+            const pen = config.enabledRewards.crash_penalty ? config.rewards.crash_penalty : 0;
+            if (config.enabledRewards.crash_penalty) console.log(pen);
+            agent.update(prevRef.current.state, prevRef.current.action, pen, prevRef.current.state, true);
             prevRef.current = null;
-            trainer.trainStep().catch(() => {});
-            trainer.onEpisodeEnd();
+            agent.onEpisodeEnd();
           }
           if (repeat && !restartTimerRef.current) {
             restartTimerRef.current = setTimeout(() => {
-              restartTimerRef.current = null;
-              crashedHandledRef.current = false;
+              restartTimerRef.current = null; crashedHandledRef.current = false;
               setTries((t) => t + 1);
               const r = (window as any).Runner?.instance_;
               if (r) {
                 r.restart?.(); r.playing = true; r.paused = false;
-                r.time = performance.now(); r.tRex?.startJump?.(r.currentSpeed);
-                r.update?.();
+                r.time = performance.now(); r.tRex?.startJump?.(r.currentSpeed); r.update?.();
               } else { restart(); }
             }, 300);
           }
@@ -60,29 +59,25 @@ export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart:
       crashedHandledRef.current = false;
       if (!runner.playing || runner.paused) return;
 
-      const currState = extractNormalizedRLFeatures(runner, config.features);
-      const obsX = currState[config.features.indexOf("obstacle1_x")] ?? 1;
+      const currState = extractDinoRLState(runner);
+      const obsX = runner.horizon?.obstacles?.[0]?.xPos ?? 999;
 
       if (prevRef.current) {
         let reward = 0;
-        if (config.enabledRewards.clear_obstacle && prevRef.current.lastObsX < 0.2 && obsX > 0.5) {
+        if (config.enabledRewards.clear_obstacle && prevRef.current.lastObsX < 50 && obsX > 150) {
           reward = config.rewards.clear_obstacle;
-        } else if (config.enabledRewards.jump_penalty && prevRef.current.actionIdx === config.actions.indexOf("jump")) {
+        } else if (config.enabledRewards.jump_penalty && prevRef.current.action === "jump") {
           reward = config.rewards.jump_penalty;
         } else if (config.enabledRewards.survive) {
           reward = config.rewards.survive;
         }
         if (reward !== 0 || config.enabledRewards.survive) console.log(reward);
-        trainer.storeTransition({
-          state: prevRef.current.state, actionIdx: prevRef.current.actionIdx,
-          reward, nextState: currState, done: false,
-        });
-        await trainer.trainStep();
+        agent.update(prevRef.current.state, prevRef.current.action, reward, currState, false);
       }
 
-      const { action, actionIdx } = trainer.selectAction(currState);
+      const action = agent.selectAction(currState);
       dispatchDinoAction(runner, action);
-      prevRef.current = { state: currState, actionIdx, lastObsX: obsX };
+      prevRef.current = { state: currState, action, lastObsX: obsX };
     }, 50);
 
     return () => {
@@ -91,5 +86,5 @@ export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart:
     };
   }, [config, repeat, restart]);
 
-  return { tries, repeat, setRepeat, config, updateConfig };
+  return { tries, repeat, setRepeat, config, updateConfig, getQTableEntries, getEpsilon };
 }

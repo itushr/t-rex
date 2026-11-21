@@ -77,7 +77,7 @@ export function ActionPanel({
 
           <ActionPanelControls
             timer={timer} isRecording={isRecording} isRecordingPaused={isRecordingPaused}
-            gameStatus={gameStatus} soundEnabled={soundEnabled} showVisualize={showVisualize}
+            gameStatus={gameStatus} soundEnabled={soundEnabled} showVisualize={showVisualize || barConfig.actions.includes("visualize")}
             soundDisabled={soundDisabled} trainDisabled={trainDisabled} counterSlot={barConfig.counterSlot}
             tries={tries} showRepeat={barConfig.actions.includes("repeat")} repeat={repeat}
             onToggleRepeat={onToggleRepeat} showTrain={barConfig.actions.includes("forward")}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AUDIO_PRESS, AUDIO_HIT, AUDIO_REACHED } from "../games/trex/audio/runnerAudio";
 import { ActionPanel } from "../components/ActionPanel";
+import { QTableModal } from "../components/actionpanel/QTableModal";
 import { patchRunner } from "../game/runnerAudioPatch";
 import { soundManager } from "../game/soundManager";
 import { useGameRunnerControls } from "../game/useGameRunnerControls";
@@ -11,8 +12,9 @@ const INPUTS = ["keydown", "keyup", "keypress", "mousedown", "touchstart"] as co
 export function DinoReinforcePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [isQTableOpen, setIsQTableOpen] = useState(false);
   const { gameStatus, togglePlayPause, restart } = useGameRunnerControls();
-  const { tries, repeat, setRepeat, config, updateConfig } = useDinoRL(gameStatus, restart);
+  const { tries, repeat, setRepeat, config, updateConfig, getQTableEntries, getEpsilon } = useDinoRL(gameStatus, restart);
 
   useEffect(() => {
     soundManager.setSoundEnabled(false);
@@ -62,8 +64,6 @@ export function DinoReinforcePage() {
     };
   }, []);
 
-  const toggleSound = () => setSoundEnabled((p) => { soundManager.setSoundEnabled(!p); return !p; });
-
   return (
     <div className="bg-white text-black min-h-screen w-full flex flex-col items-center select-none">
       <div id="t" className="offline w-full flex-1 pointer-events-none" ref={containerRef}>
@@ -77,11 +77,13 @@ export function DinoReinforcePage() {
         </div>
       </div>
       <ActionPanel
-        mode="reinforcement" soundEnabled={soundEnabled} onToggleSound={toggleSound}
+        mode="reinforcement" soundEnabled={soundEnabled} onToggleSound={() => setSoundEnabled((p) => !p)}
         gameStatus={gameStatus} onTogglePlayPause={togglePlayPause} onRestart={restart}
         tries={tries} repeat={repeat} onToggleRepeat={() => setRepeat((r) => !r)}
         rlConfig={config} onSaveRLConfig={updateConfig}
+        showVisualize={true} onVisualize={() => setIsQTableOpen(true)}
       />
+      <QTableModal isOpen={isQTableOpen} onClose={() => setIsQTableOpen(false)} entries={getQTableEntries()} epsilon={getEpsilon()} />
     </div>
   );
 }
