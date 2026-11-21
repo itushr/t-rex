@@ -6,29 +6,38 @@ import { patchRunner } from "../game/runnerAudioPatch";
 import { soundManager } from "../game/soundManager";
 import { useGameRunnerControls } from "../game/useGameRunnerControls";
 import { useDinoRL } from "../games/trex/rl/useDinoRL";
+import { savePrivateQTableModel } from "../services/privateApi";
+import { navigateTo } from "../utils/navigation";
 
 const INPUTS = ["keydown", "keyup", "keypress", "mousedown", "touchstart"] as const;
 
 export function DinoReinforcePage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [soundEnabled, setSoundEnabled] = useState(false);
-  const [isQTableOpen, setIsQTableOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false), [isQTableOpen, setIsQTableOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { gameStatus, togglePlayPause, restart } = useGameRunnerControls();
-  const { tries, repeat, setRepeat, config, updateConfig, getQTableEntries, getEpsilon } = useDinoRL(gameStatus, restart);
+  const { tries, repeat, setRepeat, config, updateConfig, getQTableEntries, getRawQTable, getEpsilon } = useDinoRL(gameStatus, restart);
+
+  const handleForward = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await savePrivateQTableModel({ model_name: `q_table_${Date.now()}`, game_id: "dino", q_table: getRawQTable(), tries });
+      navigateTo("/dashboard");
+    } catch { setSaving(false); }
+  };
 
   useEffect(() => {
     soundManager.setSoundEnabled(false);
     let scriptTag: HTMLScriptElement | null = null;
     const linkTag = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/t-rex-runner/index.css" });
-    document.head.appendChild(linkTag);
-    document.body.classList.add("offline", "arcade-mode");
-
+    document.head.appendChild(linkTag); document.body.classList.add("offline", "arcade-mode");
     const tpl = document.getElementById("audio-resources") as HTMLTemplateElement | null;
     if (tpl) tpl.innerHTML = `<audio id="offline-sound-press" src="${AUDIO_PRESS}"></audio><audio id="offline-sound-hit" src="${AUDIO_HIT}"></audio><audio id="offline-sound-reached" src="${AUDIO_REACHED}"></audio>`;
 
     const disable = (e: Event) => {
       if ((e.target as HTMLElement | null)?.closest?.(".action-panel")) return;
-      if (e.type.startsWith("key") && "rpmtcv".includes((e as KeyboardEvent).key?.toLowerCase())) return;
+      if (e.type.startsWith("key") && "rpmtcvf".includes((e as KeyboardEvent).key?.toLowerCase())) return;
       e.preventDefault(); e.stopPropagation();
     };
     INPUTS.forEach((ev) => window.addEventListener(ev, disable, { capture: true }));
@@ -81,7 +90,7 @@ export function DinoReinforcePage() {
         gameStatus={gameStatus} onTogglePlayPause={togglePlayPause} onRestart={restart}
         tries={tries} repeat={repeat} onToggleRepeat={() => setRepeat((r) => !r)}
         rlConfig={config} onSaveRLConfig={updateConfig}
-        showVisualize={true} onVisualize={() => setIsQTableOpen(true)}
+        showVisualize={true} onVisualize={() => setIsQTableOpen(true)} onForward={handleForward}
       />
       <QTableModal isOpen={isQTableOpen} onClose={() => setIsQTableOpen(false)} entries={getQTableEntries()} epsilon={getEpsilon()} />
     </div>

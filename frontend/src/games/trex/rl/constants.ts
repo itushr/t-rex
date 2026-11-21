@@ -21,13 +21,13 @@ export const AVAILABLE_ACTIONS: { key: DinoAction; label: string }[] = [
 
 export const DEFAULT_RL_CONFIG: RLConfig = {
   rewards: {
-    survive: 0.1,
-    jump_penalty: -0.5,
+    survive: 0.0,
+    jump_penalty: -1.0,
     clear_obstacle: 5.0,
     crash_penalty: -10.0,
   },
   enabledRewards: {
-    survive: true,
+    survive: false,
     jump_penalty: true,
     clear_obstacle: true,
     crash_penalty: true,

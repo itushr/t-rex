@@ -21,8 +21,7 @@ export function ActionPanelControls({
   showRepeat = false, repeat = true, onToggleRepeat, showTrain = true, showSound = true,
   onPlayToggle, onToggleSound, onForward, onVisualize,
 }: ControlsProps) {
-  const isCrashed = gameStatus === "crashed";
-  const isPlaying = gameStatus === "playing";
+  const isCrashed = gameStatus === "crashed", isPlaying = gameStatus === "playing";
 
   return (
     <div className="flex gap-5 items-center self-stretch pr-7">
@@ -69,7 +68,18 @@ export function ActionPanelControls({
         </Tooltip>
       )}
 
-      {showTrain && !showVisualize && (
+      {showVisualize && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" onClick={onVisualize} className="h-full cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 flex items-center">
+              <DiagramFlowVertical strokeWidth={1.5} fill="white" className="size-6" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Open Visualizer <Kbd>V</Kbd></TooltipContent>
+        </Tooltip>
+      )}
+
+      {showTrain && (
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -79,18 +89,7 @@ export function ActionPanelControls({
               <SkipForward strokeWidth={1.5} fill="white" nonScalingStroke className="size-7" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top">{trainDisabled ? "Training not available" : "Start Training"} {!trainDisabled && onForward && <Kbd>T</Kbd>}</TooltipContent>
-        </Tooltip>
-      )}
-
-      {showVisualize && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button type="button" onClick={onVisualize} className="h-full cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent border-0 flex items-center">
-              <DiagramFlowVertical strokeWidth={1.5} fill="white" className="size-6" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">Open Visualizer <Kbd>V</Kbd></TooltipContent>
+          <TooltipContent side="top">{trainDisabled ? "Forward not available" : "Next / Save"} {!trainDisabled && onForward && <Kbd>F</Kbd>}</TooltipContent>
         </Tooltip>
       )}
     </div>

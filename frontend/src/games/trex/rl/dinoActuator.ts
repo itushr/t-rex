@@ -11,7 +11,5 @@ export function dispatchDinoAction(runner: any, action: DinoAction): void {
     }
   } else if (action === "duck") {
     if (!rex.ducking && !rex.jumping && typeof rex.setDuck === "function") rex.setDuck(true);
-  } else {
-    if (rex.ducking && typeof rex.setDuck === "function") rex.setDuck(false);
   }
 }

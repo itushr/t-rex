@@ -35,6 +35,18 @@ export async function listPrivateModels(): Promise<any[]> {
   return r.ok ? r.json() : [];
 }
 
+export async function savePrivateQTableModel(payload: {
+  model_name?: string; game_id?: string; q_table: any; actions?: string[]; features?: string[]; tries?: number;
+}): Promise<any> {
+  const r = await authFetch("/api/private/models/save-qtable", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || "Failed to save Q-table model");
+  return data;
+}
+
 export async function getPrivateModelInfo(name: string): Promise<any> {
   const r = await authFetch(`/api/private/models/${name}/info`);
   if (!r.ok) throw new Error(`Model info error: ${name}`);

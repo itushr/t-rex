@@ -1,6 +1,7 @@
 import * as ort from "onnxruntime-web";
 import { extractFeatureVector, readObstacles } from "./dinoFeatureExtractor";
 import { authFetch } from "../services/guestAuth";
+import { extractDinoRLState, serializeDinoState } from "../games/trex/rl/state";
 
 ort.env.wasm.wasmPaths = "/ort/";
 (window as any).ort = ort;
@@ -15,12 +16,10 @@ export interface AutoplayStep {
 export class OnnxDinoAutoplay {
   private session: ort.InferenceSession | null = null;
   private features: string[] = [];
+  private qTable: Record<string, Record<string, number>> | null = null;
   private intervalId: number | null = null;
-  private active = false;
-  private isBusy = false;
-  private startTime = 0;
-  private pausedTime = 0;
-  private lastPause = 0;
+  private active = false; private isBusy = false;
+  private startTime = 0; private pausedTime = 0; private lastPause = 0;
   public onStep?: (step: AutoplayStep) => void;
 
   async init(modelName: string, isPrivate = false): Promise<boolean> {
@@ -30,41 +29,42 @@ export class OnnxDinoAutoplay {
       if (!metaRes.ok) return false;
       const meta = await metaRes.json();
       this.features = meta.features || [];
+      if (meta.model_type === "q_table") { this.qTable = meta.q_table || {}; return true; }
       const modelRes = isPrivate ? await authFetch(`${pfx}/${modelName}`) : await fetch(`${pfx}/${modelName}`);
       if (!modelRes.ok) return false;
-      const buffer = await modelRes.arrayBuffer();
-      this.session = await ort.InferenceSession.create(buffer);
-      (window as any).__onnxReady = true;
+      this.session = await ort.InferenceSession.create(await modelRes.arrayBuffer());
       return true;
-    } catch (err) {
-      console.error("ONNX session error:", err);
-      return false;
-    }
+    } catch { return false; }
   }
 
   start(): void {
-    if (this.active || !this.session) return;
-    this.active = true;
-    this.startTime = Date.now();
+    if (this.active || (!this.session && !this.qTable)) return;
+    this.active = true; this.startTime = Date.now();
     this.intervalId = window.setInterval(async () => {
       const runner = (window as any).Runner?.instance_;
-      if (!runner?.tRex || !this.session || this.isBusy) return;
+      if (!runner?.tRex || (!this.session && !this.qTable) || this.isBusy) return;
       if (!runner.playing || runner.paused || runner.crashed) {
         if (runner.paused && !this.lastPause) this.lastPause = Date.now();
         return;
       }
       if (this.lastPause) { this.pausedTime += Date.now() - this.lastPause; this.lastPause = 0; }
-
       this.isBusy = true;
       try {
-        const vec = extractFeatureVector(runner, this.features);
-        const tensor = new ort.Tensor("float32", vec, [1, vec.length]);
-        const results = await this.session.run({ [this.session.inputNames[0]]: tensor });
-        const action = String(results[this.session.outputNames[0]].data[0]).toLowerCase();
+        let action = "none";
+        if (this.qTable) {
+          const qvals = this.qTable[serializeDinoState(extractDinoRLState(runner))];
+          if (qvals) {
+            let maxQ = -Infinity;
+            for (const [a, q] of Object.entries(qvals)) { if (q > maxQ) { maxQ = q; action = a; } }
+          }
+        } else if (this.session) {
+          const vec = extractFeatureVector(runner, this.features);
+          const res = await this.session.run({ [this.session.inputNames[0]]: new ort.Tensor("float32", vec, [1, vec.length]) });
+          action = String(res[this.session.outputNames[0]].data[0]).toLowerCase();
+        }
         this.act(runner, action);
         if (this.onStep) {
-          const [obs1, obs2] = readObstacles(runner);
-          const spd = Number(runner.currentSpeed) || 0;
+          const [obs1, obs2] = readObstacles(runner), spd = Number(runner.currentSpeed) || 0;
           this.onStep({
             time: Number(((Date.now() - this.startTime - this.pausedTime) / 1000).toFixed(2)),
             speed: spd, jumping: Boolean(runner.tRex?.jumping), ducking: Boolean(runner.tRex?.ducking),
@@ -87,8 +87,8 @@ export class OnnxDinoAutoplay {
       }
     } else if (action === "duck") {
       if (!rex.ducking && !rex.jumping && typeof rex.setDuck === "function") rex.setDuck(true);
-    } else {
-      if (rex.ducking && typeof rex.setDuck === "function") rex.setDuck(false);
+    } else if (!this.qTable && rex.ducking && typeof rex.setDuck === "function") {
+      rex.setDuck(false);
     }
   }
 

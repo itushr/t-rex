@@ -77,6 +77,12 @@ export class QLearningAgent<S = any, A extends string = string> {
     return res;
   }
 
+  getRawTable(): Record<string, Record<A, number>> {
+    const obj: Record<string, Record<A, number>> = {};
+    for (const [k, v] of this.qTable.entries()) obj[k] = { ...v };
+    return obj;
+  }
+
   reset(): void {
     this.qTable.clear(); this.epsilon = 1.0;
   }
