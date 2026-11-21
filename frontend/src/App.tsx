@@ -16,6 +16,7 @@ const GameNotFoundPage = lazy(() => import("./pages/GameNotFoundPage"));
 const SetupPage = lazy(() => import("./pages/SetupPage"));
 const ModelVisualizePage = lazy(() => import("./pages/ModelVisualizePage"));
 const PlaybackVisualizePage = lazy(() => import("./pages/PlaybackVisualizePage"));
+const DinoReinforcePage = lazy(() => import("./pages/DinoReinforcePage"));
 
 function LoadingFallback() {
   return (
@@ -29,6 +30,7 @@ function RouteView({ route }: { route: RouteInfo }) {
   if (route.type === "landing2") return <LandingPage2 />;
   if (route.type === "landing") return <LandingPage />;
   if (route.type === "setup") return <SetupPage />;
+  if (route.type === "reinforce") return <DinoReinforcePage />;
   if (route.type === "dashboard") return <PrivateDashboardV2Page />;
   if (route.type === "dashboard-local") return <VisualizerIndexPage />;
   if (route.type === "train") return <TrainPage gameId={route.gameId} />;

@@ -7,6 +7,9 @@ export function parseRoute(path = window.location.pathname): RouteInfo {
   if (path === "/dashboard/local") return { type: "dashboard-local" };
   if (path === "/setup") return { type: "setup" };
 
+  const reinforceMatch = path.match(/^\/try-web\/reinforce(?:\/([a-zA-Z0-9_-]+))?\/?$/);
+  if (reinforceMatch) return { type: "reinforce", gameId: reinforceMatch[1] || "trex" };
+
   const tryMatch = path.match(/^\/try-web(?:\/([a-zA-Z0-9_-]+))?\/?$/);
   if (tryMatch) return { type: "try-web", gameId: tryMatch[1] };
   if (path === "/web") return { type: "try-web", gameId: "trex" };
