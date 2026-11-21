@@ -49,7 +49,7 @@ export function TrainPage({ gameId = "trex" }: { gameId?: string }) {
     try {
       const data = await trainPrivateModel({
         samples: samples.slice(trimRange[0], trimRange[1]),
-        model_type: modelType, selected_features: features,
+        model_type: modelType, selected_features: features, game_id: gameId,
       });
       setResult(data);
     } catch (err: any) { setError(err?.message || String(err)); }
@@ -82,7 +82,7 @@ export function TrainPage({ gameId = "trex" }: { gameId?: string }) {
           <FeatureSelectStep selected={features} features={gameFeatures} onChange={setFeatures} />
         </div>
         {error && <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-mono">{error}</div>}
-        {result && <TrainResultCard result={result} onNavigate={nav} />}
+        {result && <TrainResultCard result={result} gameId={gameId} onNavigate={nav} />}
         <button
           type="button" onClick={handleTrain} disabled={loading || activeCount < 10 || features.length === 0}
           className="w-full py-3 px-6 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"

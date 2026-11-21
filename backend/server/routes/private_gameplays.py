@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api/private/gameplays", tags=["private-gameplays"])
 
 class SaveGameplayRequest(BaseModel):
     name: Optional[str] = None
+    game_id: Optional[str] = "dino"
     samples: List[Dict[str, Any]]
 
 
@@ -41,10 +42,11 @@ def save_user_gameplay(
 ):
     if not req.samples:
         raise HTTPException(status_code=400, detail="Cannot save empty gameplay")
+    gid = req.game_id or ("flappy-bird" if "bird_y" in req.samples[0] else "dino")
     raw_name = req.name or f"gameplay_{time.strftime('%Y%m%d_%H%M%S')}"
     clean_name = sanitize_name(raw_name)
     fname = f"{clean_name}.csv"
-    r2_key = make_r2_key(user_id, "dino", "gameplays", fname)
+    r2_key = make_r2_key(user_id, gid, "gameplays", fname)
 
     df = pd.DataFrame(req.samples)
     buf = io.BytesIO()
@@ -59,7 +61,7 @@ def save_user_gameplay(
         db,
         id=f"gp_{uuid.uuid4().hex[:12]}",
         user_id=user_id,
-        game_id="dino",
+        game_id=gid,
         name=clean_name,
         filename=fname,
         r2_key=r2_key,

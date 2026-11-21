@@ -25,14 +25,16 @@ def train_user_model(
     model_name: Optional[str] = None,
     model_type: str = "decision_tree",
     selected_features: Optional[List[str]] = None,
+    game_id: str = "dino",
 ) -> Dict[str, Any]:
     if not samples:
         raise ValueError("Cannot train with 0 samples")
     raw_name = model_name or f"model_{time.strftime('%Y%m%d_%H%M%S')}_{model_type}"
     cname = sanitize_name(raw_name)
+    gid = game_id or "dino"
 
     df = _ensure_diversity(pd.DataFrame(samples))
-    ga = FilteredGameAdapter(get_game_adapter("dino"), selected_features)
+    ga = FilteredGameAdapter(get_game_adapter(gid), selected_features)
     ma = get_model_adapter(model_type)
 
     X, y, categories, features = prepare_training_data(df, ga)
@@ -46,13 +48,13 @@ def train_user_model(
     now_ts = time.time()
 
     bundle = {
-        "model": model, "model_type": model_type, "game_id": "dino",
+        "model": model, "model_type": model_type, "game_id": gid,
         "features": features, "numeric_features": ga.numeric_features,
         "categorical_features": ga.categorical_features, "categories": categories, "actions": actions,
         "created_at": now_ts, "timestamp": now_ts,
     }
     onnx_meta = {
-        "name": cname, "model_type": model_type, "game_id": "dino",
+        "name": cname, "model_type": model_type, "game_id": gid,
         "features": features, "numeric_features": ga.numeric_features,
         "type_features": ga.categorical_features, "categories": categories, "actions": actions,
         "created_at": now_ts, "timestamp": now_ts,
@@ -65,9 +67,9 @@ def train_user_model(
     meta_bytes = json.dumps(onnx_meta, indent=2).encode("utf-8")
 
     storage = get_storage()
-    pkl_key = make_r2_key(user_id, "dino", "models", f"{cname}.pkl")
-    onnx_key = make_r2_key(user_id, "dino", "models", f"{cname}.onnx")
-    meta_key = make_r2_key(user_id, "dino", "models", f"{cname}_meta.json")
+    pkl_key = make_r2_key(user_id, gid, "models", f"{cname}.pkl")
+    onnx_key = make_r2_key(user_id, gid, "models", f"{cname}.onnx")
+    meta_key = make_r2_key(user_id, gid, "models", f"{cname}_meta.json")
 
     storage.put_bytes(pkl_key, pkl_bytes, "application/octet-stream")
     storage.put_bytes(onnx_key, onnx_bytes, "application/octet-stream")
@@ -77,7 +79,7 @@ def train_user_model(
         db,
         id=f"mod_{uuid.uuid4().hex[:12]}",
         user_id=user_id,
-        game_id="dino",
+        game_id=gid,
         name=cname,
         filename=f"{cname}.pkl",
         model_type=model_type,

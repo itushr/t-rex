@@ -3,10 +3,14 @@ import { TrainResult } from "../../types/train";
 
 interface Props {
   result: TrainResult;
+  gameId?: string;
   onNavigate: (url: string) => void;
 }
 
-export function TrainResultCard({ result, onNavigate }: Props) {
+export function TrainResultCard({ result, gameId = "trex", onNavigate }: Props) {
+  const autoUrl = gameId && gameId !== "trex"
+    ? `/autoplay/${gameId}/private/${result.model_name}`
+    : `/try-web/autoplay/private/${result.model_name}`;
   return (
     <div className="w-full border-2 border-border rounded-xl text-card-foreground p-1 block">
       <div className="bg-card rounded-xl shadow-sm p-8 flex flex-col gap-5">
@@ -48,7 +52,7 @@ export function TrainResultCard({ result, onNavigate }: Props) {
           </button>
           <button
             type="button"
-            onClick={() => onNavigate(`/try-web/autoplay/private/${result.model_name}`)}
+            onClick={() => onNavigate(autoUrl)}
             className="flex-1 py-2 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-xs flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
           >
             <Play className="size-3.5 fill-current" />

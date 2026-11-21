@@ -19,7 +19,7 @@ export interface FeatureOption {
   id: string;
   label: string;
   desc: string;
-  category: "Obstacle 1" | "Obstacle 2" | "Dino State" | "Calculated";
+  category: string;
 }
 
 export interface TrainResult {

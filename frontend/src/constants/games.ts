@@ -45,11 +45,11 @@ export const SUPPORTED_GAMES: GameDefinition[] = [
     isAvailable: true,
     hasSound: false,
     soundAvailable: false,
-    hasRecorder: false,
-    recorderImplemented: false,
-    availableModels: null,
-    models: null,
-    supportedModels: [],
+    hasRecorder: true,
+    recorderImplemented: true,
+    availableModels: ["decision_tree", "random_forest"],
+    models: ["decision_tree", "random_forest"],
+    supportedModels: ["decision_tree", "random_forest"],
   },
 ];
 

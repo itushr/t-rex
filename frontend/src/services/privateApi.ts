@@ -5,10 +5,10 @@ export async function listPrivateGameplays(): Promise<any[]> {
   return r.ok ? r.json() : [];
 }
 
-export async function savePrivateGameplay(samples: any[], name?: string): Promise<any> {
+export async function savePrivateGameplay(samples: any[], name?: string, game_id = "dino"): Promise<any> {
   const r = await authFetch("/api/private/gameplays", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, samples }),
+    body: JSON.stringify({ name, samples, game_id }),
   });
   if (!r.ok) throw new Error("Failed to save gameplay");
   return r.json();

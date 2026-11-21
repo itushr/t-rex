@@ -3,10 +3,10 @@ import { timeAgo } from "../../utils/time";
 
 function CardShell({
   title, subtitle = "T-Rex", modelType = "Random Forest",
-  timestamp, rowSpan, badge = "Private", onClick,
+  timestamp, rowSpan, badge = "Private", icon = "/dino.svg", onClick,
 }: {
   title: string; subtitle?: string; modelType?: string;
-  timestamp: any; rowSpan: string; badge?: string; onClick?: () => void;
+  timestamp: any; rowSpan: string; badge?: string; icon?: string; onClick?: () => void;
 }) {
   return (
     <div
@@ -35,7 +35,7 @@ function CardShell({
         </div>
         <div className="flex-1 flex items-center justify-center py-4">
           <div className="flex gap-5 items-center justify-center">
-            <img src="/dino.svg" className="h-10 w-10 object-contain" alt="Dino" />
+            <img src={icon} className="h-10 w-10 object-contain" alt={subtitle} />
             <div style={{ fontFamily: "'Press Start 2P', monospace" }} className="text-xs sm:text-sm">
               <div>{subtitle}</div>
               <div className="text-[10px] sm:text-xs text-muted-foreground mt-1">{modelType}</div>
@@ -48,9 +48,12 @@ function CardShell({
 }
 
 export function ModelCard({ model, isLocal, onClick }: { model: any; isLocal?: boolean; onClick?: () => void }) {
+  const isFlappy = model.game_id === "flappy-bird" || model.game_id === "flappybird";
   return (
     <CardShell
       title={model.name || "Model #1"}
+      subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
+      icon={isFlappy ? "/games/flappybird/flappybird.png" : "/dino.svg"}
       modelType={model.model_type?.replace(/_/g, " ") || "Decision Tree"}
       timestamp={model.timestamp || model.created_at || model.modified}
       rowSpan="row-span-1 sm:row-span-3"
@@ -61,9 +64,12 @@ export function ModelCard({ model, isLocal, onClick }: { model: any; isLocal?: b
 }
 
 export function GameplayCard({ gameplay, isLocal, onClick }: { gameplay: any; isLocal?: boolean; onClick?: () => void }) {
+  const isFlappy = gameplay.game_id === "flappy-bird" || gameplay.game_id === "flappybird";
   return (
     <CardShell
       title={gameplay.name || "Gameplay #1"}
+      subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
+      icon={isFlappy ? "/games/flappybird/flappybird.png" : "/dino.svg"}
       modelType="Gameplay"
       timestamp={gameplay.timestamp || gameplay.created_at || gameplay.modified}
       rowSpan="row-span-1 sm:row-span-2"
@@ -74,9 +80,12 @@ export function GameplayCard({ gameplay, isLocal, onClick }: { gameplay: any; is
 }
 
 export function PlaybackCard({ playback, isLocal, onClick }: { playback: any; isLocal?: boolean; onClick?: () => void }) {
+  const isFlappy = playback.game_id === "flappy-bird" || playback.game_id === "flappybird";
   return (
     <CardShell
       title={playback.filename || playback.name || "Autoplay #1"}
+      subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
+      icon={isFlappy ? "/games/flappybird/flappybird.png" : "/dino.svg"}
       modelType={playback.model_type?.replace(/_/g, " ") || "Autoplay"}
       timestamp={playback.timestamp || playback.created_at || playback.modified}
       rowSpan="row-span-1 sm:row-span-2"

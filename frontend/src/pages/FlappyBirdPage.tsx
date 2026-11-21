@@ -3,6 +3,7 @@ import { FlappyEngine } from "../games/flappybird/flappyEngine";
 import { FlappyRenderer } from "../games/flappybird/flappyRenderer";
 import { ActionPanel } from "../components/ActionPanel";
 import { getGameDefinition } from "../constants/games";
+import { useWebGameRecorder } from "../game/useWebGameRecorder";
 import type { GameStatus } from "../game/useGameRunnerControls";
 
 export function FlappyBirdPage() {
@@ -11,6 +12,7 @@ export function FlappyBirdPage() {
   const [gameStatus, setGameStatus] = useState<GameStatus>("paused");
   const statusRef = useRef<GameStatus>("paused");
   const def = getGameDefinition("flappy-bird");
+  const rec = useWebGameRecorder(gameStatus, "flappy-bird");
 
   const syncStatus = (next: GameStatus) => {
     if (next !== statusRef.current) { statusRef.current = next; setGameStatus(next); }
@@ -40,7 +42,7 @@ export function FlappyBirdPage() {
 
     const engine = new FlappyEngine(w, h);
     const renderer = new FlappyRenderer();
-    engineRef.current = engine;
+    engineRef.current = engine; (window as any).flappyEngine = engine;
 
     const syncSize = () => {
       const nw = canvas.clientWidth || window.innerWidth;
@@ -51,14 +53,12 @@ export function FlappyBirdPage() {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" || e.code === "ArrowUp") {
-        e.preventDefault(); engine.jump(); syncStatus("playing");
-      }
+      if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); engine.jump(); syncStatus("playing"); }
     };
-
     const handlePointerDown = (e: PointerEvent) => {
       if ((e.target as HTMLElement)?.closest(".action-panel")) return;
       engine.jump(); syncStatus("playing");
+      window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
     };
 
     window.addEventListener("resize", syncSize);
@@ -75,6 +75,7 @@ export function FlappyBirdPage() {
 
     return () => {
       document.body.style.backgroundColor = prevBg;
+      (window as any).flappyEngine = null;
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", syncSize);
       window.removeEventListener("keydown", handleKeyDown);
@@ -86,13 +87,12 @@ export function FlappyBirdPage() {
     <div className="fixed inset-0 w-full h-full overflow-hidden select-none bg-sky-400 flex flex-col items-center">
       <canvas ref={canvasRef} className="block w-full h-full cursor-pointer touch-none" />
       <ActionPanel
-        gameStatus={gameStatus} onTogglePlayPause={handleTogglePlayPause}
-        onRestart={handleRestart} soundDisabled={!def?.hasSound}
-        trainDisabled={def?.availableModels === null} recordDisabled={!def?.hasRecorder}
-        soundEnabled={false}
+        gameStatus={gameStatus} onTogglePlayPause={handleTogglePlayPause} onRestart={handleRestart}
+        soundDisabled={!def?.hasSound} trainDisabled={def?.availableModels === null}
+        recordDisabled={!def?.hasRecorder} soundEnabled={false} isRecording={rec.isRecording}
+        isRecordingPaused={rec.isRecordingPaused} onToggleRecord={rec.toggleRecord} onForward={rec.forwardToTrain}
       />
     </div>
   );
 }
-
 export default FlappyBirdPage;

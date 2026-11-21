@@ -8,6 +8,7 @@ const PrivateDashboardV2Page = lazy(() => import("./pages/PrivateDashboardV2Page
 const VisualizerIndexPage = lazy(() => import("./pages/VisualizerIndexPage"));
 const TrainPage = lazy(() => import("./pages/TrainPage"));
 const TryWebAutoplayPage = lazy(() => import("./pages/TryWebAutoplayPage"));
+const FlappyBirdAutoplayPage = lazy(() => import("./pages/FlappyBirdAutoplayPage"));
 const WebRunnerPage = lazy(() => import("./pages/WebRunnerPage"));
 const FlappyBirdPage = lazy(() => import("./pages/FlappyBirdPage"));
 const TryWebSelectPage = lazy(() => import("./pages/TryWebSelectPage"));
@@ -32,6 +33,9 @@ function RouteView({ route }: { route: RouteInfo }) {
   if (route.type === "dashboard-local") return <VisualizerIndexPage />;
   if (route.type === "train") return <TrainPage gameId={route.gameId} />;
   if (route.type === "autoplay" && route.modelName) {
+    if (route.gameId === "flappy-bird" || route.gameId === "flappy-brird") {
+      return <FlappyBirdAutoplayPage modelName={route.modelName} isPrivate={route.isPrivate} />;
+    }
     return <TryWebAutoplayPage modelName={route.modelName} isPrivate={route.isPrivate} />;
   }
   if (route.type === "try-web") {

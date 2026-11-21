@@ -20,6 +20,7 @@ class TrainModelRequest(BaseModel):
     gameplay_name: Optional[str] = None
     model_name: Optional[str] = None
     model_type: str = "decision_tree"
+    game_id: Optional[str] = "dino"
     samples: Optional[List[Dict[str, Any]]] = None
     selected_features: Optional[List[str]] = None
 
@@ -58,7 +59,8 @@ def train_private(req: TrainModelRequest, user_id: str = Depends(get_current_use
         samples = pd.read_csv(io.BytesIO(csv_bytes)).to_dict(orient="records")
     if not samples:
         raise HTTPException(status_code=400, detail="Samples or gameplay_name required")
-    return train_user_model(db, user_id, samples, req.model_name, req.model_type, req.selected_features)
+    gid = req.game_id or ("flappy-bird" if samples and "bird_y" in samples[0] else "dino")
+    return train_user_model(db, user_id, samples, req.model_name, req.model_type, req.selected_features, gid)
 
 
 @router.get("/{name}/info")

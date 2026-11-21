@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ensureGuestToken } from "../services/guestAuth";
 import { listPrivateGameplays, listPrivateModels, listPrivatePlaybacks } from "../services/privateApi";
 import { ModelCard, GameplayCard, PlaybackCard } from "../components/dashboard/BentoCards";
+import { navigateTo } from "../utils/navigation";
 import Header from "../components/Header";
 
 const BENTO_PATTERN = [1, 3, 2, 3, 1, 2, 3, 3, 2, 3, 1, 3];
@@ -59,9 +60,17 @@ export function PrivateDashboardV2Page() {
       <div className="mt-20 max-w-275 mx-auto">
         <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 auto-rows-25 grid-flow-row-dense gap-2">
           {items.map((it) => {
-            if (it.kind === "model") return <ModelCard key={it.id} model={it} />;
-            if (it.kind === "gameplay") return <GameplayCard key={it.id} gameplay={it} />;
-            if (it.kind === "playback") return <PlaybackCard key={it.id} playback={it} />;
+            if (it.kind === "model") {
+              const url = it.game_id === "flappy-bird" ? `/autoplay/flappy-bird/private/${it.name}` : `/try-web/autoplay/private/${it.name}`;
+              return <ModelCard key={it.id} model={it} onClick={() => navigateTo(url)} />;
+            }
+            if (it.kind === "gameplay") {
+              const url = it.game_id === "flappy-bird" ? `/train/flappy-bird?gameplay=${it.name}` : `/train?gameplay=${it.name}`;
+              return <GameplayCard key={it.id} gameplay={it} onClick={() => navigateTo(url)} />;
+            }
+            if (it.kind === "playback") {
+              return <PlaybackCard key={it.id} playback={it} onClick={() => navigateTo(`/visualize/playback/private/${it.filename || it.name}`)} />;
+            }
           })}
         </main>
       </div>

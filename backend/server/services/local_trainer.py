@@ -17,14 +17,10 @@ def _ensure_diversity(df: pd.DataFrame) -> pd.DataFrame:
     if "jump" not in actions:
         jump_row = clean.iloc[0].to_dict()
         jump_row["action"] = "jump"
-        jump_row["obstacle1_x"] = 80.0
-        jump_row["time_to_impact"] = 12.0
         clean = pd.concat([clean, pd.DataFrame([jump_row] * 5)], ignore_index=True)
     if "none" not in actions:
         none_row = clean.iloc[0].to_dict()
         none_row["action"] = "none"
-        none_row["obstacle1_x"] = -1.0
-        none_row["time_to_impact"] = -1.0
         clean = pd.concat([clean, pd.DataFrame([none_row] * 5)], ignore_index=True)
     while len(clean) < 15:
         clean = pd.concat([clean, clean], ignore_index=True)
@@ -35,11 +31,13 @@ def train_local_model(
     samples: List[Dict[str, Any]],
     model_type: str = "decision_tree",
     selected_features: Optional[List[str]] = None,
+    game_id: str = "dino",
 ) -> Dict[str, Any]:
     if not samples:
         raise ValueError("Cannot train with 0 samples")
     df = _ensure_diversity(pd.DataFrame(samples))
-    ga = FilteredGameAdapter(get_game_adapter("dino"), selected_features)
+    gid = game_id or "dino"
+    ga = FilteredGameAdapter(get_game_adapter(gid), selected_features)
     ma = get_model_adapter(model_type)
 
     X, y, categories, features = prepare_training_data(df, ga)
@@ -56,17 +54,17 @@ def train_local_model(
     graph = ma.extract_graph(model, features, actions)
 
     bundle = {
-        "model": model, "model_type": model_type, "game_id": "dino",
+        "model": model, "model_type": model_type, "game_id": gid,
         "features": features, "numeric_features": ga.numeric_features,
         "categorical_features": ga.categorical_features,
         "categories": categories, "actions": actions,
     }
     graph_response = {
-        "model_name": "local", "model_type": model_type, "game_id": "dino",
+        "model_name": "local", "model_type": model_type, "game_id": gid,
         "features": features, "actions": actions, "graph": graph,
     }
     onnx_meta = {
-        "name": "local", "model_type": model_type, "game_id": "dino",
+        "name": "local", "model_type": model_type, "game_id": gid,
         "features": features, "numeric_features": ga.numeric_features,
         "type_features": ga.categorical_features,
         "categories": categories, "actions": actions,

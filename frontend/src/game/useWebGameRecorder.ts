@@ -57,7 +57,7 @@ export function useWebGameRecorder(gameStatus: GameStatus, gameId: string = "tre
     setIsRecording(false);
     sessionStorage.setItem(`${gameId}_local_samples`, JSON.stringify(samples));
     if (gameId === "trex") sessionStorage.setItem("dino_local_samples", JSON.stringify(samples));
-    if (samples.length >= 10) savePrivateGameplay(samples).catch(() => {});
+    if (samples.length >= 10) savePrivateGameplay(samples, undefined, gameId).catch(() => {});
     const targetUrl = gameId === "trex" ? "/train" : `/train/${gameId}`;
     window.history.pushState(null, "", targetUrl);
     window.dispatchEvent(new PopStateEvent("popstate"));

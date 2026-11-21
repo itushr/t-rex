@@ -23,8 +23,11 @@ export function SetupPage() {
 
           <TabsContent value="prompt" className="w-full">
             <div className="border-2 border-border rounded-xl text-card-foreground p-1 w-full shadow-xs">
-              <div className="bg-card rounded-xl p-6 sm:p-8">
-                <p className="text-xs sm:text-sm text-muted-foreground mb-4">
+              <div className="bg-card rounded-xl p-6 sm:p-10">
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-2">
+                  Using prompt
+                </h2>
+                <p className="text-sm text-muted-foreground mb-6">
                   Paste this setup prompt into any agent:
                 </p>
                 <CodeCard title="Prompt" code={PROMPT_SETUP_TEXT} />
@@ -34,8 +37,11 @@ export function SetupPage() {
 
           <TabsContent value="manual" className="w-full">
             <div className="border-2 border-border rounded-xl text-card-foreground p-1 w-full shadow-xs">
-              <div className="bg-card rounded-xl p-6 sm:p-8">
-                <p className="text-xs sm:text-sm text-muted-foreground mb-6">
+              <div className="bg-card rounded-xl p-6 sm:p-10">
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-2">
+                  Set up your project by hand
+                </h2>
+                <p className="text-sm text-muted-foreground mb-8">
                   Your agent can do this for you. To do it yourself, or to check what it did:
                 </p>
                 <ManualSetupSteps steps={MANUAL_STEPS} />

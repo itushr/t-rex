@@ -2,6 +2,7 @@ from typing import Dict, List
 from ml.base.game_adapter import BaseGameAdapter
 from ml.base.model_adapter import BaseModelAdapter
 from ml.games.dino_adapter import DinoGameAdapter
+from ml.games.flappy_bird_adapter import FlappyBirdGameAdapter
 from ml.models.decision_tree_adapter import DecisionTreeAdapter
 from ml.models.random_forest_adapter import RandomForestAdapter
 
@@ -44,5 +45,8 @@ def list_models() -> List[str]:
 dino = DinoGameAdapter()
 register_game(dino)
 _GAMES["trex"] = dino
+flappy = FlappyBirdGameAdapter()
+register_game(flappy)
+_GAMES["flappybird"] = flappy
 register_model(DecisionTreeAdapter())
 register_model(RandomForestAdapter())
