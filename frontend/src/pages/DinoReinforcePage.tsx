@@ -43,10 +43,6 @@ export function DinoReinforcePage() {
         r.soundEnabled = false; r.isWeb = false; r.stopListening?.();
         if (r.containerEl) r.containerEl.style.width = r.dimensions?.WIDTH + "px";
         r.activated = true; r.setArcadeMode?.();
-        r.playing = true; r.paused = false; r.time = performance.now();
-        if (typeof r.play === "function") r.play();
-        r.tRex?.startJump?.(r.currentSpeed);
-        r.update?.();
       }
     }
 

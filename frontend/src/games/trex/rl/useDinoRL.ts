@@ -30,8 +30,8 @@ export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart:
         if (!crashedHandledRef.current) {
           crashedHandledRef.current = true;
           if (prevRef.current) {
-            const penalty = config.enabledRewards.crash_penalty ? config.rewards.crash_penalty : -10;
-            console.log(penalty);
+            const penalty = config.enabledRewards.crash_penalty ? config.rewards.crash_penalty : 0;
+            if (config.enabledRewards.crash_penalty) console.log(penalty);
             trainer.storeTransition({
               state: prevRef.current.state, actionIdx: prevRef.current.actionIdx,
               reward: penalty, nextState: prevRef.current.state, done: true,
@@ -64,14 +64,15 @@ export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart:
       const obsX = currState[config.features.indexOf("obstacle1_x")] ?? 1;
 
       if (prevRef.current) {
-        let reward = config.enabledRewards.survive ? config.rewards.survive : 0.1;
-        if (config.enabledRewards.jump_penalty && prevRef.current.actionIdx === config.actions.indexOf("jump")) {
-          reward += config.rewards.jump_penalty;
-        }
+        let reward = 0;
         if (config.enabledRewards.clear_obstacle && prevRef.current.lastObsX < 0.2 && obsX > 0.5) {
-          reward += config.rewards.clear_obstacle;
+          reward = config.rewards.clear_obstacle;
+        } else if (config.enabledRewards.jump_penalty && prevRef.current.actionIdx === config.actions.indexOf("jump")) {
+          reward = config.rewards.jump_penalty;
+        } else if (config.enabledRewards.survive) {
+          reward = config.rewards.survive;
         }
-        console.log(reward);
+        if (reward !== 0 || config.enabledRewards.survive) console.log(reward);
         trainer.storeTransition({
           state: prevRef.current.state, actionIdx: prevRef.current.actionIdx,
           reward, nextState: currState, done: false,
