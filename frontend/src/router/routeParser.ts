@@ -24,6 +24,9 @@ export function parseRoute(path = window.location.pathname): RouteInfo {
   const trainMatch = path.match(/^\/(?:try-web\/)?t(?:rain|ain)(?:\/([a-zA-Z0-9_-]+))?\/?$/);
   if (trainMatch) return { type: "train", gameId: trainMatch[1] };
 
+  const playMatch = path.match(/^\/play(?:\/([a-zA-Z0-9_-]+))?\/?$/);
+  if (playMatch) return { type: "play", gameId: playMatch[1] || "t-rex" };
+
   const rlMatch = path.match(/^\/try-web\/reinforce(?:ment)?(?:\/([a-zA-Z0-9_-]+))?\/?$/);
   if (rlMatch) return { type: "game", mode: "reinforcement", gameId: rlMatch[1] };
 
