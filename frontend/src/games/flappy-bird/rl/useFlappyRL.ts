@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
-import { QLearningAgent } from "../../../rl/qlearning";
+import { QLearningAgent, NStepBuffer } from "../../../models/q-network";
 import { DEFAULT_FLAPPY_RL_CONFIG } from "./constants";
 import { extractFlappyRLState, serializeFlappyState, FlappyRLState } from "./state";
 import { calcFlappyStepReward, calcFlappyCrashPenalty } from "./rewardHelper";
-import { NStepBuffer } from "../../../rl/nStepBuffer";
 import { FlappyEngine } from "../game/flappyEngine";
 import type { FlappyAction, FlappyRLConfig } from "./types";
 

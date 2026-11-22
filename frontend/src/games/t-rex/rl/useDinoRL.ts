@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { QLearningAgent } from "../../../rl/qlearning";
+import { QLearningAgent } from "../../../models/q-network";
 import { DEFAULT_RL_CONFIG } from "./constants";
 import { extractDinoRLState, serializeDinoState, DinoRLState } from "./state";
 import { dispatchDinoAction, getValidActions } from "./dinoActuator";

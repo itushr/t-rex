@@ -1,7 +1,7 @@
-import { QLearningAgent, QAgentOptions, QTableEntry } from "../../../rl/qlearning";
+export * from "./qlearning";
+export * from "./nStepBuffer";
 
-export { QLearningAgent };
-export type { QAgentOptions, QTableEntry };
+import type { QTableEntry } from "./qlearning";
 
 export interface QPolicySummary {
   totalStates: number;
