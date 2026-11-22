@@ -19,6 +19,8 @@ export function useFlappyRL(engineRef: RefObject<FlappyEngine | null>, gameStatu
   const lastScoreRef = useRef(0);
   const restartTimerRef = useRef<any>(null);
   const crashedHandledRef = useRef(false);
+  const gameStatusRef = useRef(gameStatus);
+  gameStatusRef.current = gameStatus;
 
   const updateConfig = useCallback((cfg: FlappyRLConfig) => {
     setConfig(cfg);
@@ -56,8 +58,7 @@ export function useFlappyRL(engineRef: RefObject<FlappyEngine | null>, gameStatu
         return;
       }
       crashedHandledRef.current = false;
-      if (!engine.state.started) { engine.jump(); return; }
-      if (engine.state.paused) return;
+      if (gameStatusRef.current !== "playing" || !engine.state.started || engine.state.paused) return;
 
       const currScore = Math.floor(engine.state.score);
       const passed = currScore > lastScoreRef.current;
