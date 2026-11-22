@@ -3,13 +3,16 @@ import { getGameDefinition } from "../constants/games";
 import { ActionPanel } from "../components/ActionPanel";
 import { QTableModal } from "../components/actionpanel/QTableModal";
 import { GameNotFound } from "../components/GameNotFound";
-import { useWebGameRecorder } from "../game/useWebGameRecorder";
 import { useGameRL } from "../games/useGameRL";
 import { savePrivateQTableModel } from "../services/privateApi";
 import { navigateTo } from "../utils/navigation";
 import type { GameStatus } from "../game/useGameRunnerControls";
 
-export function Game({ gameId = "t-rex", mode = "imitation" }: { gameId?: string; mode?: "imitation" | "reinforcement" }) {
+export interface ReinforcementProps {
+  gameId?: string;
+}
+
+export function Reinforcement({ gameId = "t-rex" }: ReinforcementProps) {
   const def = getGameDefinition(gameId);
   const [gameStatus, setGameStatus] = useState<GameStatus>("paused");
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -24,7 +27,6 @@ export function Game({ gameId = "t-rex", mode = "imitation" }: { gameId?: string
   }, [gameStatus]);
 
   const handleRestart = useCallback(() => controllerRef.current?.restart?.(), []);
-  const rec = useWebGameRecorder(gameStatus, def?.id || gameId);
   const rl = useGameRL(def?.id || gameId, engineRef, gameStatus, handleRestart);
 
   if (!def) return <GameNotFound />;
@@ -33,8 +35,11 @@ export function Game({ gameId = "t-rex", mode = "imitation" }: { gameId?: string
   const handleRLSave = async () => {
     try {
       await savePrivateQTableModel({
-        model_name: `q_${def.id}_${Date.now()}`, game_id: def.id,
-        q_table: rl.getRawQTable(), actions: rl.actions, tries: rl.tries,
+        model_name: `q_${def.id}_${Date.now()}`,
+        game_id: def.id,
+        q_table: rl.getRawQTable(),
+        actions: rl.actions,
+        tries: rl.tries,
       });
       navigateTo("/dashboard");
     } catch {}
@@ -45,33 +50,44 @@ export function Game({ gameId = "t-rex", mode = "imitation" }: { gameId?: string
       <Suspense fallback={<div className="text-muted-foreground text-xs">Loading game...</div>}>
         {GameComponent && (
           <GameComponent
-            interactive={mode === "imitation"} soundEnabled={soundEnabled}
-            onStatusChange={setGameStatus} onReady={(c: any) => { controllerRef.current = c; }}
+            interactive={false}
+            soundEnabled={soundEnabled}
+            onStatusChange={setGameStatus}
+            onReady={(c: any) => { controllerRef.current = c; }}
             onEngineInstance={(e: any) => { engineRef.current = e; }}
             onRunnerInstance={(r: any) => { engineRef.current = r; }}
           />
         )}
       </Suspense>
       <ActionPanel
-        mode={mode} soundEnabled={soundEnabled} onToggleSound={() => setSoundEnabled((p) => !p)}
-        gameStatus={gameStatus} onTogglePlayPause={handlePlayToggle} onRestart={handleRestart}
-        soundDisabled={!def.hasSound} recordDisabled={!def.hasRecorder}
-        trainDisabled={mode === "imitation" && (!rec.isRecording || def.availableModels === null)}
-        isRecording={rec.isRecording} isRecordingPaused={rec.isRecordingPaused}
-        onToggleRecord={rec.toggleRecord} onForward={mode === "imitation" ? rec.forwardToTrain : handleRLSave}
-        tries={rl.tries} repeat={rl.repeat} onToggleRepeat={() => rl.setRepeat((r) => !r)}
-        rlConfig={rl.config} onSaveRLConfig={rl.updateConfig}
-        showVisualize={mode === "reinforcement"} onVisualize={() => setIsQTableOpen(true)}
-        selectedModel={selectedModel} onSelectModel={setSelectedModel}
+        mode="reinforcement"
+        soundEnabled={soundEnabled}
+        onToggleSound={() => setSoundEnabled((p) => !p)}
+        gameStatus={gameStatus}
+        onTogglePlayPause={handlePlayToggle}
+        onRestart={handleRestart}
+        soundDisabled={!def.hasSound}
+        tries={rl.tries}
+        repeat={rl.repeat}
+        onToggleRepeat={() => rl.setRepeat((r) => !r)}
+        rlConfig={rl.config}
+        onSaveRLConfig={rl.updateConfig}
+        showVisualize={true}
+        onVisualize={() => setIsQTableOpen(true)}
+        selectedModel={selectedModel}
+        onSelectModel={setSelectedModel}
+        onForward={handleRLSave}
       />
-      {mode === "reinforcement" && (
-        <QTableModal
-          isOpen={isQTableOpen} onClose={() => setIsQTableOpen(false)}
-          entries={rl.getQTableEntries()} epsilon={rl.getEpsilon()}
-          actions={rl.actions} stateHeader={rl.stateHeader}
-        />
-      )}
+      <QTableModal
+        isOpen={isQTableOpen}
+        onClose={() => setIsQTableOpen(false)}
+        entries={rl.getQTableEntries()}
+        epsilon={rl.getEpsilon()}
+        actions={rl.actions}
+        stateHeader={rl.stateHeader}
+      />
     </div>
   );
 }
-export default Game;
+
+export default Reinforcement;

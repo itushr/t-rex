@@ -6,7 +6,8 @@ const Home = lazy(() => import("./pages/Home"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Setup = lazy(() => import("./pages/Setup"));
 const TryWeb = lazy(() => import("./pages/TryWeb"));
-const Game = lazy(() => import("./pages/Game"));
+const Immitation = lazy(() => import("./pages/Immitation"));
+const Reinforcement = lazy(() => import("./pages/Reinforcement"));
 const Autoplay = lazy(() => import("./pages/Autoplay"));
 const Visualizer = lazy(() => import("./pages/Visualizer"));
 const Train = lazy(() => import("./pages/Train"));
@@ -26,7 +27,8 @@ function RouteView({ route }: { route: RouteInfo }) {
   if (route.type === "try-web") return <TryWeb />;
   if (route.type === "train") return <Train gameId={route.gameId} />;
   if (route.type === "play") return <Play gameId={route.gameId} />;
-  if (route.type === "game") return <Game gameId={route.gameId} mode={route.mode} />;
+  if (route.type === "immitation") return <Immitation gameId={route.gameId} />;
+  if (route.type === "reinforcement") return <Reinforcement gameId={route.gameId} />;
   if (route.type === "autoplay" && route.modelName) {
     return <Autoplay gameId={route.gameId} modelName={route.modelName} isPrivate={route.isLocal === false} />;
   }

@@ -28,15 +28,15 @@ export function parseRoute(path = window.location.pathname): RouteInfo {
   if (playMatch) return { type: "play", gameId: playMatch[1] || "t-rex" };
 
   const rlMatch = path.match(/^\/try-web\/reinforce(?:ment)?(?:\/([a-zA-Z0-9_-]+))?\/?$/);
-  if (rlMatch) return { type: "game", mode: "reinforcement", gameId: rlMatch[1] };
+  if (rlMatch) return { type: "reinforcement", gameId: rlMatch[1] || "t-rex" };
 
-  const imMatch = path.match(/^\/try-web\/immitation(?:\/([a-zA-Z0-9_-]+))?\/?$/);
-  if (imMatch) return { type: "game", mode: "imitation", gameId: imMatch[1] };
+  const imMatch = path.match(/^\/try-web\/im+itation(?:\/([a-zA-Z0-9_-]+))?\/?$/);
+  if (imMatch) return { type: "immitation", gameId: imMatch[1] || "t-rex" };
 
   if (path === "/try-web") return { type: "try-web" };
 
   const tryGame = path.match(/^\/try-web\/([a-zA-Z0-9_-]+)\/?$/);
-  if (tryGame) return { type: "game", mode: "imitation", gameId: tryGame[1] };
+  if (tryGame) return { type: "immitation", gameId: tryGame[1] };
 
   return { type: "landing" };
 }
