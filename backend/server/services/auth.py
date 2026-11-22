@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import Header, HTTPException, Query, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -12,7 +13,8 @@ security = HTTPBearer(auto_error=False)
 
 def create_guest_token(user_id: Optional[str] = None) -> str:
     uid = user_id or f"gst_{uuid.uuid4().hex[:10]}"
-    payload = {"sub": uid}
+    exp = datetime.now(timezone.utc) + timedelta(days=30)
+    payload = {"sub": uid, "exp": exp}
     return jwt.encode(payload, SECRET, algorithm=ALGO)
 
 

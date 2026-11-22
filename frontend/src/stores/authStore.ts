@@ -14,6 +14,19 @@ const TOKEN_KEY = "dino_guest_token";
 const USER_KEY = "dino_guest_user_id";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
 
+function isTokenExpired(token: string | null): boolean {
+  if (!token) return true;
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return false;
+    const payload = JSON.parse(atob(parts[1]));
+    if (typeof payload.exp === "number") return payload.exp * 1000 <= Date.now();
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   token: localStorage.getItem(TOKEN_KEY),
   userId: localStorage.getItem(USER_KEY),
@@ -35,25 +48,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   ensureToken: async () => {
     const { token, userId, isValidated, lastChecked } = get();
     const now = Date.now();
-    if (token && userId && isValidated && now - lastChecked < CACHE_TTL_MS) {
-      return { token, userId };
-    }
-
-    if (token && userId) {
+    if (token && userId && !isTokenExpired(token)) {
+      if (isValidated && now - lastChecked < CACHE_TTL_MS) return { token, userId };
       try {
-        const check = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const check = await fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } });
         if (check.ok) {
           set({ isValidated: true, lastChecked: now });
           return { token, userId };
         }
+        if (check.status !== 401) {
+          // Server error or non-auth issue: preserve current session
+          return { token, userId };
+        }
       } catch {
-        // network issue fallback to re-auth
+        // Network error: preserve existing credentials
+        return { token, userId };
       }
     }
 
-    // Refresh or create new guest session
     get().clearSession();
     const res = await fetch("/api/auth/guest", { method: "POST" });
     if (!res.ok) throw new Error("Failed to initialize guest session");
