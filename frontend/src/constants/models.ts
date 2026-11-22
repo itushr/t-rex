@@ -11,6 +11,15 @@ export interface ModelDefinition {
   playbackVisualizer?: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
 }
 
+export function normalizeModelId(id?: string): string {
+  if (!id) return "decision_tree";
+  const lower = id.toLowerCase().replace(/-/g, "_");
+  if (lower === "q_learning" || lower === "q_network" || lower === "qnetwork") return "q_network";
+  if (lower === "random_forest" || lower === "randomforest") return "random_forest";
+  if (lower === "decision_tree" || lower === "decisiontree") return "decision_tree";
+  return lower;
+}
+
 export const GLOBAL_MODELS: ModelDefinition[] = [
   {
     id: "decision_tree",
@@ -29,29 +38,42 @@ export const GLOBAL_MODELS: ModelDefinition[] = [
     description: "Ensemble of decision trees voting on predictions",
     supportsVisualization: true,
     defaultParams: { n_estimators: 10, max_depth: 5 },
-    modelVisualizer: lazy(() => import("../models/decision-tree/visualizers/model")),
-    playbackVisualizer: lazy(() => import("../models/decision-tree/visualizers/playback")),
+    modelVisualizer: lazy(() => import("../models/random-forest/visualizers/model")),
+    playbackVisualizer: lazy(() => import("../models/random-forest/visualizers/playback")),
+  },
+  {
+    id: "q_network",
+    name: "Q-Network / Q-Learning",
+    category: "reinforcement",
+    description: "Tabular and neural reinforcement learning policy",
+    supportsVisualization: true,
+    defaultParams: { alpha: 0.1, gamma: 0.95, epsilon: 0.1 },
+    modelVisualizer: lazy(() => import("../models/q-network/visualizers/model")),
+    playbackVisualizer: lazy(() => import("../models/q-network/visualizers/playback")),
   },
   {
     id: "q_learning",
-    name: "Q-Learning / Q-Network",
+    name: "Q-Learning",
     category: "reinforcement",
     description: "Tabular and neural reinforcement learning policy",
-    supportsVisualization: false,
+    supportsVisualization: true,
     defaultParams: { alpha: 0.1, gamma: 0.95, epsilon: 0.1 },
+    modelVisualizer: lazy(() => import("../models/q-network/visualizers/model")),
+    playbackVisualizer: lazy(() => import("../models/q-network/visualizers/playback")),
   },
 ];
 
-export function getModelDefinition(id: string): ModelDefinition | undefined {
-  return GLOBAL_MODELS.find((m) => m.id === id);
+export function getModelDefinition(id?: string): ModelDefinition | undefined {
+  const norm = normalizeModelId(id);
+  return GLOBAL_MODELS.find((m) => m.id === norm) || GLOBAL_MODELS[0];
 }
 
 export function getModelVisualizer(id?: string): LazyExoticComponent<ComponentType<any>> | ComponentType<any> | undefined {
-  const def = id ? getModelDefinition(id) : GLOBAL_MODELS[0];
+  const def = getModelDefinition(id);
   return def?.modelVisualizer;
 }
 
 export function getPlaybackVisualizer(id?: string): LazyExoticComponent<ComponentType<any>> | ComponentType<any> | undefined {
-  const def = id ? getModelDefinition(id) : GLOBAL_MODELS[0];
+  const def = getModelDefinition(id);
   return def?.playbackVisualizer;
 }
