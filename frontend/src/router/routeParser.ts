@@ -1,8 +1,7 @@
 import { RouteInfo } from "./types";
 
 export function parseRoute(path = window.location.pathname): RouteInfo {
-  if (path === "/") return { type: "landing" };
-  if (path === "/lander2" || path === "/landing2") return { type: "landing2" };
+  if (path === "/" || path === "/lander2" || path === "/landing2") return { type: "landing" };
   if (path === "/dashboard" || path === "/dashboardv2") return { type: "dashboard" };
   if (path === "/dashboard/local") return { type: "dashboard-local" };
   if (path === "/setup") return { type: "setup" };

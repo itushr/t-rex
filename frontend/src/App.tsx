@@ -2,8 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { parseRoute } from "./router/routeParser";
 import { RouteInfo } from "./router/types";
 
-const LandingPage = lazy(() => import("./pages/LandingPage"));
-const LandingPage2 = lazy(() => import("./pages/LandingPage2"));
+const Home = lazy(() => import("./pages/Home"));
 const PrivateDashboardV2Page = lazy(() => import("./pages/PrivateDashboardV2Page"));
 const VisualizerIndexPage = lazy(() => import("./pages/VisualizerIndexPage"));
 const TrainPage = lazy(() => import("./pages/TrainPage"));
@@ -28,8 +27,7 @@ function LoadingFallback() {
 }
 
 function RouteView({ route }: { route: RouteInfo }) {
-  if (route.type === "landing2") return <LandingPage2 />;
-  if (route.type === "landing") return <LandingPage />;
+  if (route.type === "landing" || route.type === "landing2") return <Home />;
   if (route.type === "setup") return <SetupPage />;
   if (route.type === "reinforce") {
     if (route.gameId === "flappybird" || route.gameId === "flappy-bird") return <FlappyReinforcePage />;
@@ -56,7 +54,7 @@ function RouteView({ route }: { route: RouteInfo }) {
   if (route.type === "playback-viz" && route.playbackName) {
     return <PlaybackVisualizePage playbackName={route.playbackName} predictionStep={route.predictionStep} treeNo={route.treeNo} isPrivate={route.isPrivate} />;
   }
-  return <LandingPage />;
+  return <Home />;
 }
 
 export function App() {

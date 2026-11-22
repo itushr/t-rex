@@ -2,7 +2,7 @@ import Header from "../components/Header";
 import { CTA } from "../components/landing/CTA";
 import { BottomDinoRunner } from "../components/landing/BottomDinoRunner";
 
-export function LandingPage2() {
+export function Home() {
   return (
     <div className="relative min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
       <section
@@ -43,4 +43,4 @@ export function LandingPage2() {
   );
 }
 
-export default LandingPage2;
+export default Home;
