@@ -53,7 +53,7 @@ export function ModelCard({ model, isLocal, onClick }: { model: any; isLocal?: b
     <CardShell
       title={model.name || "Model #1"}
       subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
-      icon={isFlappy ? "/games/flappybird/flappybird.png" : "/dino.svg"}
+      icon={isFlappy ? "/games/flappy-bird/flappybird.png" : "/dino.svg"}
       modelType={model.model_type?.replace(/_/g, " ") || "Decision Tree"}
       timestamp={model.timestamp || model.created_at || model.modified}
       rowSpan="row-span-1 sm:row-span-3"
@@ -69,7 +69,7 @@ export function GameplayCard({ gameplay, isLocal, onClick }: { gameplay: any; is
     <CardShell
       title={gameplay.name || "Gameplay #1"}
       subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
-      icon={isFlappy ? "/games/flappybird/flappybird.png" : "/dino.svg"}
+      icon={isFlappy ? "/games/flappy-bird/flappybird.png" : "/dino.svg"}
       modelType="Gameplay"
       timestamp={gameplay.timestamp || gameplay.created_at || gameplay.modified}
       rowSpan="row-span-1 sm:row-span-2"
@@ -85,7 +85,7 @@ export function PlaybackCard({ playback, isLocal, onClick }: { playback: any; is
     <CardShell
       title={playback.filename || playback.name || "Autoplay #1"}
       subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
-      icon={isFlappy ? "/games/flappybird/flappybird.png" : "/dino.svg"}
+      icon={isFlappy ? "/games/flappy-bird/flappybird.png" : "/dino.svg"}
       modelType={playback.model_type?.replace(/_/g, " ") || "Autoplay"}
       timestamp={playback.timestamp || playback.created_at || playback.modified}
       rowSpan="row-span-1 sm:row-span-2"

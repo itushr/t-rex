@@ -7,10 +7,10 @@ export class FlappyRenderer {
   private botPipe = new Image();
 
   constructor() {
-    this.bg.src = "/games/flappybird/flappybirdbg.png";
-    this.bird.src = "/games/flappybird/flappybird.png";
-    this.topPipe.src = "/games/flappybird/toppipe.png";
-    this.botPipe.src = "/games/flappybird/bottompipe.png";
+    this.bg.src = "/games/flappy-bird/flappybirdbg.png";
+    this.bird.src = "/games/flappy-bird/flappybird.png";
+    this.topPipe.src = "/games/flappy-bird/toppipe.png";
+    this.botPipe.src = "/games/flappy-bird/bottompipe.png";
   }
 
   public render(ctx: CanvasRenderingContext2D, s: FlappyState, w: number, h: number): void {
