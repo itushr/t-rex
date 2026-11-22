@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, Suspense } from "react";
 import { getGameDefinition } from "../constants/games";
 import { ActionPanel } from "../components/ActionPanel";
 import { QTableModal } from "../components/actionpanel/QTableModal";
-import { GameNotFoundPage } from "./GameNotFoundPage";
+import { GameNotFound } from "../components/GameNotFound";
 import { useWebGameRecorder } from "../game/useWebGameRecorder";
 import { useGameRL } from "../games/useGameRL";
 import { savePrivateQTableModel } from "../services/privateApi";
@@ -27,7 +27,7 @@ export function Game({ gameId = "t-rex", mode = "imitation" }: { gameId?: string
   const rec = useWebGameRecorder(gameStatus, def?.id || gameId);
   const rl = useGameRL(def?.id || gameId, engineRef, gameStatus, handleRestart);
 
-  if (!def) return <GameNotFoundPage />;
+  if (!def) return <GameNotFound />;
   const GameComponent = def.gameComponent;
 
   const handleRLSave = async () => {

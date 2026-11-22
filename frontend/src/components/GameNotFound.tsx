@@ -1,6 +1,6 @@
-import { Header } from "../components/Header";
+import { Header } from "./Header";
 
-export function GameNotFoundPage() {
+export function GameNotFound() {
   return (
     <div className="min-h-screen bg-background text-foreground px-5 py-10 flex flex-col">
       <Header />
@@ -16,4 +16,4 @@ export function GameNotFoundPage() {
   );
 }
 
-export default GameNotFoundPage;
+export default GameNotFound;

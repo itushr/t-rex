@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { getGameDefinition, normalizeGameId } from "../constants/games";
 import { ActionPanel } from "../components/ActionPanel";
-import { GameNotFoundPage } from "./GameNotFoundPage";
+import { GameNotFound } from "../components/GameNotFound";
 import { OnnxDinoAutoplay } from "../game/onnxAutoplay";
 import { OnnxFlappyAutoplay } from "../game/onnxFlappyAutoplay";
 import { useAutoplayPlaybackRecorder } from "../game/useAutoplayPlaybackRecorder";
@@ -44,7 +44,7 @@ export function Autoplay({ gameId = "t-rex", modelName, isPrivate = false }: {
     return () => { active = false; dinoAutoplay.current.stop(); };
   }, [normId, modelName, isPrivate]);
 
-  if (!def) return <GameNotFoundPage />;
+  if (!def) return <GameNotFound />;
   const GameComponent = def.gameComponent;
 
   return (

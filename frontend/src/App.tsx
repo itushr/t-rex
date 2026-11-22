@@ -9,7 +9,7 @@ const TryWeb = lazy(() => import("./pages/TryWeb"));
 const Game = lazy(() => import("./pages/Game"));
 const Autoplay = lazy(() => import("./pages/Autoplay"));
 const Visualizer = lazy(() => import("./pages/Visualizer"));
-const TrainPage = lazy(() => import("./pages/TrainPage"));
+const Train = lazy(() => import("./pages/Train"));
 
 function LoadingFallback() {
   return (
@@ -23,7 +23,7 @@ function RouteView({ route }: { route: RouteInfo }) {
   if (route.type === "dashboard") return <Dashboard isLocal={route.isLocal} />;
   if (route.type === "setup") return <Setup />;
   if (route.type === "try-web") return <TryWeb />;
-  if (route.type === "train") return <TrainPage gameId={route.gameId} />;
+  if (route.type === "train") return <Train gameId={route.gameId} />;
   if (route.type === "game") return <Game gameId={route.gameId} mode={route.mode} />;
   if (route.type === "autoplay" && route.modelName) {
     return <Autoplay gameId={route.gameId} modelName={route.modelName} isPrivate={route.isLocal === false} />;

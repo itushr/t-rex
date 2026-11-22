@@ -15,7 +15,7 @@ function defaultTrim(len: number): [number, number] {
   return [trim, len - trim];
 }
 
-export function TrainPage({ gameId = "trex" }: { gameId?: string }) {
+export function Train({ gameId = "trex" }: { gameId?: string }) {
   const gameFeatures = useMemo(() => getGameFeatures(gameId), [gameId]);
   const gameModels = useMemo(() => getGameModels(gameId), [gameId]);
   const [samples, setSamples] = useState<GameSample[]>([]);
@@ -94,4 +94,4 @@ export function TrainPage({ gameId = "trex" }: { gameId?: string }) {
     </div>
   );
 }
-export default TrainPage;
+export default Train;
