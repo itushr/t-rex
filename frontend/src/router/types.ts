@@ -1,10 +1,9 @@
 export interface RouteInfo {
-  type: "landing" | "landing2" | "dashboard" | "dashboard-local" | "try-web" | "train" | "autoplay" | "model-viz" | "playback-viz" | "setup" | "reinforce";
+  type: "landing" | "dashboard" | "setup" | "try-web" | "game" | "train" | "autoplay" | "visualizer";
+  isLocal?: boolean;
   gameId?: string;
+  mode?: "imitation" | "reinforcement";
   modelName?: string;
-  isPrivate?: boolean;
-  treeIndex?: number;
-  playbackName?: string;
-  predictionStep?: number;
-  treeNo?: number;
+  vizMode?: "model" | "playback";
+  name?: string;
 }

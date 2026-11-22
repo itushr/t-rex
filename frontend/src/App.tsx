@@ -3,20 +3,13 @@ import { parseRoute } from "./router/routeParser";
 import { RouteInfo } from "./router/types";
 
 const Home = lazy(() => import("./pages/Home"));
-const PrivateDashboardV2Page = lazy(() => import("./pages/PrivateDashboardV2Page"));
-const VisualizerIndexPage = lazy(() => import("./pages/VisualizerIndexPage"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Setup = lazy(() => import("./pages/Setup"));
+const TryWeb = lazy(() => import("./pages/TryWeb"));
+const Game = lazy(() => import("./pages/Game"));
+const Autoplay = lazy(() => import("./pages/Autoplay"));
+const Visualizer = lazy(() => import("./pages/Visualizer"));
 const TrainPage = lazy(() => import("./pages/TrainPage"));
-const TryWebAutoplayPage = lazy(() => import("./pages/TryWebAutoplayPage"));
-const FlappyBirdAutoplayPage = lazy(() => import("./pages/FlappyBirdAutoplayPage"));
-const WebRunnerPage = lazy(() => import("./pages/WebRunnerPage"));
-const FlappyBirdPage = lazy(() => import("./pages/FlappyBirdPage"));
-const TryWebSelectPage = lazy(() => import("./pages/TryWebSelectPage"));
-const GameNotFoundPage = lazy(() => import("./pages/GameNotFoundPage"));
-const SetupPage = lazy(() => import("./pages/SetupPage"));
-const ModelVisualizePage = lazy(() => import("./pages/ModelVisualizePage"));
-const PlaybackVisualizePage = lazy(() => import("./pages/PlaybackVisualizePage"));
-const DinoReinforcePage = lazy(() => import("./pages/DinoReinforcePage"));
-const FlappyReinforcePage = lazy(() => import("./pages/FlappyReinforcePage"));
 
 function LoadingFallback() {
   return (
@@ -27,32 +20,16 @@ function LoadingFallback() {
 }
 
 function RouteView({ route }: { route: RouteInfo }) {
-  if (route.type === "landing" || route.type === "landing2") return <Home />;
-  if (route.type === "setup") return <SetupPage />;
-  if (route.type === "reinforce") {
-    if (route.gameId === "flappybird" || route.gameId === "flappy-bird") return <FlappyReinforcePage />;
-    return <DinoReinforcePage />;
-  }
-  if (route.type === "dashboard") return <PrivateDashboardV2Page />;
-  if (route.type === "dashboard-local") return <VisualizerIndexPage />;
+  if (route.type === "dashboard") return <Dashboard isLocal={route.isLocal} />;
+  if (route.type === "setup") return <Setup />;
+  if (route.type === "try-web") return <TryWeb />;
   if (route.type === "train") return <TrainPage gameId={route.gameId} />;
+  if (route.type === "game") return <Game gameId={route.gameId} mode={route.mode} />;
   if (route.type === "autoplay" && route.modelName) {
-    if (route.gameId === "flappy-bird" || route.gameId === "flappy-brird") {
-      return <FlappyBirdAutoplayPage modelName={route.modelName} isPrivate={route.isPrivate} />;
-    }
-    return <TryWebAutoplayPage modelName={route.modelName} isPrivate={route.isPrivate} />;
+    return <Autoplay gameId={route.gameId} modelName={route.modelName} isPrivate={route.isLocal === false} />;
   }
-  if (route.type === "try-web") {
-    if (!route.gameId) return <TryWebSelectPage />;
-    if (route.gameId === "dino" || route.gameId === "trex") return <WebRunnerPage />;
-    if (route.gameId === "flappy-bird" || route.gameId === "flappy-brird") return <FlappyBirdPage />;
-    return <GameNotFoundPage />;
-  }
-  if (route.type === "model-viz" && route.modelName) {
-    return <ModelVisualizePage modelName={route.modelName} treeIndex={route.treeIndex} isPrivate={route.isPrivate} />;
-  }
-  if (route.type === "playback-viz" && route.playbackName) {
-    return <PlaybackVisualizePage playbackName={route.playbackName} predictionStep={route.predictionStep} treeNo={route.treeNo} isPrivate={route.isPrivate} />;
+  if (route.type === "visualizer" && route.vizMode && route.name) {
+    return <Visualizer mode={route.vizMode} name={route.name} isPrivate={Boolean(route.isLocal === false)} />;
   }
   return <Home />;
 }
