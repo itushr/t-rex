@@ -1,3 +1,5 @@
+import { ComponentType, lazy, LazyExoticComponent } from "react";
+
 export interface GameDefinition {
   id: string;
   name: string;
@@ -7,59 +9,58 @@ export interface GameDefinition {
   isAvailable: boolean;
   hasSound: boolean;
   hasRecorder: boolean;
+  hasController: boolean;
+  aliases?: string[];
   availableModels: string[] | null;
-  supportedModels?: string[];
-  gameName?: string;
-  thumbnailImage?: string;
-  recorderImplemented?: boolean;
-  models?: string[] | null;
-  soundAvailable?: boolean;
+  supportedModels: string[];
+  gameComponent?: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
 }
 
 export const SUPPORTED_GAMES: GameDefinition[] = [
   {
-    id: "trex",
+    id: "t-rex",
     name: "Chrome T-Rex Runner",
-    gameName: "Chrome T-Rex Runner",
     thumbnail: "/dino.svg",
-    thumbnailImage: "/dino.svg",
     description: "Classic offline browser runner obstacle avoidance game",
     icon: "dino",
     isAvailable: true,
     hasSound: true,
-    soundAvailable: true,
     hasRecorder: true,
-    recorderImplemented: true,
-    availableModels: ["decision_tree", "random_forest"],
-    models: ["decision_tree", "random_forest"],
-    supportedModels: ["decision_tree", "random_forest"],
+    hasController: true,
+    aliases: ["trex", "dino"],
+    availableModels: ["decision_tree", "random_forest", "q_learning"],
+    supportedModels: ["decision_tree", "random_forest", "q_learning"],
+    gameComponent: lazy(() => import("../games/t-rex/game")),
   },
   {
     id: "flappy-bird",
     name: "Flappy Bird",
-    gameName: "Flappy Bird",
     thumbnail: "/games/flappybird/flappybird.png",
-    thumbnailImage: "/games/flappybird/flappybird.png",
     description: "Classic flapping bird pipe navigation game",
     icon: "bird",
     isAvailable: true,
-    hasSound: false,
-    soundAvailable: false,
+    hasSound: true,
     hasRecorder: true,
-    recorderImplemented: true,
-    availableModels: ["decision_tree", "random_forest"],
-    models: ["decision_tree", "random_forest"],
-    supportedModels: ["decision_tree", "random_forest"],
+    hasController: true,
+    aliases: ["flappybird", "flappy-brird"],
+    availableModels: ["decision_tree", "random_forest", "q_learning"],
+    supportedModels: ["decision_tree", "random_forest", "q_learning"],
+    gameComponent: lazy(() => import("../games/flappy-bird/game")),
   },
 ];
 
-export const DEFAULT_GAME_ID = "trex";
+export const DEFAULT_GAME_ID = SUPPORTED_GAMES[0]?.id || "";
+
+export function normalizeGameId(id?: string): string {
+  if (!id) return DEFAULT_GAME_ID;
+  const match = SUPPORTED_GAMES.find((g) => g.id === id || g.aliases?.includes(id));
+  return match ? match.id : id;
+}
 
 export function getGameDefinition(id: string): GameDefinition | undefined {
-  const norm = id === "dino" ? "trex" : id === "flappy-brird" ? "flappy-bird" : id;
-  return SUPPORTED_GAMES.find((g) => g.id === norm);
+  return SUPPORTED_GAMES.find((g) => g.id === id || g.aliases?.includes(id));
 }
 
 export function isValidGameId(id: string): boolean {
-  return SUPPORTED_GAMES.some((g) => g.id === id && g.isAvailable);
+  return SUPPORTED_GAMES.some((g) => (g.id === id || g.aliases?.includes(id)) && g.isAvailable);
 }

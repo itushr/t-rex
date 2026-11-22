@@ -4,34 +4,35 @@ import { TREX_FEATURES } from "./trex/features";
 import { flappyAdapter } from "./flappybird/adapter";
 import { FLAPPY_FEATURES } from "./flappybird/features";
 import { FeatureOption } from "../types/train";
+import { normalizeGameId, SUPPORTED_GAMES } from "../constants/games";
 
 export * from "./types";
 export { trexAdapter } from "./trex/adapter";
 export { flappyAdapter } from "./flappybird/adapter";
 
 const GAME_ADAPTERS: Record<string, GameAdapter<any>> = {
-  trex: trexAdapter,
-  dino: trexAdapter,
+  "t-rex": trexAdapter,
   "flappy-bird": flappyAdapter,
-  flappybird: flappyAdapter,
 };
 
 const GAME_FEATURES: Record<string, FeatureOption[]> = {
-  trex: TREX_FEATURES,
-  dino: TREX_FEATURES,
+  "t-rex": TREX_FEATURES,
   "flappy-bird": FLAPPY_FEATURES,
-  flappybird: FLAPPY_FEATURES,
 };
 
 export function getGameAdapter<T = Record<string, any>>(gameId: string): GameAdapter<T> {
-  const adapter = GAME_ADAPTERS[gameId] || GAME_ADAPTERS.trex;
+  const norm = normalizeGameId(gameId);
+  const adapter = GAME_ADAPTERS[norm] || GAME_ADAPTERS[SUPPORTED_GAMES[0]?.id];
   return adapter as GameAdapter<T>;
 }
 
 export function getGameFeatures(gameId: string): FeatureOption[] {
-  return GAME_FEATURES[gameId] || GAME_FEATURES.trex;
+  const norm = normalizeGameId(gameId);
+  return GAME_FEATURES[norm] || GAME_FEATURES[SUPPORTED_GAMES[0]?.id] || [];
 }
 
 export function getGameModels(gameId: string): readonly string[] {
-  return getGameAdapter(gameId).supportedModels;
+  const norm = normalizeGameId(gameId);
+  const def = SUPPORTED_GAMES.find((g) => g.id === norm);
+  return def?.supportedModels || [];
 }
