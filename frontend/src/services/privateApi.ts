@@ -25,9 +25,18 @@ export async function trainPrivateModel(payload: any): Promise<any> {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  const data = await r.json();
-  if (!r.ok) throw new Error(data.detail || "Training failed");
-  return data;
+  if (!r.ok) {
+    let msg = `HTTP ${r.status}`;
+    try {
+      const data = await r.json();
+      msg = data.detail || msg;
+    } catch {
+      const txt = await r.text().catch(() => "");
+      msg = txt || msg;
+    }
+    throw new Error(msg);
+  }
+  return r.json();
 }
 
 export async function listPrivateModels(): Promise<any[]> {

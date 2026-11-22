@@ -19,13 +19,18 @@ def register_model(adapter: BaseModelAdapter) -> None:
 
 
 def get_game_adapter(game_id: str = "dino") -> BaseGameAdapter:
-    if game_id == "trex" and "trex" in _GAMES:
-        return _GAMES["trex"]
-    if game_id not in _GAMES:
-        if game_id == "trex" and "dino" in _GAMES:
-            return _GAMES["dino"]
-        raise ValueError(f"Unknown game ID: {game_id}. Available: {list(_GAMES.keys())}")
-    return _GAMES[game_id]
+    if not game_id:
+        game_id = "dino"
+    norm = game_id.lower().replace("_", "-")
+    if norm in ("t-rex", "trex", "dino"):
+        return _GAMES.get("dino") or _GAMES.get("trex") or _GAMES["t-rex"]
+    if norm in ("flappy-bird", "flappybird", "flappy"):
+        return _GAMES.get("flappy-bird") or _GAMES.get("flappybird")
+    if norm in _GAMES:
+        return _GAMES[norm]
+    if game_id in _GAMES:
+        return _GAMES[game_id]
+    raise ValueError(f"Unknown game ID: {game_id}. Available: {list(_GAMES.keys())}")
 
 
 def get_model_adapter(model_type: str = "decision_tree") -> BaseModelAdapter:
@@ -45,8 +50,10 @@ def list_models() -> List[str]:
 dino = DinoGameAdapter()
 register_game(dino)
 _GAMES["trex"] = dino
+_GAMES["t-rex"] = dino
 flappy = FlappyBirdGameAdapter()
 register_game(flappy)
 _GAMES["flappybird"] = flappy
+_GAMES["flappy-bird"] = flappy
 register_model(DecisionTreeAdapter())
 register_model(RandomForestAdapter())

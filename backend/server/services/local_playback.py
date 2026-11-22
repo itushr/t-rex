@@ -14,7 +14,7 @@ def create_local_playback(steps: List[Dict[str, Any]]) -> Dict[str, Any]:
     model = bundle["model"]
     features = bundle["features"]
     actions = bundle["actions"]
-    ga = get_game_adapter("dino")
+    ga = get_game_adapter(bundle.get("game_id", "dino"))
     ma = get_model_adapter(bundle.get("model_type", "decision_tree"))
 
     records = []

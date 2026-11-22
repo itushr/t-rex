@@ -28,7 +28,8 @@ def save_user_playback(
     bundle_data = storage.get_bytes(rec.r2_bundle_key)
     bundle = joblib.load(io.BytesIO(bundle_data))
     model, features, actions = bundle["model"], bundle["features"], bundle["actions"]
-    ga = get_game_adapter("dino")
+    gid = bundle.get("game_id", "dino")
+    ga = get_game_adapter(gid)
     ma = get_model_adapter(bundle.get("model_type", "decision_tree"))
 
     records = []
@@ -69,14 +70,14 @@ def save_user_playback(
         "forest": graph, "records": records,
     }
     pb_bytes = json.dumps(playback).encode("utf-8")
-    r2_key = make_r2_key(user_id, "dino", "playbacks", f"{cpname}.json")
+    r2_key = make_r2_key(user_id, gid, "playbacks", f"{cpname}.json")
     storage.put_bytes(r2_key, pb_bytes, "application/json")
 
     create_playback(
         db,
         id=f"pb_{uuid.uuid4().hex[:12]}",
         user_id=user_id,
-        game_id="dino",
+        game_id=gid,
         name=cpname,
         filename=f"{cpname}.json",
         model_name=cmodel,
