@@ -43,7 +43,7 @@ class SoundManager {
     if (type === "score" && (!r.playing || r.crashed || r.paused)) return;
 
     const ctx = r.audioContext as AudioContext | undefined;
-    const buf = buffer || (r.soundFx && (type === "jump" ? r.soundFx.BUTTON_PRESS : type === "score" ? r.soundFx.SCORE : r.soundFx.HIT));
+    const buf = (buffer && typeof buffer !== "string") ? buffer : (r.soundFx && (type === "jump" ? r.soundFx.BUTTON_PRESS : type === "score" ? r.soundFx.SCORE : r.soundFx.HIT));
 
     if (buf && ctx) {
       try {

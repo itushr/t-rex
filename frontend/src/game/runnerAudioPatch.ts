@@ -3,10 +3,7 @@ import { soundManager } from "./soundManager";
 function notifyStatus(runner: any) {
   if (!runner?.onStatusChange) return;
   const status = runner.crashed ? "crashed" : (runner.playing && !runner.paused ? "playing" : "paused");
-  if (runner._lastStatus !== status) {
-    runner._lastStatus = status;
-    runner.onStatusChange(status);
-  }
+  if (runner._lastStatus !== status) { runner._lastStatus = status; runner.onStatusChange(status); }
 }
 
 export function patchRunner(Runner: any): void {
@@ -18,15 +15,13 @@ export function patchRunner(Runner: any): void {
   proto.init = function () {
     const res = origInit?.apply(this, arguments as any);
     if (this.containerEl) this.containerEl.style.width = this.dimensions.WIDTH + "px";
-    this.activated = true; this.setArcadeMode?.();
-    return res;
+    this.activated = true; this.setArcadeMode?.(); return res;
   };
 
   const origUpdate = proto.update;
   proto.update = function () {
     if (this !== Runner.instance_) { this.stop?.(); return; }
-    notifyStatus(this);
-    return origUpdate.apply(this, arguments as any);
+    notifyStatus(this); return origUpdate.apply(this, arguments as any);
   };
 
   const origStop = proto.stop;
@@ -35,16 +30,14 @@ export function patchRunner(Runner: any): void {
     if (this.raqId) { cancelAnimationFrame(this.raqId); this.raqId = 0; }
     soundManager.stopScore();
     const res = origStop?.apply(this, arguments as any);
-    notifyStatus(this);
-    return res;
+    notifyStatus(this); return res;
   };
 
   proto.play = function () {
     if (this.crashed) { this.restart(); return; }
     this.playing = true; this.paused = false; this.time = performance.now();
     if (this.raqId) { cancelAnimationFrame(this.raqId); this.raqId = 0; }
-    this.updatePending = false; this.update();
-    notifyStatus(this);
+    this.updatePending = false; this.update(); notifyStatus(this);
   };
 
   const origKeyUp = proto.onKeyUp;
@@ -86,15 +79,20 @@ export function patchRunner(Runner: any): void {
   proto.gameOver = function () {
     soundManager.stopScore();
     const res = origGameOver?.apply(this, arguments as any);
-    notifyStatus(this);
-    return res;
+    notifyStatus(this); return res;
+  };
+
+  const origVis = proto.onVisibilityChange;
+  proto.onVisibilityChange = function () {
+    if (!this.playing && !this.runningTime) return;
+    return origVis?.apply(this, arguments as any);
   };
 
   proto.playSound = function (soundBuffer: any) {
     if (this !== Runner.instance_) return;
     if (this.soundEnabled === false || Runner.soundEnabled === false || !soundManager.isSoundEnabled()) return;
-    const isScore = soundBuffer === this.soundFx?.SCORE || soundBuffer === "SCORE";
-    const isJump = soundBuffer === this.soundFx?.BUTTON_PRESS || soundBuffer === "BUTTON_PRESS";
-    soundManager.play(isJump ? "jump" : isScore ? "score" : "hit", soundBuffer, this);
+    const isScore = soundBuffer === "SCORE" || (Boolean(soundBuffer) && soundBuffer === this.soundFx?.SCORE);
+    const isJump = soundBuffer === "BUTTON_PRESS" || (Boolean(soundBuffer) && soundBuffer === this.soundFx?.BUTTON_PRESS);
+    soundManager.play(isScore ? "score" : isJump ? "jump" : "hit", soundBuffer, this);
   };
 }

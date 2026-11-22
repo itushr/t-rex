@@ -609,7 +609,7 @@
                 if (score > 0 && score % 100 === 0 && this.lastCenturyScore !== score) {
                     this.lastCenturyScore = score;
                     if (this.playing && !this.crashed && !this.paused) {
-                        this.playSound(this.soundFx.SCORE);
+                        this.playSound(this.soundFx.SCORE || 'SCORE');
                     }
                 }
 
@@ -723,7 +723,7 @@
                     }
                     //  Play sound effect and jump on starting the game for the first time.
                     if (!this.tRex.jumping && !this.tRex.ducking) {
-                        this.playSound(this.soundFx.BUTTON_PRESS);
+                        this.playSound(this.soundFx.BUTTON_PRESS || 'BUTTON_PRESS');
                         this.tRex.startJump(this.currentSpeed);
                     }
                 }
@@ -811,7 +811,7 @@
          * Game over state.
          */
         gameOver: function () {
-            this.playSound(this.soundFx.HIT);
+            this.playSound(this.soundFx.HIT || 'HIT');
             vibrate(200);
 
             this.stop();
@@ -878,7 +878,7 @@
                 this.distanceMeter.reset(this.highestScore);
                 this.horizon.reset();
                 this.tRex.reset();
-                this.playSound(this.soundFx.BUTTON_PRESS);
+                this.playSound(this.soundFx.BUTTON_PRESS || 'BUTTON_PRESS');
                 this.invert(true);
                 this.update();
             }
@@ -932,10 +932,10 @@
          */
         playSound: function (soundBuffer) {
             if (this !== Runner.instance_) return;
-            var isJump = soundBuffer === this.soundFx.BUTTON_PRESS || soundBuffer === 'BUTTON_PRESS';
-            var isScore = soundBuffer === this.soundFx.SCORE || soundBuffer === 'SCORE';
+            var isScore = soundBuffer === 'SCORE' || (Boolean(soundBuffer) && soundBuffer === this.soundFx.SCORE);
+            var isJump = soundBuffer === 'BUTTON_PRESS' || (Boolean(soundBuffer) && soundBuffer === this.soundFx.BUTTON_PRESS);
             if (window.soundManager) {
-                window.soundManager.play(isJump ? 'jump' : isScore ? 'score' : 'hit', soundBuffer, this);
+                window.soundManager.play(isScore ? 'score' : isJump ? 'jump' : 'hit', soundBuffer, this);
                 return;
             }
             if (Runner.soundEnabled === false || this.soundEnabled === false) {

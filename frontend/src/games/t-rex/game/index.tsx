@@ -60,6 +60,7 @@ export function DinoGame({
         if (!interactive) { r.stopListening?.(); r.onVisibilityChange = () => {}; }
         if (r.containerEl) r.containerEl.style.width = r.dimensions?.WIDTH + "px";
         r.activated = true; r.setArcadeMode?.();
+        r.loadSounds?.();
         onReadyRef.current?.(createTRexController(r));
         onRunnerInstanceRef.current?.(r);
       }
@@ -74,13 +75,13 @@ export function DinoGame({
   }, [interactive]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (!interactive || (e.target as HTMLElement)?.closest(".action-panel")) return;
+    if ((e.target as HTMLElement)?.closest(".action-panel")) return;
     const r = (window as any).Runner?.instance_;
     if (r?.crashed) r.restart();
   };
 
   return (
-    <div id="t" onPointerDown={handlePointerDown} className={`offline w-full flex-1 ${interactive ? "" : "pointer-events-none"}`} ref={containerRef}>
+    <div id="t" onPointerDown={handlePointerDown} className="offline w-full flex-1" ref={containerRef}>
       <div id="main-frame-error" className="interstitial-wrapper">
         <div id="main-content"><div className="icon icon-offline" /></div>
         <div id="offline-resources" className="hidden">

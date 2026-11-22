@@ -14,12 +14,12 @@ export interface TRexController {
 export function createTRexController(runnerInstance: any): TRexController {
   return {
     play: () => {
+      runnerInstance?.loadSounds?.();
       if (runnerInstance?.crashed) {
         runnerInstance.restart?.();
       } else if (runnerInstance?.paused || runnerInstance?.runningTime > 0) {
         runnerInstance?.play?.();
       } else if (runnerInstance) {
-        runnerInstance.loadSounds?.();
         runnerInstance.playing = true;
         runnerInstance.activated = true;
         runnerInstance.paused = false;
@@ -35,7 +35,10 @@ export function createTRexController(runnerInstance: any): TRexController {
       }
     },
     pause: () => runnerInstance?.stop?.(),
-    restart: () => runnerInstance?.restart?.(),
+    restart: () => {
+      runnerInstance?.loadSounds?.();
+      runnerInstance?.restart?.();
+    },
     jump: () => dispatchDinoAction(runnerInstance, "jump"),
     duck: () => dispatchDinoAction(runnerInstance, "duck"),
     stand: () => dispatchDinoAction(runnerInstance, "none"),
