@@ -35,7 +35,7 @@ export const SUPPORTED_GAMES: GameDefinition[] = [
   {
     id: "flappy-bird",
     name: "Flappy Bird",
-    thumbnail: "/games/flappybird/flappybird.png",
+    thumbnail: "/games/flappy-bird/flappybird.png",
     description: "Classic flapping bird pipe navigation game",
     icon: "bird",
     isAvailable: true,

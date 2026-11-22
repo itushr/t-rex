@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
-import { SPRITE_1X, SPRITE_2X, RUNNER_CSS, RUNNER_JS } from "../assets";
+import "./runner.css";
+import "./runner.js";
+import { SPRITE_1X, SPRITE_2X } from "../assets";
 import { TRexSounds } from "../sounds";
 import { createTRexController, TRexController } from "../controller";
 import { patchRunner } from "../../../game/runnerAudioPatch";
@@ -9,17 +11,14 @@ export interface DinoGameProps {
   soundEnabled?: boolean;
   onReady?: (controller: TRexController) => void;
   onRunnerInstance?: (runner: any) => void;
+  onStatusChange?: (status: any) => void;
 }
 
 export function DinoGame({ interactive = true, soundEnabled = false, onReady, onRunnerInstance }: DinoGameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let scriptTag: HTMLScriptElement | null = null;
-    const linkTag = Object.assign(document.createElement("link"), { rel: "stylesheet", href: RUNNER_CSS });
-    document.head.appendChild(linkTag);
     document.body.classList.add("offline", "arcade-mode");
-
     const tpl = document.getElementById("audio-resources") as HTMLTemplateElement | null;
     if (tpl) {
       tpl.innerHTML = `<audio id="offline-sound-press" src="${TRexSounds.AUDIO_PRESS}"></audio>` +
@@ -27,9 +26,8 @@ export function DinoGame({ interactive = true, soundEnabled = false, onReady, on
         `<audio id="offline-sound-reached" src="${TRexSounds.AUDIO_REACHED}"></audio>`;
     }
 
-    function initRunner() {
-      const win = window as any;
-      if (typeof win.Runner !== "function" || !containerRef.current) return;
+    const win = window as any;
+    if (typeof win.Runner === "function" && containerRef.current) {
       document.querySelectorAll(".runner-container").forEach((el) => el.remove());
       if (win.Runner.instance_) { win.Runner.instance_.stop?.(); win.Runner.instance_ = null; }
       patchRunner(win.Runner);
@@ -49,24 +47,13 @@ export function DinoGame({ interactive = true, soundEnabled = false, onReady, on
       }
     }
 
-    const win = window as any;
-    if (typeof win.Runner === "function") initRunner();
-    else {
-      scriptTag = Object.assign(document.createElement("script"), {
-        src: RUNNER_JS + "?v=" + Date.now(), async: true, onload: initRunner,
-      });
-      document.body.appendChild(scriptTag);
-    }
-
     return () => {
       const r = (window as any).Runner?.instance_;
       if (r) { r.stop?.(); (window as any).Runner.instance_ = null; }
       document.querySelectorAll(".runner-container").forEach((el) => el.remove());
       document.body.classList.remove("offline", "arcade-mode", "inverted");
-      linkTag.parentNode?.removeChild(linkTag);
-      scriptTag?.parentNode?.removeChild(scriptTag);
     };
-  }, [soundEnabled, interactive]);
+  }, [soundEnabled, interactive, onReady, onRunnerInstance]);
 
   return (
     <div id="t" className={`offline w-full flex-1 ${interactive ? "" : "pointer-events-none"}`} ref={containerRef}>
