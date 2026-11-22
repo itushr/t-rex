@@ -8,9 +8,9 @@ interface Props {
 }
 
 export function TrainResultCard({ result, gameId = "trex", onNavigate }: Props) {
-  const autoUrl = gameId && gameId !== "trex"
-    ? `/autoplay/${gameId}/private/${result.model_name}`
-    : `/try-web/autoplay/private/${result.model_name}`;
+  const normGame = gameId === "trex" ? "t-rex" : gameId;
+  const autoUrl = `/try-web/autoplay/${normGame}/private/${result.model_name}`;
+
   return (
     <div className="w-full border-2 border-border rounded-xl text-card-foreground p-1 block">
       <div className="bg-card rounded-xl shadow-sm p-8 flex flex-col gap-5">
@@ -63,4 +63,5 @@ export function TrainResultCard({ result, gameId = "trex", onNavigate }: Props) 
     </div>
   );
 }
+
 export default TrainResultCard;

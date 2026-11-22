@@ -6,20 +6,41 @@ export function parseRoute(path = window.location.pathname): RouteInfo {
   if (path === "/dashboard/local") return { type: "dashboard", isLocal: true };
   if (path === "/dashboard") return { type: "dashboard", isLocal: false };
 
-  const vizModel = path.match(/^\/visualizer\/model\/([^/]+)\/?$/);
-  if (vizModel) return { type: "visualizer", vizMode: "model", name: decodeURIComponent(vizModel[1]) };
+  const vizMatch = path.match(/^\/(?:try-web\/)?visualize(?:r)?\/(model|playback)\/(?:(private|local)\/)?([^/]+)(?:\/tree\/\d+)?\/?$/);
+  if (vizMatch) {
+    const isLoc = vizMatch[2] === "local";
+    return {
+      type: "visualizer",
+      vizMode: vizMatch[1] as "model" | "playback",
+      isLocal: isLoc,
+      name: decodeURIComponent(vizMatch[3]),
+    };
+  }
 
-  const vizPlayback = path.match(/^\/visualizer\/playback\/([^/]+)\/?$/);
-  if (vizPlayback) return { type: "visualizer", vizMode: "playback", name: decodeURIComponent(vizPlayback[1]) };
+  const autoMatchWithScope = path.match(/^\/(?:try-web\/)?autoplay\/(?:([a-zA-Z0-9_-]+)\/)?(private|local)\/([^/]+)\/?$/);
+  if (autoMatchWithScope) {
+    const gid = autoMatchWithScope[1];
+    const gameId = gid ? (gid === "trex" ? "t-rex" : gid) : "t-rex";
+    return {
+      type: "autoplay",
+      gameId,
+      isLocal: autoMatchWithScope[2] === "local",
+      modelName: decodeURIComponent(autoMatchWithScope[3]),
+    };
+  }
 
-  const vizOldModel = path.match(/^\/(?:try-web\/visualize|visualize)\/(?:model\/)?(?:private\/)?([^/]+)(?:\/tree\/\d+)?\/?$/);
-  if (vizOldModel) return { type: "visualizer", vizMode: "model", name: decodeURIComponent(vizOldModel[1]) };
-
-  const vizOldPb = path.match(/^\/(?:try-web\/visualize|visualize)\/playback\/(?:private\/)?([^/]+)/);
-  if (vizOldPb) return { type: "visualizer", vizMode: "playback", name: decodeURIComponent(vizOldPb[1]) };
-
-  const autoMatch = path.match(/^\/(?:try-web\/)?autoplay\/([^/]+)\/(?:private\/|local\/)?([^/]+)\/?$/);
-  if (autoMatch) return { type: "autoplay", gameId: autoMatch[1], modelName: decodeURIComponent(autoMatch[2]) };
+  const autoMatch = path.match(/^\/(?:try-web\/)?autoplay\/(?:([a-zA-Z0-9_-]+)\/)?([^/]+)\/?$/);
+  if (autoMatch) {
+    const hasGame = Boolean(autoMatch[1]);
+    const gid = autoMatch[1];
+    const gameId = hasGame ? (gid === "trex" ? "t-rex" : gid) : "t-rex";
+    return {
+      type: "autoplay",
+      gameId,
+      isLocal: false,
+      modelName: decodeURIComponent(autoMatch[2]),
+    };
+  }
 
   const trainMatch = path.match(/^\/(?:try-web\/)?t(?:rain|ain)(?:\/([a-zA-Z0-9_-]+))?\/?$/);
   if (trainMatch) return { type: "train", gameId: trainMatch[1] };

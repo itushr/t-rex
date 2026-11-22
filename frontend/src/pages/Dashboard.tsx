@@ -64,18 +64,19 @@ export function Dashboard({ isLocal = false }: { isLocal?: boolean }) {
         <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 auto-rows-25 grid-flow-row-dense gap-2">
           {items.map((it) => {
             if (it.kind === "model") {
-              const url = isLocal ? `/visualizer/model/${it.name}` : `/try-web/autoplay/${it.game_id || "t-rex"}/${it.name}`;
+              const url = isLocal ? `/visualizer/model/${it.name}` : `/try-web/autoplay/${it.game_id || "t-rex"}/private/${it.name}`;
               return <ModelCard key={it.id} model={it} isLocal={isLocal} onClick={() => navigateTo(url)} />;
             }
             if (it.kind === "gameplay") {
               const url = `/try-web/train?gameplay=${it.name}&game=${it.game_id || "t-rex"}`;
               return <GameplayCard key={it.id} gameplay={it} onClick={() => navigateTo(url)} />;
             }
-            return <PlaybackCard key={it.id} playback={it} isLocal={isLocal} onClick={() => navigateTo(`/visualizer/playback/${it.filename || it.name}`)} />;
+            return <PlaybackCard key={it.id} playback={it} isLocal={isLocal} onClick={() => navigateTo(isLocal ? `/visualizer/playback/${it.filename || it.name}` : `/visualize/playback/private/${it.filename || it.name}`)} />;
           })}
         </main>
       </div>
     </div>
   );
 }
+
 export default Dashboard;
