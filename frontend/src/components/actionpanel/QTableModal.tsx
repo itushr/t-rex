@@ -1,16 +1,14 @@
 import { X, Cpu } from "lucide-react";
 import type { QTableEntry } from "../../rl/qlearning";
-import type { DinoAction } from "../../games/trex/rl/types";
 
 interface QTableModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  entries: QTableEntry<DinoAction>[];
-  epsilon: number;
+  isOpen: boolean; onClose: () => void; entries: QTableEntry<any>[];
+  epsilon: number; actions?: string[]; stateHeader?: string;
 }
 
-export function QTableModal({ isOpen, onClose, entries, epsilon }: QTableModalProps) {
+export function QTableModal({ isOpen, onClose, entries, epsilon, actions, stateHeader }: QTableModalProps) {
   if (!isOpen) return null;
+  const acts = actions ?? ["jump", "duck", "none"];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
@@ -37,10 +35,8 @@ export function QTableModal({ isOpen, onClose, entries, epsilon }: QTableModalPr
               <table className="w-full text-left font-mono text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-neutral-800 text-neutral-400 text-[11px]">
-                    <th className="py-2 px-3">State (motion | tti | obstacle)</th>
-                    <th className="py-2 px-3 text-right">Jump</th>
-                    <th className="py-2 px-3 text-right">Duck</th>
-                    <th className="py-2 px-3 text-right">None</th>
+                    <th className="py-2 px-3">{stateHeader ?? "State (motion | tti | obstacle)"}</th>
+                    {acts.map((act) => (<th key={act} className="py-2 px-3 text-right capitalize">{act}</th>))}
                     <th className="py-2 px-3 text-center">Best</th>
                   </tr>
                 </thead>
@@ -48,8 +44,8 @@ export function QTableModal({ isOpen, onClose, entries, epsilon }: QTableModalPr
                   {entries.map((e, idx) => (
                     <tr key={idx} className="hover:bg-neutral-900/40">
                       <td className="py-2 px-3 font-medium text-white">{e.stateKey}</td>
-                      {(["jump", "duck", "none"] as DinoAction[]).map((act) => {
-                        const val = e.values[act] ?? 0;
+                      {acts.map((act) => {
+                        const val = (e.values as any)[act] ?? 0;
                         const isBest = e.bestAction === act;
                         return (
                           <td key={act} className={`py-2 px-3 text-right ${isBest ? "text-emerald-400 font-bold" : "text-neutral-400"}`}>

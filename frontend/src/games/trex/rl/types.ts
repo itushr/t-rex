@@ -15,4 +15,6 @@ export interface RLConfig {
   rewards: RewardConfig;
   enabledRewards: Record<keyof RewardConfig, boolean>;
   actions: DinoAction[];
+  stateDefs?: { key: string; label: string; desc: string; type: string }[];
+  availableActions?: { key: any; label: string }[];
 }

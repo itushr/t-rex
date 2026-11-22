@@ -2,6 +2,7 @@ import * as ort from "onnxruntime-web";
 import { authFetch } from "../services/guestAuth";
 import { FlappyEngine } from "../games/flappybird/flappyEngine";
 import { extractFlappyFeatures } from "../games/flappybird/adapter";
+import { extractFlappyRLState, serializeFlappyState } from "../games/flappybird/rl/state";
 
 ort.env.wasm.wasmPaths = "/ort/";
 
@@ -12,10 +13,10 @@ export interface FlappyAutoplayStep {
 
 export class OnnxFlappyAutoplay {
   private session: ort.InferenceSession | null = null;
+  private qTable: Record<string, Record<string, number>> | null = null;
   private features: string[] = [];
   private intervalId: number | null = null;
-  private active = false;
-  private isBusy = false;
+  private active = false; private isBusy = false;
   private startTime = 0;
   public onStep?: (step: FlappyAutoplayStep) => void;
 
@@ -26,34 +27,38 @@ export class OnnxFlappyAutoplay {
       if (!metaRes.ok) return false;
       const meta = await metaRes.json();
       this.features = meta.features || [];
+      if (meta.model_type === "q_table") { this.qTable = meta.q_table || {}; return true; }
       const modelRes = isPrivate ? await authFetch(`${pfx}/${modelName}`) : await fetch(`${pfx}/${modelName}`);
       if (!modelRes.ok) return false;
-      const buffer = await modelRes.arrayBuffer();
-      this.session = await ort.InferenceSession.create(buffer);
+      this.session = await ort.InferenceSession.create(await modelRes.arrayBuffer());
       return true;
-    } catch (err) {
-      console.error("Flappy ONNX session error:", err);
-      return false;
-    }
+    } catch { return false; }
   }
 
   start(engineGetter: () => FlappyEngine | null): void {
-    if (this.active || !this.session) return;
-    this.active = true;
-    this.startTime = Date.now();
+    if (this.active || (!this.session && !this.qTable)) return;
+    this.active = true; this.startTime = Date.now();
     this.intervalId = window.setInterval(async () => {
       const engine = engineGetter();
-      if (!engine || !this.session || this.isBusy) return;
+      if (!engine || (!this.session && !this.qTable) || this.isBusy) return;
       if (!engine.state.started || engine.state.paused || engine.state.over) return;
 
       this.isBusy = true;
       try {
         const raw = extractFlappyFeatures(engine);
-        const vec = new Float32Array(this.features.map((f) => Number((raw as any)[f] ?? 0.0)));
-        const tensor = new ort.Tensor("float32", vec, [1, vec.length]);
-        const results = await this.session.run({ [this.session.inputNames[0]]: tensor });
-        const action = String(results[this.session.outputNames[0]].data[0]).toLowerCase();
-
+        let action = "none";
+        if (this.qTable) {
+          const qvals = this.qTable[serializeFlappyState(extractFlappyRLState(engine))];
+          if (qvals) {
+            let maxQ = -Infinity;
+            for (const [a, q] of Object.entries(qvals)) { if (q > maxQ) { maxQ = q; action = a; } }
+          }
+        } else if (this.session) {
+          const vec = new Float32Array(this.features.map((f) => Number((raw as any)[f] ?? 0.0)));
+          const tensor = new ort.Tensor("float32", vec, [1, vec.length]);
+          const results = await this.session.run({ [this.session.inputNames[0]]: tensor });
+          action = String(results[this.session.outputNames[0]].data[0]).toLowerCase();
+        }
         if (action === "jump") engine.jump();
         if (this.onStep) {
           this.onStep({

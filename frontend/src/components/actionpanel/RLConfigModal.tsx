@@ -12,6 +12,9 @@ export function RLConfigModal({ isOpen, onClose, config, onSave }: Props) {
   const [draft, setDraft] = useState<RLConfig>(config);
   if (!isOpen) return null;
 
+  const states = config.stateDefs ?? FIXED_DINO_STATES;
+  const actions = (config.availableActions as { key: DinoAction; label: string }[]) ?? AVAILABLE_ACTIONS;
+
   const toggleAction = (act: DinoAction) => {
     if (draft.actions.includes(act) && draft.actions.length <= 1) return;
     const next = draft.actions.includes(act) ? draft.actions.filter((a) => a !== act) : [...draft.actions, act];
@@ -55,18 +58,18 @@ export function RLConfigModal({ isOpen, onClose, config, onSave }: Props) {
             <div key={k} className="flex items-center justify-between p-2 rounded-lg bg-neutral-900/60 border border-neutral-800 hover:bg-neutral-800/50">
               <label className="flex items-center gap-3 cursor-pointer flex-1">
                 <input type="checkbox" checked={draft.enabledRewards[k]} onChange={() => toggleReward(k)} className="rounded accent-white size-3.5" />
-                <span className="font-mono capitalize">{k.replace(/_/g, " ")}</span>
+                <span className="font-mono capitalize">{String(k).replace(/_/g, " ")}</span>
               </label>
               <input type="number" step="any" value={draft.rewards[k]} onChange={(e) => updateReward(k, parseFloat(e.target.value) || 0)} className="w-20 px-2 py-1 rounded bg-neutral-800 border border-neutral-700 text-right font-mono text-xs text-white focus:outline-none focus:border-white" />
             </div>
           ))}
-          {tab === "actions" && AVAILABLE_ACTIONS.map((a) => (
+          {tab === "actions" && actions.map((a) => (
             <label key={a.key} className="flex items-center gap-3 p-2 rounded-lg bg-neutral-900/60 border border-neutral-800 cursor-pointer hover:bg-neutral-800/50">
               <input type="checkbox" checked={draft.actions.includes(a.key)} onChange={() => toggleAction(a.key)} className="rounded accent-white size-3.5" />
               <span className="font-mono">{a.label}</span>
             </label>
           ))}
-          {tab === "states" && FIXED_DINO_STATES.map((s) => (
+          {tab === "states" && states.map((s) => (
             <div key={s.key} className="flex items-center justify-between p-2.5 rounded-lg bg-neutral-900/40 border border-neutral-800/80">
               <div className="flex flex-col gap-0.5"><span className="font-mono font-semibold text-white">{s.label}</span><span className="text-[10px] text-neutral-400">{s.desc}</span></div>
               <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-neutral-800 text-neutral-300 border border-neutral-700"><Lock className="size-2.5 text-neutral-400" /> Non-editable</span>
