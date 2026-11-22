@@ -43,7 +43,11 @@ export function useWebGameRecorder(gameStatus: GameStatus, gameId: string = "tre
   const toggleRecord = () => {
     const rec = recRef.current;
     if (!rec.isRecording()) {
-      rec.start(); setIsRecording(true); setIsRecordingPaused(false);
+      rec.start();
+      setIsRecording(true);
+      const shouldPause = gameStatus === "paused" || gameStatus === "crashed";
+      if (shouldPause) rec.pause();
+      setIsRecordingPaused(shouldPause);
     } else if (!rec.isPaused()) {
       rec.pause(); setIsRecordingPaused(true);
     } else {

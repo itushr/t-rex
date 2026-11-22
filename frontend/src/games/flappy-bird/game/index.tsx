@@ -20,30 +20,33 @@ export function FlappyGame({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<FlappyEngine | null>(null);
   const statusRef = useRef<GameStatus>("paused");
+  const onReadyRef = useRef(onReady), onEngineInstanceRef = useRef(onEngineInstance);
+  const onStatusChangeRef = useRef(onStatusChange), soundEnabledRef = useRef(soundEnabled), soundsRef = useRef(sounds);
+
+  onReadyRef.current = onReady; onEngineInstanceRef.current = onEngineInstance;
+  onStatusChangeRef.current = onStatusChange; soundEnabledRef.current = soundEnabled; soundsRef.current = sounds;
 
   const syncStatus = useCallback((next: GameStatus) => {
     if (next !== statusRef.current) {
       statusRef.current = next;
-      onStatusChange?.(next);
-      if (soundEnabled && next === "crashed") (sounds?.playGameOverSound ?? FlappySounds.playGameOverSound)();
+      onStatusChangeRef.current?.(next);
+      if (soundEnabledRef.current && next === "crashed") (soundsRef.current?.playGameOverSound ?? FlappySounds.playGameOverSound)();
     }
-  }, [onStatusChange, soundEnabled, sounds]);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const w = canvas.clientWidth || window.innerWidth;
-    const h = canvas.clientHeight || window.innerHeight;
+    const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
     canvas.width = w; canvas.height = h;
 
-    const engine = new FlappyEngine(w, h);
-    const renderer = new FlappyRenderer();
+    const engine = new FlappyEngine(w, h), renderer = new FlappyRenderer();
     engineRef.current = engine;
     (window as any).flappyEngine = engine;
-    onReady?.(createFlappyController(engine));
-    onEngineInstance?.(engine);
+    onReadyRef.current?.(createFlappyController(engine));
+    onEngineInstanceRef.current?.(engine);
 
     const syncSize = () => {
       const nw = canvas.clientWidth || window.innerWidth, nh = canvas.clientHeight || window.innerHeight;
@@ -52,21 +55,18 @@ export function FlappyGame({
       }
     };
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleJump = () => {
       if (!interactive) return;
-      if (e.code === "Space" || e.code === "ArrowUp") {
-        e.preventDefault();
-        engine.jump();
-        syncStatus("playing");
-        if (soundEnabled) (sounds?.playJumpSound ?? FlappySounds.playJumpSound)();
-      }
+      if (engine.state.over) { engine.restart(); engine.jump(); syncStatus("playing"); }
+      else { engine.jump(); syncStatus("playing"); }
+      if (soundEnabledRef.current) (soundsRef.current?.playJumpSound ?? FlappySounds.playJumpSound)();
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.code === "Space" || e.code === "ArrowUp") && interactive) { e.preventDefault(); handleJump(); }
+    };
     const handlePointerDown = (e: PointerEvent) => {
-      if (!interactive || (e.target as HTMLElement)?.closest(".action-panel")) return;
-      engine.jump();
-      syncStatus("playing");
-      if (soundEnabled) (sounds?.playJumpSound ?? FlappySounds.playJumpSound)();
+      if (interactive && !(e.target as HTMLElement)?.closest(".action-panel")) handleJump();
     };
 
     window.addEventListener("resize", syncSize);
@@ -88,7 +88,7 @@ export function FlappyGame({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [interactive, soundEnabled, syncStatus, onReady, onEngineInstance, sounds]);
+  }, [interactive, syncStatus]);
 
   return (
     <div className="fixed inset-0 w-full h-full overflow-hidden select-none bg-sky-400 flex flex-col items-center">

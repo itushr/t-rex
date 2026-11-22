@@ -10,7 +10,15 @@ export interface FlappyController {
 export function createFlappyController(engine: FlappyEngine | null): FlappyController {
   return {
     play: () => {
-      if (engine?.state) engine.state.paused = false;
+      if (engine?.state) {
+        if (engine.state.over) {
+          engine.restart();
+          engine.jump();
+        } else {
+          engine.state.paused = false;
+          if (!engine.state.started) engine.jump();
+        }
+      }
     },
     pause: () => {
       if (engine?.state) engine.state.paused = true;
