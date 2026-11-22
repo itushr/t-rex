@@ -1,5 +1,5 @@
 class SoundManager {
-  private enabled = true;
+  private enabled = false;
   private currentScoreNode: AudioBufferSourceNode | null = null;
 
   setSoundEnabled(val: boolean): void {
@@ -11,12 +11,8 @@ class SoundManager {
     if (!val) {
       this.stopScore();
       document.querySelectorAll<HTMLAudioElement>("#audio-resources audio").forEach((el) => {
-        el.muted = true;
-        el.pause();
-        el.currentTime = 0;
+        el.muted = true; el.pause(); el.currentTime = 0;
       });
-      const ctx = win.Runner?.instance_?.audioContext;
-      if (ctx?.state === "running") ctx.suspend().catch(() => {});
     } else {
       document.querySelectorAll<HTMLAudioElement>("#audio-resources audio").forEach((el) => {
         el.muted = false;
@@ -42,7 +38,7 @@ class SoundManager {
   play(type: "jump" | "score" | "hit", buffer?: any, runner?: any): void {
     if (!this.enabled) return;
     const r = runner || (window as any).Runner?.instance_;
-    if (!r) return;
+    if (!r || r.soundEnabled === false) return;
 
     if (type === "score" && (!r.playing || r.crashed || r.paused)) return;
 

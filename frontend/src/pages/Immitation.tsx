@@ -13,12 +13,32 @@ export function Immitation({ gameId = "t-rex" }: ImmitationProps) {
   const def = getGameDefinition(gameId);
   const [gameStatus, setGameStatus] = useState<GameStatus>("paused");
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const hasAutoUnmutedRef = useRef(false);
   const controllerRef = useRef<any>(null);
+
+  const toggleSound = useCallback(() => {
+    hasAutoUnmutedRef.current = true;
+    setSoundEnabled((p) => !p);
+  }, []);
+
+  const handleStatusChange = useCallback((nextStatus: GameStatus) => {
+    setGameStatus(nextStatus);
+    if (!hasAutoUnmutedRef.current && nextStatus === "playing") {
+      hasAutoUnmutedRef.current = true;
+      setSoundEnabled(true);
+    }
+  }, []);
 
   const handlePlayToggle = useCallback(() => {
     if (gameStatus === "crashed") controllerRef.current?.restart?.();
     else if (gameStatus === "playing") controllerRef.current?.pause?.();
-    else controllerRef.current?.play?.();
+    else {
+      if (!hasAutoUnmutedRef.current) {
+        hasAutoUnmutedRef.current = true;
+        setSoundEnabled(true);
+      }
+      controllerRef.current?.play?.();
+    }
   }, [gameStatus]);
 
   const handleRestart = useCallback(() => controllerRef.current?.restart?.(), []);
@@ -34,7 +54,7 @@ export function Immitation({ gameId = "t-rex" }: ImmitationProps) {
           <GameComponent
             interactive={true}
             soundEnabled={soundEnabled}
-            onStatusChange={setGameStatus}
+            onStatusChange={handleStatusChange}
             onReady={(c: any) => { controllerRef.current = c; }}
           />
         )}
@@ -42,7 +62,7 @@ export function Immitation({ gameId = "t-rex" }: ImmitationProps) {
       <ActionPanel
         mode="imitation"
         soundEnabled={soundEnabled}
-        onToggleSound={() => setSoundEnabled((p) => !p)}
+        onToggleSound={toggleSound}
         gameStatus={gameStatus}
         onTogglePlayPause={handlePlayToggle}
         onRestart={handleRestart}

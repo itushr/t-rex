@@ -18,8 +18,7 @@ export function patchRunner(Runner: any): void {
   proto.init = function () {
     const res = origInit?.apply(this, arguments as any);
     if (this.containerEl) this.containerEl.style.width = this.dimensions.WIDTH + "px";
-    this.activated = true;
-    this.setArcadeMode?.();
+    this.activated = true; this.setArcadeMode?.();
     return res;
   };
 
@@ -93,6 +92,7 @@ export function patchRunner(Runner: any): void {
 
   proto.playSound = function (soundBuffer: any) {
     if (this !== Runner.instance_) return;
+    if (this.soundEnabled === false || Runner.soundEnabled === false || !soundManager.isSoundEnabled()) return;
     const isScore = soundBuffer === this.soundFx?.SCORE || soundBuffer === "SCORE";
     const isJump = soundBuffer === this.soundFx?.BUTTON_PRESS || soundBuffer === "BUTTON_PRESS";
     soundManager.play(isJump ? "jump" : isScore ? "score" : "hit", soundBuffer, this);

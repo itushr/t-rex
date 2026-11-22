@@ -16,14 +16,34 @@ export function Reinforcement({ gameId = "t-rex" }: ReinforcementProps) {
   const def = getGameDefinition(gameId);
   const [gameStatus, setGameStatus] = useState<GameStatus>("paused");
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const hasAutoUnmutedRef = useRef(false);
   const [isQTableOpen, setIsQTableOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>("q_learning");
   const controllerRef = useRef<any>(null), engineRef = useRef<any>(null);
 
+  const toggleSound = useCallback(() => {
+    hasAutoUnmutedRef.current = true;
+    setSoundEnabled((p) => !p);
+  }, []);
+
+  const handleStatusChange = useCallback((nextStatus: GameStatus) => {
+    setGameStatus(nextStatus);
+    if (!hasAutoUnmutedRef.current && nextStatus === "playing") {
+      hasAutoUnmutedRef.current = true;
+      setSoundEnabled(true);
+    }
+  }, []);
+
   const handlePlayToggle = useCallback(() => {
     if (gameStatus === "crashed") controllerRef.current?.restart?.();
     else if (gameStatus === "playing") controllerRef.current?.pause?.();
-    else controllerRef.current?.play?.();
+    else {
+      if (!hasAutoUnmutedRef.current) {
+        hasAutoUnmutedRef.current = true;
+        setSoundEnabled(true);
+      }
+      controllerRef.current?.play?.();
+    }
   }, [gameStatus]);
 
   const handleRestart = useCallback(() => controllerRef.current?.restart?.(), []);
@@ -50,9 +70,8 @@ export function Reinforcement({ gameId = "t-rex" }: ReinforcementProps) {
       <Suspense fallback={<div className="text-muted-foreground text-xs">Loading game...</div>}>
         {GameComponent && (
           <GameComponent
-            interactive={false}
-            soundEnabled={soundEnabled}
-            onStatusChange={setGameStatus}
+            interactive={false} soundEnabled={soundEnabled}
+            onStatusChange={handleStatusChange}
             onReady={(c: any) => { controllerRef.current = c; }}
             onEngineInstance={(e: any) => { engineRef.current = e; }}
             onRunnerInstance={(r: any) => { engineRef.current = r; }}
@@ -60,31 +79,18 @@ export function Reinforcement({ gameId = "t-rex" }: ReinforcementProps) {
         )}
       </Suspense>
       <ActionPanel
-        mode="reinforcement"
-        soundEnabled={soundEnabled}
-        onToggleSound={() => setSoundEnabled((p) => !p)}
-        gameStatus={gameStatus}
-        onTogglePlayPause={handlePlayToggle}
-        onRestart={handleRestart}
-        soundDisabled={!def.hasSound}
-        tries={rl.tries}
-        repeat={rl.repeat}
-        onToggleRepeat={() => rl.setRepeat((r) => !r)}
-        rlConfig={rl.config}
-        onSaveRLConfig={rl.updateConfig}
-        showVisualize={true}
-        onVisualize={() => setIsQTableOpen(true)}
-        selectedModel={selectedModel}
-        onSelectModel={setSelectedModel}
-        onForward={handleRLSave}
+        mode="reinforcement" soundEnabled={soundEnabled} onToggleSound={toggleSound}
+        gameStatus={gameStatus} onTogglePlayPause={handlePlayToggle} onRestart={handleRestart}
+        soundDisabled={!def.hasSound} tries={rl.tries} repeat={rl.repeat}
+        onToggleRepeat={() => rl.setRepeat((r) => !r)} rlConfig={rl.config}
+        onSaveRLConfig={rl.updateConfig} showVisualize={true}
+        onVisualize={() => setIsQTableOpen(true)} selectedModel={selectedModel}
+        onSelectModel={setSelectedModel} onForward={handleRLSave}
       />
       <QTableModal
-        isOpen={isQTableOpen}
-        onClose={() => setIsQTableOpen(false)}
-        entries={rl.getQTableEntries()}
-        epsilon={rl.getEpsilon()}
-        actions={rl.actions}
-        stateHeader={rl.stateHeader}
+        isOpen={isQTableOpen} onClose={() => setIsQTableOpen(false)}
+        entries={rl.getQTableEntries()} epsilon={rl.getEpsilon()}
+        actions={rl.actions} stateHeader={rl.stateHeader}
       />
     </div>
   );

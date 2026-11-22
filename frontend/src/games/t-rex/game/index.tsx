@@ -5,6 +5,7 @@ import { SPRITE_1X, SPRITE_2X } from "../assets";
 import { TRexSounds } from "../sounds";
 import { createTRexController, TRexController } from "../controller";
 import { patchRunner } from "../../../game/runnerAudioPatch";
+import { soundManager } from "../../../game/soundManager";
 import type { GameStatus } from "../../../game/useGameRunnerControls";
 
 export interface DinoGameProps {
@@ -19,17 +20,14 @@ export function DinoGame({
   interactive = true, soundEnabled = false, onReady, onRunnerInstance, onStatusChange,
 }: DinoGameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const onReadyRef = useRef(onReady);
-  const onRunnerInstanceRef = useRef(onRunnerInstance);
-  const onStatusChangeRef = useRef(onStatusChange);
-  const soundEnabledRef = useRef(soundEnabled);
+  const onReadyRef = useRef(onReady), onRunnerInstanceRef = useRef(onRunnerInstance);
+  const onStatusChangeRef = useRef(onStatusChange), soundEnabledRef = useRef(soundEnabled);
 
-  onReadyRef.current = onReady;
-  onRunnerInstanceRef.current = onRunnerInstance;
-  onStatusChangeRef.current = onStatusChange;
-  soundEnabledRef.current = soundEnabled;
+  onReadyRef.current = onReady; onRunnerInstanceRef.current = onRunnerInstance;
+  onStatusChangeRef.current = onStatusChange; soundEnabledRef.current = soundEnabled;
 
   useEffect(() => {
+    soundManager.setSoundEnabled(soundEnabled);
     const win = window as any;
     if (win.Runner) win.Runner.soundEnabled = soundEnabled;
     const r = win.Runner?.instance_;
@@ -38,7 +36,7 @@ export function DinoGame({
 
   useEffect(() => {
     document.body.classList.add("offline", "arcade-mode");
-    const tpl = document.getElementById("audio-resources") as HTMLTemplateElement | null;
+    const tpl = document.getElementById("audio-resources");
     if (tpl) {
       tpl.innerHTML = `<audio id="offline-sound-press" src="${TRexSounds.AUDIO_PRESS}"></audio>` +
         `<audio id="offline-sound-hit" src="${TRexSounds.AUDIO_HIT}"></audio>` +
@@ -52,6 +50,7 @@ export function DinoGame({
       patchRunner(win.Runner);
       win.Runner.soundEnabled = soundEnabledRef.current;
       win.Runner.isWeb = interactive;
+      soundManager.setSoundEnabled(soundEnabledRef.current);
       new win.Runner(".interstitial-wrapper");
       const r = win.Runner.instance_;
       if (r) {
@@ -60,8 +59,7 @@ export function DinoGame({
         r.onStatusChange = (s: GameStatus) => onStatusChangeRef.current?.(s);
         if (!interactive) { r.stopListening?.(); r.onVisibilityChange = () => {}; }
         if (r.containerEl) r.containerEl.style.width = r.dimensions?.WIDTH + "px";
-        r.activated = true;
-        r.setArcadeMode?.();
+        r.activated = true; r.setArcadeMode?.();
         onReadyRef.current?.(createTRexController(r));
         onRunnerInstanceRef.current?.(r);
       }
@@ -88,7 +86,7 @@ export function DinoGame({
         <div id="offline-resources" className="hidden">
           <img id="offline-resources-1x" src={SPRITE_1X} alt="" />
           <img id="offline-resources-2x" src={SPRITE_2X} alt="" />
-          <template id="audio-resources" />
+          <div id="audio-resources" className="hidden" />
         </div>
       </div>
     </div>
