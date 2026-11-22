@@ -1,4 +1,4 @@
-import { FeatureOption } from "../../types/train";
+import { FeatureOption } from "../../../types/train";
 
 export const FLAPPY_FEATURES: FeatureOption[] = [
   { id: "bird_y", label: "Bird Altitude", desc: "Current Y position of the bird", category: "Bird State" },

@@ -6,7 +6,7 @@ import {
   FLAPPY_VALID_ACTIONS,
   FLAPPY_FEATURE_CONFIGS,
 } from "./constants";
-import { FlappyEngine } from "./flappyEngine";
+import { FlappyEngine } from "./game/flappyEngine";
 
 export interface FlappySample {
   bird_y: number; bird_vy: number; pipe1_dist: number; pipe1_top: number; pipe1_bottom: number;

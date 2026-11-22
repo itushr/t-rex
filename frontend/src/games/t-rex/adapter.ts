@@ -6,7 +6,7 @@ import {
   TREX_VALID_ACTIONS,
   TREX_FEATURE_CONFIGS,
 } from "./constants";
-import { readObstacles } from "./featureExtractor";
+import { readObstacles } from "./recorder/featureExtractor";
 
 export interface TrexSample {
   obstacle1_x: number; obstacle1_y: number; obstacle1_type: string; obstacle1_size: number;

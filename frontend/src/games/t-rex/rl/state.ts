@@ -1,4 +1,4 @@
-import { readObstacles } from "../featureExtractor";
+import { readObstacles } from "../recorder/featureExtractor";
 
 export type DinoMotion = "ground" | "ducking" | "jump_up" | "jump_down";
 

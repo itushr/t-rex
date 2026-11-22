@@ -1,1 +1,1 @@
-export * from "../games/trex/featureExtractor";
+export * from "../games/t-rex/recorder/featureExtractor";

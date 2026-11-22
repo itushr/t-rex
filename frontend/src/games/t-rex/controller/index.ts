@@ -1,4 +1,4 @@
-import { dispatchDinoAction, getValidActions } from "../../trex/rl/dinoActuator";
+import { dispatchDinoAction, getValidActions } from "../rl/dinoActuator";
 
 export { dispatchDinoAction, getValidActions };
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
-import { FlappyEngine } from "../../flappybird/flappyEngine";
-import { FlappyRenderer } from "../../flappybird/flappyRenderer";
+import { FlappyEngine } from "./flappyEngine";
+import { FlappyRenderer } from "./flappyRenderer";
 import { FlappySounds } from "../sounds";
 import { createFlappyController, FlappyController } from "../controller";
 import type { GameStatus } from "../../../game/useGameRunnerControls";

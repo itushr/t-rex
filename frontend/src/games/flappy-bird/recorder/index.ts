@@ -1,5 +1,5 @@
-import { extractFlappyFeatures } from "../../flappybird/adapter";
-import { FLAPPY_FEATURES } from "../../flappybird/features";
+import { extractFlappyFeatures } from "../adapter";
+import { FLAPPY_FEATURES } from "./features";
 
 export { extractFlappyFeatures, FLAPPY_FEATURES };
 

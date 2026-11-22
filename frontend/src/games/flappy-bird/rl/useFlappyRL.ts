@@ -3,8 +3,8 @@ import { QLearningAgent } from "../../../rl/qlearning";
 import { DEFAULT_FLAPPY_RL_CONFIG } from "./constants";
 import { extractFlappyRLState, serializeFlappyState, FlappyRLState } from "./state";
 import { calcFlappyStepReward, calcFlappyCrashPenalty } from "./rewardHelper";
-import { NStepBuffer } from "../../trex/rl/nStepBuffer";
-import { FlappyEngine } from "../flappyEngine";
+import { NStepBuffer } from "../../../rl/nStepBuffer";
+import { FlappyEngine } from "../game/flappyEngine";
 import type { FlappyAction, FlappyRLConfig } from "./types";
 
 export function useFlappyRL(engineRef: RefObject<FlappyEngine | null>, gameStatus: string, restart: () => void) {

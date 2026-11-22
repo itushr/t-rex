@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, Check, Lock } from "lucide-react";
-import { FIXED_DINO_STATES, AVAILABLE_ACTIONS } from "../../games/trex/rl/constants";
-import type { DinoAction, RLConfig, RewardConfig } from "../../games/trex/rl/types";
+import { FIXED_DINO_STATES, AVAILABLE_ACTIONS } from "../../games/t-rex/rl/constants";
+import type { DinoAction, RLConfig, RewardConfig } from "../../games/t-rex/rl/types";
 
 interface Props {
   isOpen: boolean; onClose: () => void; config: RLConfig; onSave: (config: RLConfig) => void;

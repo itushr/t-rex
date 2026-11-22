@@ -10,7 +10,7 @@ import { RLConfigModal } from "./actionpanel/RLConfigModal";
 import { useActionPanelTimer } from "../hooks/useActionPanelTimer";
 import { useActionPanelShortcuts } from "../hooks/useActionPanelShortcuts";
 import type { GameStatus } from "../game/useGameRunnerControls";
-import type { RLConfig } from "../games/trex/rl/types";
+import type { RLConfig } from "../games/t-rex/rl/types";
 
 export interface ActionPanelProps {
   mode?: "supervised" | "imitation" | "reinforcement" | "autoplay";

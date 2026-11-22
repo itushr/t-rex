@@ -1,6 +1,6 @@
 import { RefObject } from "react";
-import { useDinoRL } from "./trex/rl/useDinoRL";
-import { useFlappyRL } from "./flappybird/rl/useFlappyRL";
+import { useDinoRL } from "./t-rex/rl/useDinoRL";
+import { useFlappyRL } from "./flappy-bird/rl/useFlappyRL";
 import { normalizeGameId } from "../constants/games";
 import type { GameStatus } from "../game/useGameRunnerControls";
 

@@ -1,14 +1,14 @@
 import { GameAdapter } from "./types";
-import { trexAdapter } from "./trex/adapter";
-import { TREX_FEATURES } from "./trex/features";
-import { flappyAdapter } from "./flappybird/adapter";
-import { FLAPPY_FEATURES } from "./flappybird/features";
+import { trexAdapter } from "./t-rex/adapter";
+import { TREX_FEATURES } from "./t-rex/recorder/features";
+import { flappyAdapter } from "./flappy-bird/adapter";
+import { FLAPPY_FEATURES } from "./flappy-bird/recorder/features";
 import { FeatureOption } from "../types/train";
 import { normalizeGameId, SUPPORTED_GAMES } from "../constants/games";
 
 export * from "./types";
-export { trexAdapter } from "./trex/adapter";
-export { flappyAdapter } from "./flappybird/adapter";
+export { trexAdapter } from "./t-rex/adapter";
+export { flappyAdapter } from "./flappy-bird/adapter";
 
 const GAME_ADAPTERS: Record<string, GameAdapter<any>> = {
   "t-rex": trexAdapter,

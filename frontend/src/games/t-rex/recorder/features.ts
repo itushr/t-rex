@@ -1,4 +1,4 @@
-import { FeatureOption } from "../../types/train";
+import { FeatureOption } from "../../../types/train";
 
 export const TREX_FEATURES: FeatureOption[] = [
   { id: "obstacle1_x", label: "Obs 1 Distance", desc: "X distance to hazard", category: "Obstacle 1" },

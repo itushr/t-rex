@@ -1,4 +1,4 @@
-import type { FlappyEngine } from "../../flappybird/flappyEngine";
+import type { FlappyEngine } from "../game/flappyEngine";
 
 export interface FlappyController {
   play: () => void;

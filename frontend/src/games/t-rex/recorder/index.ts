@@ -1,5 +1,5 @@
-import { extractFeatureVector, readObstacles } from "../../trex/featureExtractor";
-import { TREX_FEATURES } from "../../trex/features";
+import { extractFeatureVector, readObstacles } from "./featureExtractor";
+import { TREX_FEATURES } from "./features";
 
 export { extractFeatureVector, readObstacles, TREX_FEATURES };
 

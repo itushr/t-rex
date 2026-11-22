@@ -1,4 +1,4 @@
-import { FlappyEngine } from "../flappyEngine";
+import { FlappyEngine } from "../game/flappyEngine";
 
 export type HBucket = "imminent" | "close" | "mid" | "far";
 export type VBucket = "high" | "above" | "centered" | "below" | "low";

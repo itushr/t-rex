@@ -1,4 +1,4 @@
-import { AUDIO_PRESS, AUDIO_HIT, AUDIO_REACHED } from "../../trex/audio/runnerAudio";
+import { AUDIO_PRESS, AUDIO_HIT, AUDIO_REACHED } from "./runnerAudio";
 
 export const playJumpSound = (): void => {
   const el = document.getElementById("offline-sound-press") as HTMLAudioElement | null;

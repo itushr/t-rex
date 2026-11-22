@@ -1,5 +1,5 @@
 import { GameAdapter } from "../games/types";
-import { trexAdapter } from "../games/trex/adapter";
+import { trexAdapter } from "../games/t-rex/adapter";
 
 export type GameSample = Record<string, any>;
 
