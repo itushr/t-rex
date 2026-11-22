@@ -15,7 +15,7 @@ export class QLearningAgent<S = any, A extends string = string> {
   private qTable = new Map<string, Record<A, number>>();
 
   constructor(opts: QAgentOptions<S, A>) {
-    this.actions = opts.actions; this.alpha = opts.alpha ?? 0.2; this.gamma = opts.gamma ?? 0.9;
+    this.actions = opts.actions; this.alpha = opts.alpha ?? 0.15; this.gamma = opts.gamma ?? 0.95;
     this.epsilon = opts.epsilon ?? 1.0; this.minEpsilon = opts.minEpsilon ?? 0.05;
     this.epsilonDecay = opts.epsilonDecay ?? 0.995;
     this.serializeState = opts.serializeState ?? ((s: S) => JSON.stringify(s));
@@ -31,34 +31,45 @@ export class QLearningAgent<S = any, A extends string = string> {
     return vals;
   }
 
-  predict(state: S): A {
+  predict(state: S, validActions?: A[]): A {
     const vals = this.getQValues(this.serializeState(state));
-    let best = this.actions[0], maxV = -Infinity;
-    for (const a of this.actions) {
-      if ((vals[a] ?? 0) > maxV) { maxV = vals[a]; best = a; }
+    const allowed = validActions && validActions.length > 0 ? validActions : this.actions;
+    let best = allowed[0], maxV = -Infinity;
+    for (const a of allowed) {
+      const v = vals[a] ?? 0;
+      if (v > maxV) { maxV = v; best = a; }
     }
     return best;
   }
 
-  selectAction(state: S): A {
-    if (Math.random() < this.epsilon) {
-      return this.actions[Math.floor(Math.random() * this.actions.length)];
-    }
-    return this.predict(state);
+  selectAction(state: S, validActions?: A[]): A {
+    const allowed = validActions && validActions.length > 0 ? validActions : this.actions;
+    if (Math.random() < this.epsilon) return allowed[Math.floor(Math.random() * allowed.length)];
+    return this.predict(state, allowed);
   }
 
-  update(state: S, action: A, reward: number, nextState: S, done = false): number {
-    const currVals = this.getQValues(this.serializeState(state));
-    const curQ = currVals[action] ?? 0;
-    let target = reward;
-    if (!done) {
-      const nextVals = this.getQValues(this.serializeState(nextState));
-      const maxNext = Math.max(...this.actions.map((a) => nextVals[a] ?? 0));
-      target = reward + this.gamma * (maxNext === -Infinity ? 0 : maxNext);
+  getMaxQ(state: S, validActions?: A[]): number {
+    const vals = this.getQValues(this.serializeState(state));
+    const allowed = validActions && validActions.length > 0 ? validActions : this.actions;
+    let maxV = -Infinity;
+    for (const a of allowed) {
+      const v = vals[a] ?? 0;
+      if (v > maxV) maxV = v;
     }
+    return maxV === -Infinity ? 0 : maxV;
+  }
+
+  updateQ(state: S, action: A, target: number): number {
+    const vals = this.getQValues(this.serializeState(state));
+    const curQ = vals[action] ?? 0;
     const newQ = curQ + this.alpha * (target - curQ);
-    currVals[action] = Number(newQ.toFixed(4));
-    return currVals[action];
+    vals[action] = Number(newQ.toFixed(4));
+    return vals[action];
+  }
+
+  update(state: S, action: A, reward: number, nextState: S, done = false, nextValid?: A[]): number {
+    const target = done ? reward : reward + this.gamma * this.getMaxQ(nextState, nextValid);
+    return this.updateQ(state, action, target);
   }
 
   onEpisodeEnd(): void {

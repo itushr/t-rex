@@ -37,7 +37,7 @@ export function QTableModal({ isOpen, onClose, entries, epsilon }: QTableModalPr
               <table className="w-full text-left font-mono text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-neutral-800 text-neutral-400 text-[11px]">
-                    <th className="py-2 px-3">State (close | type | y)</th>
+                    <th className="py-2 px-3">State (motion | tti | obstacle)</th>
                     <th className="py-2 px-3 text-right">Jump</th>
                     <th className="py-2 px-3 text-right">Duck</th>
                     <th className="py-2 px-3 text-right">None</th>

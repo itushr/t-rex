@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { QLearningAgent } from "../../../rl/qlearning";
 import { DEFAULT_RL_CONFIG } from "./constants";
 import { extractDinoRLState, serializeDinoState, DinoRLState } from "./state";
-import { dispatchDinoAction } from "./dinoActuator";
+import { dispatchDinoAction, getValidActions } from "./dinoActuator";
 import { calcStepReward, calcCrashPenalty } from "./rewardHelper";
+import { NStepBuffer } from "./nStepBuffer";
 import type { DinoAction, RLConfig } from "./types";
 
 export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart: () => void) {
@@ -11,17 +12,20 @@ export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart:
   const [repeat, setRepeat] = useState(true);
   const [config, setConfig] = useState<RLConfig>(DEFAULT_RL_CONFIG);
   const agentRef = useRef<QLearningAgent<DinoRLState, DinoAction>>(
-    new QLearningAgent({ actions: DEFAULT_RL_CONFIG.actions, serializeState: serializeDinoState })
+    new QLearningAgent({ actions: DEFAULT_RL_CONFIG.actions, alpha: DEFAULT_RL_CONFIG.alpha, gamma: DEFAULT_RL_CONFIG.gamma, serializeState: serializeDinoState })
   );
-  const pendingJump = useRef<{ state: DinoRLState; passed: boolean } | null>(null);
-  const pendingDuck = useRef<{ state: DinoRLState; passed: boolean } | null>(null);
-  const wasJumping = useRef(false);
-  const lastObsX = useRef(999);
+  const bufferRef = useRef(new NStepBuffer<DinoRLState, DinoAction>(10, DEFAULT_RL_CONFIG.gamma));
+  const prevStateRef = useRef<DinoRLState | null>(null);
+  const prevActionRef = useRef<DinoAction | null>(null);
   const restartTimerRef = useRef<any>(null);
   const crashedHandledRef = useRef(false);
 
   const updateConfig = useCallback((cfg: RLConfig) => {
-    setConfig(cfg); agentRef.current.actions = cfg.actions;
+    setConfig(cfg);
+    agentRef.current.actions = cfg.actions;
+    agentRef.current.alpha = cfg.alpha;
+    agentRef.current.gamma = cfg.gamma;
+    bufferRef.current.gamma = cfg.gamma;
   }, []);
 
   const getQTableEntries = useCallback(() => agentRef.current.getTableEntries(), []);
@@ -29,19 +33,20 @@ export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart:
   const getEpsilon = useCallback(() => agentRef.current.epsilon, []);
 
   useEffect(() => {
-    const agent = agentRef.current;
+    const agent = agentRef.current, buffer = bufferRef.current;
     const interval = setInterval(() => {
       const runner = (window as any).Runner?.instance_;
       if (!runner?.tRex) return;
-      const rex = runner.tRex, currState = extractDinoRLState(runner);
+      const currState = extractDinoRLState(runner);
 
       if (runner.crashed) {
         if (!crashedHandledRef.current) {
           crashedHandledRef.current = true;
           const pen = calcCrashPenalty(config);
-          if (pendingJump.current) { console.log(pen); agent.update(pendingJump.current.state, "jump", pen, currState, true); pendingJump.current = null; }
-          if (pendingDuck.current) { console.log(pen); agent.update(pendingDuck.current.state, "duck", pen, currState, true); pendingDuck.current = null; }
-          wasJumping.current = false; agent.onEpisodeEnd();
+          const updates = buffer.flushTerminal(pen, true);
+          for (const u of updates) agent.updateQ(u.state, u.action, u.target);
+          agent.onEpisodeEnd();
+          prevStateRef.current = null; prevActionRef.current = null;
           if (repeat && !restartTimerRef.current) {
             restartTimerRef.current = setTimeout(() => {
               restartTimerRef.current = null; crashedHandledRef.current = false; setTries((t) => t + 1);
@@ -55,41 +60,32 @@ export function useDinoRL(gameStatus: "playing" | "paused" | "crashed", restart:
       crashedHandledRef.current = false;
       if (!runner.playing || runner.paused) return;
 
-      const firstObs = runner.horizon?.obstacles?.[0];
-      const ox = firstObs ? Number(firstObs.xPos) : 999;
-      if ((firstObs && ox < 50 && ox > -100) || (lastObsX.current < 80 && ox > 150)) {
-        if (pendingJump.current) pendingJump.current.passed = true;
-        if (pendingDuck.current) pendingDuck.current.passed = true;
+      const dinoX = Number(runner.tRex.xPos) || 50;
+      let cleared = false;
+      for (const obs of runner.horizon?.obstacles || []) {
+        const trailing = Number(obs.xPos) + (Number(obs.width) || 20);
+        if (trailing < dinoX && !(obs as any)._cleared) {
+          (obs as any)._cleared = true;
+          cleared = true;
+        }
       }
-      lastObsX.current = ox;
 
-      if (wasJumping.current && !rex.jumping) {
-        wasJumping.current = false;
-        if (pendingJump.current) {
-          const rew = calcStepReward(pendingJump.current.passed, config);
-          console.log(rew); agent.update(pendingJump.current.state, "jump", rew, currState, false); pendingJump.current = null;
+      if (prevStateRef.current && prevActionRef.current) {
+        const r = calcStepReward(prevStateRef.current.dino_motion, prevActionRef.current, cleared, config);
+        const validNow = getValidActions(runner);
+        const popped = buffer.add({ state: prevStateRef.current, action: prevActionRef.current, reward: r, nextState: currState, nextValidActions: validNow, done: false });
+        if (popped) {
+          const maxNext = agent.getMaxQ(currState, validNow);
+          agent.updateQ(popped.state, popped.action, buffer.computeReturn(popped, maxNext));
         }
       }
-      if (rex.jumping) { wasJumping.current = true; return; }
 
-      const action = agent.selectAction(currState);
-      if (rex.ducking) {
-        if (action === "jump") {
-          if (pendingDuck.current) {
-            const rew = calcStepReward(pendingDuck.current.passed, config);
-            console.log(rew); agent.update(pendingDuck.current.state, "duck", rew, currState, false); pendingDuck.current = null;
-          }
-          dispatchDinoAction(runner, "jump");
-          wasJumping.current = true; pendingJump.current = { state: currState, passed: false };
-        }
-      } else {
-        if (action === "jump") {
-          dispatchDinoAction(runner, "jump");
-          wasJumping.current = true; pendingJump.current = { state: currState, passed: false };
-        } else if (action === "duck") {
-          dispatchDinoAction(runner, "duck"); pendingDuck.current = { state: currState, passed: false };
-        }
-      }
+      const valid = getValidActions(runner);
+      const allowed = valid.filter((a) => config.actions.includes(a));
+      const action = agent.selectAction(currState, allowed.length > 0 ? allowed : valid);
+      dispatchDinoAction(runner, action);
+      prevStateRef.current = currState;
+      prevActionRef.current = action;
     }, 50);
 
     return () => { clearInterval(interval); if (restartTimerRef.current) clearTimeout(restartTimerRef.current); };
