@@ -4,6 +4,8 @@ export class FlappyEngine {
   public state: FlappyState;
   public width = 800;
   public height = 600;
+  public onJump?: () => void;
+  public onScore?: () => void;
   private lastPipeTime = 0;
 
   constructor(w = 800, h = 600) {
@@ -32,6 +34,7 @@ export class FlappyEngine {
     if (this.state.paused) this.state.paused = false;
     this.state.bird.vy = -7.2 * Math.max(0.6, this.height / 600);
     this.state.started = true;
+    this.onJump?.();
   }
 
   public restart(): void {
@@ -54,16 +57,15 @@ export class FlappyEngine {
 
   public update(now: number): void {
     if (!this.state.started || this.state.over || this.state.paused) return;
-    const s = Math.max(0.6, this.height / 600);
-    const b = this.state.bird;
+    const s = Math.max(0.6, this.height / 600), b = this.state.bird;
     b.vy += 0.68 * s; b.y += b.vy;
     if (b.y < 0) { b.y = 0; b.vy = 0; }
     if (now - this.lastPipeTime > 1650) { this.spawnPipe(s); this.lastPipeTime = now; }
 
-    const pw = 64 * s; const speed = 3.2 * s;
+    const pw = 64 * s, speed = 3.2 * s;
     for (const p of this.state.pipes) {
       p.x -= speed;
-      if (!p.passed && b.x > p.x + pw) { p.passed = true; this.state.score += 1; }
+      if (!p.passed && b.x > p.x + pw) { p.passed = true; this.state.score += 1; this.onScore?.(); }
       if (this.checkCollision(b, p)) this.endGame();
     }
     this.state.pipes = this.state.pipes.filter((p) => p.x > -pw * 2);
@@ -71,14 +73,14 @@ export class FlappyEngine {
   }
 
   private spawnPipe(s: number): void {
-    const pw = 64 * s; const ph = 512 * s; const gap = Math.max(140 * s, this.height * 0.28);
-    const minTop = -ph + 60 * s; const maxTop = this.height * 0.9 - gap - ph - 60 * s;
+    const pw = 64 * s, ph = 512 * s, gap = Math.max(140 * s, this.height * 0.28);
+    const minTop = -ph + 60 * s, maxTop = this.height * 0.9 - gap - ph - 60 * s;
     const topY = minTop + Math.random() * (maxTop - minTop);
     this.state.pipes.push({ x: this.width + 10, topY, bottomY: topY + ph + gap, width: pw, height: ph, passed: false });
   }
 
   private checkCollision(b: FlappyState["bird"], p: Pipe): boolean {
-    const px = b.width * 0.15; const py = b.height * 0.15;
+    const px = b.width * 0.15, py = b.height * 0.15;
     if (b.x + b.width - px < p.x || b.x + px > p.x + p.width) return false;
     return b.y + py < p.topY + p.height || b.y + b.height - py > p.bottomY;
   }

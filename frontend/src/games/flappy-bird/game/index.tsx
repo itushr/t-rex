@@ -45,6 +45,8 @@ export function FlappyGame({
     const engine = new FlappyEngine(w, h), renderer = new FlappyRenderer();
     engineRef.current = engine;
     (window as any).flappyEngine = engine;
+    engine.onJump = () => { if (soundEnabledRef.current) (soundsRef.current?.playJumpSound ?? FlappySounds.playJumpSound)(); };
+    engine.onScore = () => { if (soundEnabledRef.current) (soundsRef.current?.playScoreSound ?? FlappySounds.playScoreSound)(); };
     onReadyRef.current?.(createFlappyController(engine));
     onEngineInstanceRef.current?.(engine);
 
@@ -59,7 +61,6 @@ export function FlappyGame({
       if (!interactive) return;
       if (engine.state.over) { engine.restart(); engine.jump(); syncStatus("playing"); }
       else { engine.jump(); syncStatus("playing"); }
-      if (soundEnabledRef.current) (soundsRef.current?.playJumpSound ?? FlappySounds.playJumpSound)();
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -82,8 +83,7 @@ export function FlappyGame({
     animId = requestAnimationFrame(loop);
 
     return () => {
-      (window as any).flappyEngine = null;
-      cancelAnimationFrame(animId);
+      (window as any).flappyEngine = null; cancelAnimationFrame(animId);
       window.removeEventListener("resize", syncSize);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("pointerdown", handlePointerDown);
