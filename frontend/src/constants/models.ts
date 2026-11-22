@@ -14,7 +14,7 @@ export interface ModelDefinition {
 export function normalizeModelId(id?: string): string {
   if (!id) return "decision_tree";
   const lower = id.toLowerCase().replace(/-/g, "_");
-  if (lower === "q_learning" || lower === "q_network" || lower === "qnetwork") return "q_network";
+  if (lower === "q_learning" || lower === "q_network" || lower === "qnetwork" || lower === "qlearning") return "q_learning";
   if (lower === "random_forest" || lower === "randomforest") return "random_forest";
   if (lower === "decision_tree" || lower === "decisiontree") return "decision_tree";
   return lower;
@@ -42,24 +42,14 @@ export const GLOBAL_MODELS: ModelDefinition[] = [
     playbackVisualizer: lazy(() => import("../models/random-forest/visualizers/playback")),
   },
   {
-    id: "q_network",
-    name: "Q-Network / Q-Learning",
-    category: "reinforcement",
-    description: "Tabular and neural reinforcement learning policy",
-    supportsVisualization: true,
-    defaultParams: { alpha: 0.1, gamma: 0.95, epsilon: 0.1 },
-    modelVisualizer: lazy(() => import("../models/q-network/visualizers/model")),
-    playbackVisualizer: lazy(() => import("../models/q-network/visualizers/playback")),
-  },
-  {
     id: "q_learning",
     name: "Q-Learning",
     category: "reinforcement",
-    description: "Tabular and neural reinforcement learning policy",
+    description: "Tabular reinforcement learning policy",
     supportsVisualization: true,
     defaultParams: { alpha: 0.1, gamma: 0.95, epsilon: 0.1 },
-    modelVisualizer: lazy(() => import("../models/q-network/visualizers/model")),
-    playbackVisualizer: lazy(() => import("../models/q-network/visualizers/playback")),
+    modelVisualizer: lazy(() => import("../models/q-learning/visualizers/model")),
+    playbackVisualizer: lazy(() => import("../models/q-learning/visualizers/playback")),
   },
 ];
 

@@ -4,12 +4,12 @@ import { getPrivateModelInfo } from "@/services/privateApi";
 import type { ModelInfo } from "@/types/model";
 import { summarizeQTable, QTableEntry } from "../../model";
 
-export interface QNetworkModelVisualizerProps {
+export interface QLearningModelVisualizerProps {
   modelName: string;
   isPrivate?: boolean;
 }
 
-export function QNetworkModelVisualizer({ modelName, isPrivate = false }: QNetworkModelVisualizerProps) {
+export function QLearningModelVisualizer({ modelName, isPrivate = false }: QLearningModelVisualizerProps) {
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ export function QNetworkModelVisualizer({ modelName, isPrivate = false }: QNetwo
       <header className="border-b border-border px-4 py-2.5 flex items-center justify-between flex-wrap gap-3 bg-background z-20">
         <div className="flex items-center gap-3">
           <span className="font-semibold text-sm">{modelName}</span>
-          <span className="border border-border rounded px-2 py-0.5 text-xs text-muted-foreground uppercase">Q-Network Policy</span>
+          <span className="border border-border rounded px-2 py-0.5 text-xs text-muted-foreground uppercase">Q-Learning Policy</span>
           {isPrivate && <span className="bg-primary text-primary-foreground rounded px-2 py-0.5 text-xs font-mono">Private</span>}
           <span className="text-xs text-muted-foreground">{summary.totalStates} States</span>
         </div>
@@ -42,7 +42,7 @@ export function QNetworkModelVisualizer({ modelName, isPrivate = false }: QNetwo
       </header>
       <div className="flex-1 overflow-auto p-4 max-w-4xl mx-auto w-full">
         {loading ? (
-          <div className="flex items-center justify-center h-48 text-xs text-muted-foreground">Loading Q-Network policy...</div>
+          <div className="flex items-center justify-center h-48 text-xs text-muted-foreground">Loading Q-Learning policy...</div>
         ) : entries.length === 0 ? (
           <div className="border border-dashed border-border rounded p-8 text-center text-xs text-muted-foreground">
             No policy entries found matching "{filter}".
@@ -82,4 +82,4 @@ export function QNetworkModelVisualizer({ modelName, isPrivate = false }: QNetwo
   );
 }
 
-export default QNetworkModelVisualizer;
+export default QLearningModelVisualizer;

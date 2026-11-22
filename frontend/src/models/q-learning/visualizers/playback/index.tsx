@@ -4,12 +4,12 @@ import { getPrivatePlaybackMeta, getPrivatePlaybackStep } from "@/services/priva
 import type { PlaybackMetaResponse } from "@/types/playback";
 import { PlaybackHeader } from "@/components/visualizer/PlaybackHeader";
 
-export interface QNetworkPlaybackVisualizerProps {
+export interface QLearningPlaybackVisualizerProps {
   playbackName: string;
   isPrivate?: boolean;
 }
 
-export function QNetworkPlaybackVisualizer({ playbackName, isPrivate = false }: QNetworkPlaybackVisualizerProps) {
+export function QLearningPlaybackVisualizer({ playbackName, isPrivate = false }: QLearningPlaybackVisualizerProps) {
   const [meta, setMeta] = useState<PlaybackMetaResponse | null>(null);
   const [stepNo, setStepNo] = useState(1);
   const [stepData, setStepData] = useState<any>(null);
@@ -40,7 +40,7 @@ export function QNetworkPlaybackVisualizer({ playbackName, isPrivate = false }: 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden text-foreground bg-background">
       <PlaybackHeader
-        playbackName={playbackName} modelType="q_network" stepNo={stepNo}
+        playbackName={playbackName} modelType="q_learning" stepNo={stepNo}
         totalSteps={meta?.total_steps ?? 0} isPlaying={isPlaying} onTogglePlay={() => setIsPlaying(!isPlaying)}
         onPrev={() => setStepNo((s: number) => Math.max(1, s - 1))}
         onNext={() => setStepNo((s: number) => Math.min(meta?.total_steps ?? 1, s + 1))}
@@ -75,4 +75,4 @@ export function QNetworkPlaybackVisualizer({ playbackName, isPrivate = false }: 
   );
 }
 
-export default QNetworkPlaybackVisualizer;
+export default QLearningPlaybackVisualizer;
