@@ -2,8 +2,11 @@ import csv
 from datetime import datetime
 from pathlib import Path
 import time
+import uuid
 from driver.browser import open_dino_tab
 from driver.cdp import CDPClient
+from server.database.crud import create_gameplay
+from server.database.session import SessionSqlite
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR.parent / "data"
@@ -15,7 +18,6 @@ COLUMNS = [
 
 
 def record_gameplay(output_file: Path = None) -> Path:
-    """Connects to Dino debug tab and records human gameplay until Ctrl+C."""
     if output_file is None:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = DATA_DIR / "gameplay" / f"gameplay_{ts}.csv"
@@ -26,7 +28,6 @@ def record_gameplay(output_file: Path = None) -> Path:
     script_path = Path(__file__).parent / "scripts" / "watch_script.js"
     script_code = script_path.read_text(encoding="utf-8")
 
-    # Install recorder in browser
     for _ in range(30):
         res = cdp.evaluate(script_code)
         if isinstance(res, dict) and res.get("ok"):
@@ -61,6 +62,19 @@ def record_gameplay(output_file: Path = None) -> Path:
             output_file.unlink()
         print("\nNo gameplay samples captured. Discarded empty file.")
         return None
+
+    try:
+        db = SessionSqlite()
+        now_ts = time.time()
+        cname = output_file.stem
+        create_gameplay(
+            db, id=f"gp_{uuid.uuid4().hex[:12]}", user_id="local", game_id="dino",
+            name=cname, filename=output_file.name, r2_key=str(output_file),
+            size_bytes=output_file.stat().st_size, samples_count=count, created_at=now_ts,
+        )
+        db.close()
+    except Exception:
+        pass
 
     print(f"\nRecording saved to {output_file.name} ({count} samples)")
     return output_file

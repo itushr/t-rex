@@ -75,7 +75,7 @@ def train_user_model(
     storage.put_bytes(onnx_key, onnx_bytes, "application/octet-stream")
     storage.put_bytes(meta_key, meta_bytes, "application/json")
 
-    create_model(
+    rec = create_model(
         db,
         id=f"mod_{uuid.uuid4().hex[:12]}",
         user_id=user_id,
@@ -95,4 +95,5 @@ def train_user_model(
     return {
         "ok": True, "model_name": cname, "accuracy": round(acc * 100, 2),
         "samples": len(df), "features": features, "actions": actions, "model_type": model_type,
+        "sr_no": rec.sr_no, "display_name": rec.display_name,
     }

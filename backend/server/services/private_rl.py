@@ -36,7 +36,7 @@ def save_user_qtable(
     storage.put_bytes(meta_key, meta_bytes, "application/json")
     storage.put_bytes(bundle_key, meta_bytes, "application/json")
 
-    create_model(
+    rec = create_model(
         db,
         id=f"mod_{uuid.uuid4().hex[:12]}",
         user_id=user_id,
@@ -52,4 +52,7 @@ def save_user_qtable(
         actions=acts,
         created_at=now_ts,
     )
-    return {"ok": True, "model_name": cname, "model_type": "q_table", "tries": tries}
+    return {
+        "ok": True, "model_name": cname, "model_type": "q_table", "tries": tries,
+        "sr_no": rec.sr_no, "display_name": rec.display_name,
+    }

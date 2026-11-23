@@ -49,9 +49,10 @@ function CardShell({
 
 export function ModelCard({ model, isLocal, onClick }: { model: any; isLocal?: boolean; onClick?: () => void }) {
   const isFlappy = model.game_id === "flappy-bird" || model.game_id === "flappybird";
+  const title = model.display_name || (model.sr_no ? `Model #${model.sr_no}` : model.name);
   return (
     <CardShell
-      title={model.name || "Model #1"}
+      title={title}
       subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
       icon={isFlappy ? "/games/flappy-bird/flappybird.png" : "/dino.svg"}
       modelType={model.model_type?.replace(/_/g, " ") || "Decision Tree"}
@@ -65,9 +66,10 @@ export function ModelCard({ model, isLocal, onClick }: { model: any; isLocal?: b
 
 export function GameplayCard({ gameplay, isLocal, onClick }: { gameplay: any; isLocal?: boolean; onClick?: () => void }) {
   const isFlappy = gameplay.game_id === "flappy-bird" || gameplay.game_id === "flappybird";
+  const title = gameplay.display_name || (gameplay.sr_no ? `Gameplay #${gameplay.sr_no}` : gameplay.name);
   return (
     <CardShell
-      title={gameplay.name || "Gameplay #1"}
+      title={title}
       subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
       icon={isFlappy ? "/games/flappy-bird/flappybird.png" : "/dino.svg"}
       modelType="Gameplay"
@@ -81,9 +83,10 @@ export function GameplayCard({ gameplay, isLocal, onClick }: { gameplay: any; is
 
 export function PlaybackCard({ playback, isLocal, onClick }: { playback: any; isLocal?: boolean; onClick?: () => void }) {
   const isFlappy = playback.game_id === "flappy-bird" || playback.game_id === "flappybird";
+  const title = playback.display_name || (playback.sr_no ? `Autoplay #${playback.sr_no}` : (playback.filename || playback.name));
   return (
     <CardShell
-      title={playback.filename || playback.name || "Autoplay #1"}
+      title={title}
       subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
       icon={isFlappy ? "/games/flappy-bird/flappybird.png" : "/dino.svg"}
       modelType={playback.model_type?.replace(/_/g, " ") || "Autoplay"}

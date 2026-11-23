@@ -29,6 +29,7 @@ def list_user_gameplays(user_id: str = Depends(get_current_user_id), db: Session
             "name": r.name, "filename": r.filename, "size_bytes": r.size_bytes,
             "samples_count": r.samples_count, "modified": r.created_at,
             "timestamp": r.created_at, "created_at": r.created_at,
+            "sr_no": r.sr_no, "display_name": r.display_name,
         }
         for r in records
     ]
@@ -57,7 +58,7 @@ def save_user_gameplay(
     storage.put_bytes(r2_key, csv_bytes, "text/csv")
 
     now = time.time()
-    create_gameplay(
+    rec = create_gameplay(
         db,
         id=f"gp_{uuid.uuid4().hex[:12]}",
         user_id=user_id,
@@ -69,7 +70,10 @@ def save_user_gameplay(
         samples_count=len(req.samples),
         created_at=now,
     )
-    return {"ok": True, "name": clean_name, "samples_count": len(req.samples)}
+    return {
+        "ok": True, "name": clean_name, "samples_count": len(req.samples),
+        "sr_no": rec.sr_no, "display_name": rec.display_name,
+    }
 
 
 @router.get("/{name}")
@@ -85,4 +89,7 @@ def get_user_gameplay(
     storage = get_storage()
     csv_bytes = storage.get_bytes(rec.r2_key)
     df = pd.read_csv(io.BytesIO(csv_bytes))
-    return {"name": clean_name, "samples": df.to_dict(orient="records")}
+    return {
+        "name": rec.name, "samples": df.to_dict(orient="records"),
+        "sr_no": rec.sr_no, "display_name": rec.display_name,
+    }

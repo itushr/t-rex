@@ -2,12 +2,13 @@ from datetime import datetime
 import json
 from pathlib import Path
 import time
+import uuid
 from typing import Any, Dict, List
+from server.database.crud import create_playback
+from server.database.session import SessionSqlite
 
 
 class PlaybackRecorder:
-    """Records each decision step during autoplay and exports to JSON."""
-
     def __init__(self, model_name: str, model_bundle: Dict[str, Any], output_dir: Path):
         self.model_name = model_name
         self.bundle = model_bundle
@@ -33,24 +34,16 @@ class PlaybackRecorder:
             "y": round(float(raw_features.get("obstacle2_y", -1)), 1),
             "size": int(raw_features.get("obstacle2_size", 0)),
         }
-        entry = {
-            "step": step_num,
-            "time": elapsed,
-            "speed": round(float(raw_features.get("speed", 0)), 2),
+        self.records.append({
+            "step": step_num, "time": elapsed, "speed": round(float(raw_features.get("speed", 0)), 2),
             "time_to_impact": round(float(raw_features.get("time_to_impact", -1)), 2),
-            "jumping": bool(raw_features.get("jumping", 0)),
-            "ducking": bool(raw_features.get("ducking", 0)),
-            "obs1": obs1,
-            "obs2": obs2,
-            "action": action,
+            "jumping": bool(raw_features.get("jumping", 0)), "ducking": bool(raw_features.get("ducking", 0)),
+            "obs1": obs1, "obs2": obs2, "action": action,
             "model_type": path_info.get("model_type", "decision_tree"),
-            "votes": path_info.get("votes", {}),
-            "trees": path_info.get("trees", []),
-            "path": path_info.get("node_ids", []),
-            "leaf_id": path_info.get("leaf_id", 0),
+            "votes": path_info.get("votes", {}), "trees": path_info.get("trees", []),
+            "path": path_info.get("node_ids", []), "leaf_id": path_info.get("leaf_id", 0),
             "steps": path_info.get("steps", []),
-        }
-        self.records.append(entry)
+        })
 
     def mark_crashed(self) -> None:
         self.crashed = True
@@ -58,18 +51,26 @@ class PlaybackRecorder:
     def save(self, forest_data: Dict[str, Any]) -> Path:
         ts = self.start_wall_time.strftime("%Y%m%d_%H%M%S")
         duration = round(time.time() - self.start_perf_time, 2)
+        mtype = forest_data.get("model_type", "decision_tree")
         payload = {
-            "model_name": self.model_name,
-            "model_type": forest_data.get("model_type", "decision_tree"),
+            "model_name": self.model_name, "model_type": mtype,
             "n_estimators": forest_data.get("n_estimators", 1),
             "recorded_at": self.start_wall_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "duration": duration,
-            "total_steps": len(self.records),
-            "crashed": self.crashed,
-            "forest": forest_data,
-            "tree": forest_data["trees"][0] if forest_data.get("trees") else None,
+            "duration": duration, "total_steps": len(self.records), "crashed": self.crashed,
+            "forest": forest_data, "tree": forest_data["trees"][0] if forest_data.get("trees") else None,
             "records": self.records,
         }
         path = self.output_dir / f"playback_{self.model_name}_{ts}.json"
         path.write_text(json.dumps(payload), encoding="utf-8")
+        try:
+            db = SessionSqlite()
+            create_playback(
+                db, id=f"pb_{uuid.uuid4().hex[:12]}", user_id="local", game_id="dino",
+                name=path.stem, filename=path.name, model_name=self.model_name,
+                model_type=mtype, r2_key=str(path), total_steps=len(self.records),
+                duration=duration, created_at=time.time(),
+            )
+            db.close()
+        except Exception:
+            pass
         return path

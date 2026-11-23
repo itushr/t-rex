@@ -1,6 +1,8 @@
 import json
 from typing import Any, Dict, List
 from server.config import PLAYBACK_DIR
+from server.database.crud import list_playbacks as crud_list_pb, get_playback as crud_get_pb
+from server.database.session import SessionSqlite
 from server.services.local_store import get_local_playback
 
 _CACHE: Dict[str, Dict[str, Any]] = {}
@@ -12,7 +14,13 @@ def _load_raw(fn: str) -> Dict[str, Any]:
         if p: return p
     name = fn if fn.endswith(".json") else f"{fn}.json"
     if name in _CACHE: return _CACHE[name]
-    file = PLAYBACK_DIR / name
+    db = SessionSqlite()
+    try:
+        rec = crud_get_pb(db, "local", fn.replace(".json", ""))
+        file = (PLAYBACK_DIR / rec.filename) if rec else (PLAYBACK_DIR / name)
+    finally:
+        db.close()
+    if not file.exists(): file = PLAYBACK_DIR / name
     if not file.exists(): raise FileNotFoundError(f"Playback not found: {fn}")
     with file.open("r", encoding="utf-8") as f: data = json.load(f)
     if len(_CACHE) > 5: _CACHE.clear()
@@ -21,6 +29,17 @@ def _load_raw(fn: str) -> Dict[str, Any]:
 
 
 def list_playbacks() -> List[Dict[str, Any]]:
+    db = SessionSqlite()
+    try:
+        recs = crud_list_pb(db, "local")
+        if recs:
+            return [{
+                "sr_no": r.sr_no, "name": r.name, "display_name": r.display_name,
+                "filename": r.filename, "model_name": r.model_name, "model_type": r.model_type,
+                "duration": r.duration, "total_steps": r.total_steps, "timestamp": r.created_at,
+            } for r in recs]
+    finally:
+        db.close()
     results = []
     for f in sorted(PLAYBACK_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
         try:
@@ -29,8 +48,7 @@ def list_playbacks() -> List[Dict[str, Any]]:
                 "filename": f.name, "model_name": d.get("model_name", "unknown"),
                 "model_type": d.get("model_type", "unknown"), "n_estimators": d.get("n_estimators", 1),
                 "recorded_at": d.get("recorded_at"), "duration": d.get("duration", 0),
-                "total_steps": d.get("total_steps", len(d.get("records", []))),
-                "size_bytes": f.stat().st_size,
+                "total_steps": d.get("total_steps", len(d.get("records", []))), "size_bytes": f.stat().st_size,
             })
         except Exception: results.append({"filename": f.name, "error": "corrupt_payload"})
     return results

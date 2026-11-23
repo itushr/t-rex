@@ -73,7 +73,7 @@ def save_user_playback(
     r2_key = make_r2_key(user_id, gid, "playbacks", f"{cpname}.json")
     storage.put_bytes(r2_key, pb_bytes, "application/json")
 
-    create_playback(
+    prec = create_playback(
         db,
         id=f"pb_{uuid.uuid4().hex[:12]}",
         user_id=user_id,
@@ -88,4 +88,7 @@ def save_user_playback(
         created_at=now_ts,
     )
 
-    return {"ok": True, "name": cpname, "total_steps": len(records), "duration": duration}
+    return {
+        "ok": True, "name": cpname, "total_steps": len(records), "duration": duration,
+        "sr_no": prec.sr_no, "display_name": prec.display_name,
+    }

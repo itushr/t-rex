@@ -1,5 +1,17 @@
 import { authFetch } from "./guestAuth";
 
+export async function fetchPrivateDashboard(): Promise<any> {
+  const r = await authFetch("/api/private/dashboard");
+  if (!r.ok) throw new Error(r.status === 401 ? "UNAUTHORIZED" : "Failed to fetch dashboard");
+  return r.json();
+}
+
+export async function fetchLocalDashboard(): Promise<any> {
+  const r = await fetch("/api/dashboard");
+  if (!r.ok) throw new Error("Failed to fetch local dashboard");
+  return r.json();
+}
+
 export async function listPrivateGameplays(): Promise<any[]> {
   const r = await authFetch("/api/private/gameplays");
   return r.ok ? r.json() : [];
@@ -27,13 +39,7 @@ export async function trainPrivateModel(payload: any): Promise<any> {
   });
   if (!r.ok) {
     let msg = `HTTP ${r.status}`;
-    try {
-      const data = await r.json();
-      msg = data.detail || msg;
-    } catch {
-      const txt = await r.text().catch(() => "");
-      msg = txt || msg;
-    }
+    try { msg = (await r.json()).detail || msg; } catch { msg = (await r.text().catch(() => "")) || msg; }
     throw new Error(msg);
   }
   return r.json();
@@ -84,12 +90,10 @@ export async function savePrivatePlayback(model_name: string, steps: any[], play
 
 export async function getPrivatePlaybackMeta(name: string): Promise<any> {
   const r = await authFetch(`/api/private/playbacks/${name}/meta`);
-  if (!r.ok) throw new Error("Playback meta error");
-  return r.json();
+  return r.ok ? r.json() : (() => { throw new Error("Playback meta error"); })();
 }
 
 export async function getPrivatePlaybackStep(name: string, stepNo: number): Promise<any> {
   const r = await authFetch(`/api/private/playbacks/${name}/step/${stepNo}`);
-  if (!r.ok) throw new Error("Playback step error");
-  return r.json();
+  return r.ok ? r.json() : (() => { throw new Error("Playback step error"); })();
 }

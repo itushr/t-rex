@@ -3,31 +3,49 @@ from ml.models.tree_extractor import extract_tree_data
 from ml.registry import get_model_adapter
 from ml.serialization import load_trained_model
 from server.config import MODELS_DIR
+from server.database.crud import list_models as crud_list_models, get_model as crud_get_model
+from server.database.session import SessionSqlite
 from server.services.local_store import get_local_bundle, get_local_graph
 
 
 def _resolve_bundle(model_name: str) -> Dict[str, Any]:
     if model_name == "local":
         b = get_local_bundle()
-        if b:
-            return b
+        if b: return b
+    db = SessionSqlite()
+    try:
+        rec = crud_get_model(db, "local", model_name)
+        if rec and rec.r2_bundle_key:
+            p = MODELS_DIR / rec.filename
+            if p.exists(): return load_trained_model(p)
+    finally:
+        db.close()
     path = MODELS_DIR / f"{model_name}.pkl"
-    if not path.exists():
-        path = MODELS_DIR / model_name
+    if not path.exists(): path = MODELS_DIR / model_name
     return load_trained_model(path)
 
 
 def list_models() -> List[Dict[str, Any]]:
+    db = SessionSqlite()
+    try:
+        recs = crud_list_models(db, "local")
+        if recs:
+            return [{
+                "sr_no": r.sr_no, "name": r.name, "display_name": r.display_name,
+                "filename": r.filename, "game_id": r.game_id, "model_type": r.model_type,
+                "features_count": len(r.features or []), "actions": r.actions,
+                "accuracy": r.accuracy, "size_bytes": 0, "modified": r.created_at, "timestamp": r.created_at,
+            } for r in recs]
+    finally:
+        db.close()
     results = []
     for f in sorted(MODELS_DIR.glob("*.pkl"), key=lambda p: p.stat().st_mtime, reverse=True):
         try:
             bundle = load_trained_model(f)
             results.append({
-                "name": f.stem, "filename": f.name,
-                "game_id": bundle.get("game_id", "dino"),
+                "name": f.stem, "filename": f.name, "game_id": bundle.get("game_id", "dino"),
                 "model_type": bundle.get("model_type", "unknown"),
-                "features_count": len(bundle.get("features", [])),
-                "actions": bundle.get("actions", []),
+                "features_count": len(bundle.get("features", [])), "actions": bundle.get("actions", []),
                 "size_bytes": f.stat().st_size, "modified": f.stat().st_mtime,
             })
         except Exception:
@@ -48,11 +66,9 @@ def get_model_summary(model_name: str) -> Dict[str, Any]:
 
 def get_model_single_tree(model_name: str, tree_index: int = 0) -> Dict[str, Any]:
     bundle = _resolve_bundle(model_name)
-    m = bundle["model"]
-    feats, acts = bundle.get("features", []), bundle.get("actions", [])
+    m, feats, acts = bundle["model"], bundle.get("features", []), bundle.get("actions", [])
     if hasattr(m, "estimators_"):
-        if tree_index < 0 or tree_index >= len(m.estimators_):
-            raise IndexError("Tree index out of range")
+        if tree_index < 0 or tree_index >= len(m.estimators_): raise IndexError("Tree index out of range")
         est, n_est = m.estimators_[tree_index], len(m.estimators_)
     else:
         est, n_est = m, 1
@@ -66,8 +82,7 @@ def get_model_single_tree(model_name: str, tree_index: int = 0) -> Dict[str, Any
 def get_model_graph(model_name: str) -> Dict[str, Any]:
     if model_name == "local":
         g = get_local_graph()
-        if g:
-            return g
+        if g: return g
     bundle = _resolve_bundle(model_name)
     adapter = get_model_adapter(bundle.get("model_type", "decision_tree"))
     return {

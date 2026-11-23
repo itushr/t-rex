@@ -23,6 +23,7 @@ from server.routes.private_playbacks import router as p_playbacks_router
 from server.routes.train import router as train_router
 from server.routes.ws import router as ws_router
 from server.routes.games import router as games_router
+from server.routes.dashboard import router as dashboard_router
 
 logger = logging.getLogger("server.main")
 app = FastAPI(title="Dino ML Orchestrator API", version="2.0.0")
@@ -57,7 +58,7 @@ app.add_middleware(
 for r in [
     auth_router, models_router, onnx_router, playbacks_router,
     p_gameplays_router, p_models_router, p_onnx_router, p_playbacks_router,
-    train_router, ws_router, games_router,
+    train_router, ws_router, games_router, dashboard_router,
 ]:
     app.include_router(r)
 

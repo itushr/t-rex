@@ -15,6 +15,8 @@ class GameplayRecord(Base):
     __tablename__ = "gameplays"
     id = Column(String(64), primary_key=True)
     user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    sr_no = Column(Integer, default=1, index=True)
+    display_name = Column(String(128), nullable=True)
     game_id = Column(String(32), default="dino", nullable=False)
     name = Column(String(128), nullable=False)
     filename = Column(String(128), nullable=False)
@@ -30,6 +32,8 @@ class ModelRecord(Base):
     __tablename__ = "models"
     id = Column(String(64), primary_key=True)
     user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    sr_no = Column(Integer, default=1, index=True)
+    display_name = Column(String(128), nullable=True)
     game_id = Column(String(32), default="dino", nullable=False)
     name = Column(String(128), nullable=False)
     filename = Column(String(128), nullable=False)
@@ -49,6 +53,8 @@ class PlaybackRecord(Base):
     __tablename__ = "playbacks"
     id = Column(String(64), primary_key=True)
     user_id = Column(String(64), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    sr_no = Column(Integer, default=1, index=True)
+    display_name = Column(String(128), nullable=True)
     game_id = Column(String(32), default="dino", nullable=False)
     name = Column(String(128), nullable=False)
     filename = Column(String(128), nullable=False)
