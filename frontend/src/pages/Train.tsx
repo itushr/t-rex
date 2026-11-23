@@ -6,7 +6,7 @@ import { ModelSelectStep } from "../components/train/ModelSelectStep";
 import { FeatureSelectStep } from "../components/train/FeatureSelectStep";
 import { TrainResultCard } from "../components/train/TrainResultCard";
 import { getPrivateGameplay, trainPrivateModel } from "../services/privateApi";
-import { getGameFeatures, getGameModels } from "../games";
+import { getGameFeatures, getGameTrainModels, getDefaultModel, getDefaultFeatures } from "../games";
 import Header from "../components/Header";
 
 function defaultTrim(len: number): [number, number] {
@@ -17,11 +17,11 @@ function defaultTrim(len: number): [number, number] {
 
 export function Train({ gameId = "trex" }: { gameId?: string }) {
   const gameFeatures = useMemo(() => getGameFeatures(gameId), [gameId]);
-  const gameModels = useMemo(() => getGameModels(gameId), [gameId]);
+  const gameModels = useMemo(() => getGameTrainModels(gameId), [gameId]);
   const [samples, setSamples] = useState<GameSample[]>([]);
   const [trimRange, setTrimRange] = useState<[number, number]>([0, 0]);
-  const [modelType, setModelType] = useState<string>(gameModels[0] || "decision_tree");
-  const [features, setFeatures] = useState<string[]>(() => gameFeatures.map((f) => f.id));
+  const [modelType, setModelType] = useState<string>(() => getDefaultModel(gameId));
+  const [features, setFeatures] = useState<string[]>(() => getDefaultFeatures(gameId));
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TrainResult | null>(null);
   const [error, setError] = useState<string | null>(null);

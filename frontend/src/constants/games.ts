@@ -6,42 +6,26 @@ import { trexAdapter, TREX_FEATURES, useDinoRL, OnnxDinoAutoplay } from "../game
 import { flappyAdapter, FLAPPY_FEATURES, useFlappyRL, OnnxFlappyAutoplay } from "../games/flappy-bird";
 
 export interface GameDefinition {
-  id: string;
-  name: string;
-  thumbnail: string;
-  description: string;
-  icon?: string;
-  isAvailable: boolean;
-  hasSound: boolean;
-  hasRecorder: boolean;
-  hasController: boolean;
-  aliases?: string[];
-  availableModels: string[] | null;
-  supportedModels: string[];
+  id: string; name: string; thumbnail: string; description: string; icon?: string;
+  isAvailable: boolean; hasSound: boolean; hasRecorder: boolean; hasController: boolean;
+  aliases?: string[]; availableModels: string[] | null; supportedModels: string[];
+  default_model: string; default_features: string[];
   gameComponent?: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
-  adapter: GameAdapter<any>;
-  features: FeatureOption[];
+  adapter: GameAdapter<any>; features: FeatureOption[];
   useRL: (engineRef: RefObject<any>, gameStatus: GameStatus, restart: () => void) => any;
   createAutoplay: () => any;
 }
 
 export const SUPPORTED_GAMES: GameDefinition[] = [
   {
-    id: "t-rex",
-    name: "Chrome T-Rex Runner",
-    thumbnail: "/dino.svg",
+    id: "t-rex", name: "Chrome T-Rex Runner", thumbnail: "/dino.svg",
     description: "Classic offline browser runner obstacle avoidance game",
-    icon: "dino",
-    isAvailable: true,
-    hasSound: true,
-    hasRecorder: true,
-    hasController: true,
-    aliases: ["trex", "dino"],
-    availableModels: ["decision_tree", "random_forest", "q_learning"],
+    icon: "dino", isAvailable: true, hasSound: true, hasRecorder: true, hasController: true,
+    aliases: ["trex", "dino"], availableModels: ["decision_tree", "random_forest", "q_learning"],
     supportedModels: ["decision_tree", "random_forest", "q_learning"],
-    gameComponent: lazy(() => import("../games/t-rex/game")),
-    adapter: trexAdapter,
-    features: TREX_FEATURES,
+    default_model: "decision_tree",
+    default_features: ["obstacle1_x", "obstacle1_y", "obstacle1_size", "obstacle1_type", "speed"],
+    gameComponent: lazy(() => import("../games/t-rex/game")), adapter: trexAdapter, features: TREX_FEATURES,
     useRL: (_ref, status, restart) => {
       const dino = useDinoRL(status, restart);
       return {
@@ -54,21 +38,14 @@ export const SUPPORTED_GAMES: GameDefinition[] = [
     createAutoplay: () => new OnnxDinoAutoplay(),
   },
   {
-    id: "flappy-bird",
-    name: "Flappy Bird",
-    thumbnail: "/games/flappy-bird/flappybird.png",
+    id: "flappy-bird", name: "Flappy Bird", thumbnail: "/games/flappy-bird/flappybird.png",
     description: "Classic flapping bird pipe navigation game",
-    icon: "bird",
-    isAvailable: true,
-    hasSound: true,
-    hasRecorder: true,
-    hasController: true,
-    aliases: ["flappybird", "flappy-brird"],
-    availableModels: ["decision_tree", "random_forest", "q_learning"],
+    icon: "bird", isAvailable: true, hasSound: true, hasRecorder: true, hasController: true,
+    aliases: ["flappybird", "flappy-brird"], availableModels: ["decision_tree", "random_forest", "q_learning"],
     supportedModels: ["decision_tree", "random_forest", "q_learning"],
-    gameComponent: lazy(() => import("../games/flappy-bird/game")),
-    adapter: flappyAdapter,
-    features: FLAPPY_FEATURES,
+    default_model: "decision_tree",
+    default_features: ["bird_y", "bird_vy", "pipe1_dist", "pipe1_top", "pipe1_bottom"],
+    gameComponent: lazy(() => import("../games/flappy-bird/game")), adapter: flappyAdapter, features: FLAPPY_FEATURES,
     useRL: (ref, status, restart) => {
       const flappy = useFlappyRL(ref, status, restart);
       return {

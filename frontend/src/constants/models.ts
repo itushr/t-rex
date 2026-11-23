@@ -1,8 +1,11 @@
 import { ComponentType, lazy, LazyExoticComponent } from "react";
 
+export type ModelLearningType = "supervised" | "unsupervised" | "reinforcement";
+
 export interface ModelDefinition {
   id: string;
   name: string;
+  type: ModelLearningType;
   category: "tree" | "ensemble" | "neural" | "reinforcement";
   description: string;
   supportsVisualization: boolean;
@@ -24,6 +27,7 @@ export const GLOBAL_MODELS: ModelDefinition[] = [
   {
     id: "decision_tree",
     name: "Decision Tree",
+    type: "supervised",
     category: "tree",
     description: "Interpretable single tree decision model with SVG path extraction",
     supportsVisualization: true,
@@ -34,6 +38,7 @@ export const GLOBAL_MODELS: ModelDefinition[] = [
   {
     id: "random_forest",
     name: "Random Forest",
+    type: "supervised",
     category: "ensemble",
     description: "Ensemble of decision trees voting on predictions",
     supportsVisualization: true,
@@ -44,6 +49,7 @@ export const GLOBAL_MODELS: ModelDefinition[] = [
   {
     id: "q_learning",
     name: "Q-Learning",
+    type: "reinforcement",
     category: "reinforcement",
     description: "Tabular reinforcement learning policy",
     supportsVisualization: true,
@@ -59,11 +65,9 @@ export function getModelDefinition(id?: string): ModelDefinition | undefined {
 }
 
 export function getModelVisualizer(id?: string): LazyExoticComponent<ComponentType<any>> | ComponentType<any> | undefined {
-  const def = getModelDefinition(id);
-  return def?.modelVisualizer;
+  return getModelDefinition(id)?.modelVisualizer;
 }
 
 export function getPlaybackVisualizer(id?: string): LazyExoticComponent<ComponentType<any>> | ComponentType<any> | undefined {
-  const def = getModelDefinition(id);
-  return def?.playbackVisualizer;
+  return getModelDefinition(id)?.playbackVisualizer;
 }
