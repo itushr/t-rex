@@ -1,8 +1,8 @@
 import * as ort from "onnxruntime-web";
-import { authFetch } from "../services/guestAuth";
-import { FlappyEngine } from "../games/flappy-bird/game/flappyEngine";
-import { extractFlappyFeatures } from "../games/flappy-bird/adapter";
-import { extractFlappyRLState, serializeFlappyState } from "../games/flappy-bird/rl/state";
+import { authFetch } from "../../../services/guestAuth";
+import { FlappyEngine } from "../game/flappyEngine";
+import { extractFlappyFeatures } from "../adapter";
+import { extractFlappyRLState, serializeFlappyState } from "../rl/state";
 
 ort.env.wasm.wasmPaths = "/ort/";
 

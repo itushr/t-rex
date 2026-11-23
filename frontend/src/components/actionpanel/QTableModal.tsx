@@ -1,5 +1,5 @@
 import { X, Cpu } from "lucide-react";
-import type { QTableEntry } from "../../models/q-learning";
+import type { QTableEntry } from "@/types/rl";
 
 interface QTableModalProps {
   isOpen: boolean; onClose: () => void; entries: QTableEntry<any>[];

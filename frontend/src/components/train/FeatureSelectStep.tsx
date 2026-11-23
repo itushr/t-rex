@@ -1,5 +1,4 @@
 import { Check } from "lucide-react";
-import { ALL_FEATURES } from "./featureList";
 import { FeatureOption } from "../../types/train";
 
 interface Props {
@@ -8,7 +7,7 @@ interface Props {
   onChange: (features: string[]) => void;
 }
 
-export function FeatureSelectStep({ selected, features = ALL_FEATURES, onChange }: Props) {
+export function FeatureSelectStep({ selected, features = [], onChange }: Props) {
   const toggle = (id: string) => {
     if (selected.includes(id)) {
       if (selected.length <= 1) return;
@@ -50,4 +49,5 @@ export function FeatureSelectStep({ selected, features = ALL_FEATURES, onChange 
     </div>
   );
 }
+
 export default FeatureSelectStep;

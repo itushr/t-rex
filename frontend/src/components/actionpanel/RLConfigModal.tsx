@@ -1,31 +1,30 @@
 import { useState } from "react";
 import { X, Check, Lock } from "lucide-react";
-import { FIXED_DINO_STATES, AVAILABLE_ACTIONS } from "../../games/t-rex/rl/constants";
-import type { DinoAction, RLConfig, RewardConfig } from "../../games/t-rex/rl/types";
+import type { RLConfig } from "@/types/rl";
 
 interface Props {
-  isOpen: boolean; onClose: () => void; config: RLConfig; onSave: (config: RLConfig) => void;
+  isOpen: boolean; onClose: () => void; config: RLConfig<any>; onSave: (config: RLConfig<any>) => void;
 }
 
 export function RLConfigModal({ isOpen, onClose, config, onSave }: Props) {
   const [tab, setTab] = useState<"parameters" | "rewards" | "actions" | "states">("parameters");
-  const [draft, setDraft] = useState<RLConfig>(config);
+  const [draft, setDraft] = useState<RLConfig<any>>(config);
   if (!isOpen) return null;
 
-  const states = config.stateDefs ?? FIXED_DINO_STATES;
-  const actions = (config.availableActions as { key: DinoAction; label: string }[]) ?? AVAILABLE_ACTIONS;
+  const states = config.stateDefs ?? [];
+  const actions = config.availableActions ?? draft.actions.map((a) => ({ key: a, label: String(a).toUpperCase() }));
 
-  const toggleAction = (act: DinoAction) => {
+  const toggleAction = (act: any) => {
     if (draft.actions.includes(act) && draft.actions.length <= 1) return;
     const next = draft.actions.includes(act) ? draft.actions.filter((a) => a !== act) : [...draft.actions, act];
     setDraft({ ...draft, actions: next });
   };
 
-  const toggleReward = (k: keyof RewardConfig) => {
+  const toggleReward = (k: string) => {
     setDraft({ ...draft, enabledRewards: { ...draft.enabledRewards, [k]: !draft.enabledRewards[k] } });
   };
 
-  const updateReward = (k: keyof RewardConfig, val: number) => {
+  const updateReward = (k: string, val: number) => {
     setDraft({ ...draft, rewards: { ...draft.rewards, [k]: val } });
   };
 
@@ -33,7 +32,7 @@ export function RLConfigModal({ isOpen, onClose, config, onSave }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
       <div className="bg-[#0f0f11] text-white border border-neutral-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden scale-y-125">
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800">
-          <h3 className="font-semibold text-sm tracking-wide">Q-Network RL Configuration</h3>
+          <h3 className="font-semibold text-sm tracking-wide">Q-Learning RL Configuration</h3>
           <button type="button" onClick={onClose} className="p-1 text-neutral-400 hover:text-white cursor-pointer"><X className="size-4" /></button>
         </div>
         <div className="flex border-b border-neutral-800 bg-[#09090b] text-xs">
@@ -54,10 +53,10 @@ export function RLConfigModal({ isOpen, onClose, config, onSave }: Props) {
               </div>
             </div>
           )}
-          {tab === "rewards" && (Object.keys(draft.rewards) as (keyof RewardConfig)[]).map((k) => (
+          {tab === "rewards" && Object.keys(draft.rewards).map((k) => (
             <div key={k} className="flex items-center justify-between p-2 rounded-lg bg-neutral-900/60 border border-neutral-800 hover:bg-neutral-800/50">
               <label className="flex items-center gap-3 cursor-pointer flex-1">
-                <input type="checkbox" checked={draft.enabledRewards[k]} onChange={() => toggleReward(k)} className="rounded accent-white size-3.5" />
+                <input type="checkbox" checked={Boolean(draft.enabledRewards[k])} onChange={() => toggleReward(k)} className="rounded accent-white size-3.5" />
                 <span className="font-mono capitalize">{String(k).replace(/_/g, " ")}</span>
               </label>
               <input type="number" step="any" value={draft.rewards[k]} onChange={(e) => updateReward(k, parseFloat(e.target.value) || 0)} className="w-20 px-2 py-1 rounded bg-neutral-800 border border-neutral-700 text-right font-mono text-xs text-white focus:outline-none focus:border-white" />

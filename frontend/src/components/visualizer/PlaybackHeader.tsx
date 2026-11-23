@@ -1,6 +1,5 @@
 import React from "react";
-import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
-import { DinoIcon } from "../games/trex/DinoIcon";
+import { Play, Pause, SkipBack, SkipForward, Gamepad2 } from "lucide-react";
 
 interface Props {
   playbackName: string;
@@ -23,7 +22,7 @@ export const PlaybackHeader: React.FC<Props> = ({
     <header className="border-b border-border px-2 py-2.5 flex items-center justify-between flex-wrap gap-3 z-30 bg-background text-foreground">
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-2">
-          <DinoIcon />
+          <Gamepad2 className="size-5 text-muted-foreground" />
           <span className="font-semibold text-sm">{playbackName}</span>
         </span>
         <span className="border border-border rounded px-2 py-0.5 text-xs text-muted-foreground uppercase">

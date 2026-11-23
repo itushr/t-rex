@@ -1,7 +1,7 @@
 import * as ort from "onnxruntime-web";
-import { extractFeatureVector, readObstacles } from "./dinoFeatureExtractor";
-import { authFetch } from "../services/guestAuth";
-import { extractDinoRLState, serializeDinoState } from "../games/t-rex/rl/state";
+import { extractFeatureVector, readObstacles } from "../recorder/featureExtractor";
+import { authFetch } from "../../../services/guestAuth";
+import { extractDinoRLState, serializeDinoState } from "../rl/state";
 
 ort.env.wasm.wasmPaths = "/ort/";
 (window as any).ort = ort;

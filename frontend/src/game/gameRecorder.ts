@@ -1,5 +1,5 @@
 import { GameAdapter } from "../games/types";
-import { trexAdapter } from "../games/t-rex/adapter";
+import { getGameAdapter } from "../games";
 
 export type GameSample = Record<string, any>;
 
@@ -12,7 +12,7 @@ export class GameRecorder<TSample = GameSample> {
   private adapter: GameAdapter<TSample>;
 
   constructor(adapter?: GameAdapter<TSample>) {
-    this.adapter = adapter || (trexAdapter as unknown as GameAdapter<TSample>);
+    this.adapter = adapter || (getGameAdapter() as unknown as GameAdapter<TSample>);
   }
 
   start() {

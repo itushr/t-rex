@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { useEffect, useRef, useState, useCallback, Suspense, useMemo } from "react";
 import { getGameDefinition, normalizeGameId } from "../constants/games";
 import { ActionPanel } from "../components/ActionPanel";
 import { GameNotFound } from "../components/GameNotFound";
-import { OnnxDinoAutoplay } from "../game/onnxAutoplay";
-import { OnnxFlappyAutoplay } from "../game/onnxFlappyAutoplay";
 import { useAutoplayPlaybackRecorder } from "../game/useAutoplayPlaybackRecorder";
 import type { GameStatus } from "../game/useGameRunnerControls";
 
@@ -11,13 +9,18 @@ export function Autoplay({ gameId = "t-rex", modelName, isPrivate = false }: {
   gameId?: string; modelName: string; isPrivate?: boolean;
 }) {
   const normId = normalizeGameId(gameId);
-  const def = getGameDefinition(normId);
+  const def = useMemo(() => getGameDefinition(normId), [normId]);
   const [gameStatus, setGameStatus] = useState<GameStatus>("paused");
   const [soundEnabled, setSoundEnabled] = useState(false);
   const hasAutoUnmutedRef = useRef(false);
   const controllerRef = useRef<any>(null), engineRef = useRef<any>(null);
-  const dinoAutoplay = useRef(new OnnxDinoAutoplay()), flappyAutoplay = useRef(new OnnxFlappyAutoplay());
-  const rec = useAutoplayPlaybackRecorder(gameStatus, dinoAutoplay.current, modelName, isPrivate);
+  const autoplayRef = useRef<any>(null);
+
+  if (!autoplayRef.current && def?.createAutoplay) {
+    autoplayRef.current = def.createAutoplay();
+  }
+
+  const rec = useAutoplayPlaybackRecorder(gameStatus, autoplayRef.current, modelName, isPrivate);
 
   const toggleSound = useCallback(() => {
     hasAutoUnmutedRef.current = true;
@@ -25,12 +28,11 @@ export function Autoplay({ gameId = "t-rex", modelName, isPrivate = false }: {
   }, []);
 
   const startAutoplay = useCallback(() => {
-    if (normId === "flappy-bird") flappyAutoplay.current.start(() => engineRef.current);
-    else dinoAutoplay.current.start();
-  }, [normId]);
+    autoplayRef.current?.start?.(() => engineRef.current);
+  }, []);
 
   const stopAutoplay = useCallback(() => {
-    flappyAutoplay.current.stop(); dinoAutoplay.current.stop();
+    autoplayRef.current?.stop?.();
   }, []);
 
   const handleStatusChange = useCallback((nextStatus: GameStatus) => {
@@ -66,10 +68,9 @@ export function Autoplay({ gameId = "t-rex", modelName, isPrivate = false }: {
   }, [gameStatus, handleRestart, handlePlayToggle]);
 
   useEffect(() => {
-    if (normId === "flappy-bird") flappyAutoplay.current.init(modelName, isPrivate);
-    else dinoAutoplay.current.init(modelName, isPrivate);
+    autoplayRef.current?.init?.(modelName, isPrivate);
     return () => stopAutoplay();
-  }, [normId, modelName, isPrivate, stopAutoplay]);
+  }, [modelName, isPrivate, stopAutoplay]);
 
   if (!def) return <GameNotFound />;
   const GameComponent = def.gameComponent;

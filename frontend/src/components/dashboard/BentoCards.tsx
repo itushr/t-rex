@@ -1,8 +1,9 @@
 import { Cog, Lock, HardDrive, Clock4 } from "lucide-react";
 import { timeAgo } from "../../utils/time";
+import { getGameDefinition } from "../../constants/games";
 
 function CardShell({
-  title, subtitle = "T-Rex", modelType = "Random Forest",
+  title, subtitle = "Game", modelType = "Model",
   timestamp, rowSpan, badge = "Private", icon = "/dino.svg", onClick,
 }: {
   title: string; subtitle?: string; modelType?: string;
@@ -48,13 +49,13 @@ function CardShell({
 }
 
 export function ModelCard({ model, isLocal, onClick }: { model: any; isLocal?: boolean; onClick?: () => void }) {
-  const isFlappy = model.game_id === "flappy-bird" || model.game_id === "flappybird";
+  const def = getGameDefinition(model.game_id || "");
   const title = model.display_name || (model.sr_no ? `Model #${model.sr_no}` : model.name);
   return (
     <CardShell
       title={title}
-      subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
-      icon={isFlappy ? "/games/flappy-bird/flappybird.png" : "/dino.svg"}
+      subtitle={def?.name || "Game"}
+      icon={def?.thumbnail || "/dino.svg"}
       modelType={model.model_type?.replace(/_/g, " ") || "Decision Tree"}
       timestamp={model.timestamp || model.created_at || model.modified}
       rowSpan="row-span-1 sm:row-span-3"
@@ -65,13 +66,13 @@ export function ModelCard({ model, isLocal, onClick }: { model: any; isLocal?: b
 }
 
 export function GameplayCard({ gameplay, isLocal, onClick }: { gameplay: any; isLocal?: boolean; onClick?: () => void }) {
-  const isFlappy = gameplay.game_id === "flappy-bird" || gameplay.game_id === "flappybird";
+  const def = getGameDefinition(gameplay.game_id || "");
   const title = gameplay.display_name || (gameplay.sr_no ? `Gameplay #${gameplay.sr_no}` : gameplay.name);
   return (
     <CardShell
       title={title}
-      subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
-      icon={isFlappy ? "/games/flappy-bird/flappybird.png" : "/dino.svg"}
+      subtitle={def?.name || "Game"}
+      icon={def?.thumbnail || "/dino.svg"}
       modelType="Gameplay"
       timestamp={gameplay.timestamp || gameplay.created_at || gameplay.modified}
       rowSpan="row-span-1 sm:row-span-2"
@@ -82,13 +83,13 @@ export function GameplayCard({ gameplay, isLocal, onClick }: { gameplay: any; is
 }
 
 export function PlaybackCard({ playback, isLocal, onClick }: { playback: any; isLocal?: boolean; onClick?: () => void }) {
-  const isFlappy = playback.game_id === "flappy-bird" || playback.game_id === "flappybird";
+  const def = getGameDefinition(playback.game_id || "");
   const title = playback.display_name || (playback.sr_no ? `Autoplay #${playback.sr_no}` : (playback.filename || playback.name));
   return (
     <CardShell
       title={title}
-      subtitle={isFlappy ? "Flappy Bird" : "T-Rex"}
-      icon={isFlappy ? "/games/flappy-bird/flappybird.png" : "/dino.svg"}
+      subtitle={def?.name || "Game"}
+      icon={def?.thumbnail || "/dino.svg"}
       modelType={playback.model_type?.replace(/_/g, " ") || "Autoplay"}
       timestamp={playback.timestamp || playback.created_at || playback.modified}
       rowSpan="row-span-1 sm:row-span-2"

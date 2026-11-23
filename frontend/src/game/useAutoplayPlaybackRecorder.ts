@@ -1,18 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import type { OnnxDinoAutoplay, AutoplayStep } from "./onnxAutoplay";
 import type { GameStatus } from "./useGameRunnerControls";
-import { readObstacles } from "./dinoFeatureExtractor";
 import { savePrivatePlayback } from "../services/privateApi";
 
 export function useAutoplayPlaybackRecorder(
-  gameStatus: GameStatus, autoplay: OnnxDinoAutoplay, modelName = "local", isPrivate = false
+  gameStatus: GameStatus, autoplay: any, modelName = "local", isPrivate = false
 ) {
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
-  const stepsRef = useRef<AutoplayStep[]>([]);
+  const stepsRef = useRef<any[]>([]);
 
   useEffect(() => {
-    autoplay.onStep = (step) => {
+    if (!autoplay) return;
+    autoplay.onStep = (step: any) => {
       if (isRecording && !isRecordingPaused) stepsRef.current.push(step);
     };
   }, [autoplay, isRecording, isRecordingPaused]);
@@ -35,27 +34,18 @@ export function useAutoplayPlaybackRecorder(
   };
 
   const visualizePlayback = async () => {
-    let steps = stepsRef.current;
+    const steps = stepsRef.current;
     setIsRecording(false);
     setIsRecordingPaused(false);
-    if (!steps.length) {
-      const r = (window as any).Runner?.instance_;
-      const [obs1, obs2] = readObstacles(r);
-      steps = [{
-        time: 0.1, speed: Number(r?.currentSpeed) || 6, jumping: false, ducking: false,
-        obs1, obs2, action: "none", time_to_impact: -1, crashed: Boolean(r?.crashed),
-      }];
-    }
+    if (!steps.length) return;
     if (isPrivate) {
       const res = await savePrivatePlayback(modelName, steps);
       window.history.pushState(null, "", `/visualize/playback/private/${res.name}`);
+      window.dispatchEvent(new PopStateEvent("popstate"));
     } else {
-      await fetch("/api/playbacks/local", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ steps }),
-      });
       window.history.pushState(null, "", "/visualize/playback/local");
+      window.dispatchEvent(new PopStateEvent("popstate"));
     }
-    window.dispatchEvent(new PopStateEvent("popstate"));
   };
 
   return { isRecording, isRecordingPaused, toggleRecord, visualizePlayback };

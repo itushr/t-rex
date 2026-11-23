@@ -4,8 +4,8 @@ import "./runner.js";
 import { SPRITE_1X, SPRITE_2X } from "../assets";
 import { TRexSounds } from "../sounds";
 import { createTRexController, TRexController } from "../controller";
-import { patchRunner } from "../../../game/runnerAudioPatch";
-import { soundManager } from "../../../game/soundManager";
+import { patchRunner } from "./runnerAudioPatch";
+import { soundManager } from "./soundManager";
 import type { GameStatus } from "../../../game/useGameRunnerControls";
 
 export interface DinoGameProps {
