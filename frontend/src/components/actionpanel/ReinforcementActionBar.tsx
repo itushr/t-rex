@@ -1,4 +1,4 @@
-import { DiagramFlowVertical, Pause, Play, Repeat, SkipForward, SlidersHorizontal, Volume2, VolumeX } from "lucide-react";
+import { DiagramFlowVertical, Pause, Play, Repeat, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Kbd } from "@/components/ui/kbd";
 import { TriesCounter } from "./TriesCounter";
@@ -10,29 +10,19 @@ export interface ReinforcementActionBarProps {
   tries?: number; repeat?: boolean; selectedModel?: string;
   onSelectModel?: (m: string) => void; onPlayToggle: () => void;
   onToggleSound?: () => void; onToggleRepeat?: () => void;
-  onVisualize?: () => void; onForward?: () => void; onOpenConfig?: () => void;
+  onVisualize?: () => void; onForward?: () => void;
 }
 
 export function ReinforcementActionBar({
   gameStatus, soundEnabled, soundDisabled, tries = 1, repeat = true,
   selectedModel, onSelectModel, onPlayToggle, onToggleSound, onToggleRepeat,
-  onVisualize, onForward, onOpenConfig,
+  onVisualize, onForward,
 }: ReinforcementActionBarProps) {
   const isCrashed = gameStatus === "crashed", isPlaying = gameStatus === "playing";
   return (
-    <div className="flex gap-4 items-center pr-6">
-      {onOpenConfig && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button type="button" onClick={onOpenConfig} className="rounded-full border border-border/20 p-2 hover:bg-neutral-800 transition-colors cursor-pointer">
-              <SlidersHorizontal strokeWidth={1.5} className="size-5 text-white" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">Configure RL Parameters</TooltipContent>
-        </Tooltip>
-      )}
-      <ModelSelector selectedModel={selectedModel} onSelectModel={onSelectModel} />
+    <div className="flex gap-5 items-center pr-7">
       <TriesCounter tries={tries} />
+      <ModelSelector selectedModel={selectedModel} onSelectModel={onSelectModel} />
       <Tooltip>
         <TooltipTrigger asChild>
           <button type="button" onClick={onPlayToggle} className="cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent text-white flex items-center">
@@ -51,7 +41,7 @@ export function ReinforcementActionBar({
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button type="button" onClick={onToggleRepeat} className={`cursor-pointer transition-colors ${repeat ? "text-white opacity-100" : "text-neutral-500 opacity-40 hover:opacity-75"}`}>
+          <button type="button" onClick={onToggleRepeat} className={`cursor-pointer transition-colors p-0 m-0 bg-transparent flex items-center ${repeat ? "text-white opacity-100" : "text-neutral-500 opacity-40 hover:opacity-75"}`}>
             <Repeat strokeWidth={1.75} className="size-6" />
           </button>
         </TooltipTrigger>
