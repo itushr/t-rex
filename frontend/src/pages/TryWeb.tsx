@@ -19,13 +19,9 @@ function GameCard({
     >
       <div className="bg-card rounded-xl shadow-sm p-8 flex items-center justify-center gap-5">
         <img src={img} className="h-12 w-12 object-contain" alt={title} />
-        <div className="flex flex-col">
-          <div style={{ fontFamily: "'Press Start 2P', monospace" }} className="text-sm font-bold text-foreground whitespace-nowrap">
-            {title}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1.5 font-medium">
-            {mode}
-          </div>
+        <div style={{ fontFamily: "'Press Start 2P', monospace" }} className="text-xs sm:text-sm">
+          <div className="font-bold text-foreground whitespace-nowrap">{title}</div>
+          <div className="text-[10px] sm:text-xs text-muted-foreground mt-1">{mode}</div>
         </div>
       </div>
     </a>
