@@ -29,6 +29,11 @@ export function TryWeb() {
             <GameCard key={g.id} href={`/try-web/immitation/${g.id}`} title={g.name} img={g.thumbnail} />
           ))}
         </div>
+        <div className="flex flex-col sm:flex-row-reverse flex-wrap gap-6 items-center justify-center w-full">
+          {games.map((g) => (
+            <GameCard key={g.id} href={`/try-web/reinforcement/${g.id}`} title={g.name} img={g.thumbnail} />
+          ))}
+        </div>
       </div>
     </div>
   );
