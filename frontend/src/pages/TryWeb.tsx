@@ -1,5 +1,6 @@
 import { Header } from "../components/Header";
 import { SUPPORTED_GAMES } from "../constants/games";
+import { navigateTo } from "../utils/navigation";
 
 function GameCard({
   href,
@@ -15,6 +16,11 @@ function GameCard({
   return (
     <a
       href={href}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        navigateTo(href);
+      }}
       className="w-full sm:w-72 border-2 border-border rounded-xl text-card-foreground p-1 hover:border-muted-foreground/40 transition-all hover:scale-[1.02] cursor-pointer block"
     >
       <div className="bg-card rounded-xl shadow-sm p-8 flex items-center justify-center gap-5">
