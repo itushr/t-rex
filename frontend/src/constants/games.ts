@@ -18,10 +18,10 @@ export interface GameDefinition {
 
 export const SUPPORTED_GAMES: GameDefinition[] = [
   {
-    id: "t-rex", name: "Chrome T-Rex Runner", thumbnail: "/dino.svg",
+    id: "t-rex", name: "T-Rex", thumbnail: "/dino.svg",
     description: "Classic offline browser runner obstacle avoidance game",
     icon: "dino", isAvailable: true, hasSound: true, hasRecorder: true, hasController: true,
-    aliases: ["trex", "dino"], availableModels: ["decision_tree", "random_forest", "q_learning"],
+    aliases: ["trex", "dino", "Chrome T-Rex Runner"], availableModels: ["decision_tree", "random_forest", "q_learning"],
     supportedModels: ["decision_tree", "random_forest", "q_learning"],
     default_model: "decision_tree",
     default_features: ["obstacle1_x", "obstacle1_y", "obstacle1_size", "obstacle1_type", "speed", "time_to_impact"],
