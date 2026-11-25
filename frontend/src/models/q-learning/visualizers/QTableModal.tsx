@@ -2,8 +2,12 @@ import { X, Cpu } from "lucide-react";
 import type { QTableEntry } from "@/types/rl";
 
 interface QTableModalProps {
-  isOpen: boolean; onClose: () => void; entries: QTableEntry<any>[];
-  epsilon: number; actions?: string[]; stateHeader?: string;
+  isOpen: boolean;
+  onClose: () => void;
+  entries: QTableEntry<any>[];
+  epsilon: number;
+  actions?: string[];
+  stateHeader?: string;
 }
 
 export function QTableModal({ isOpen, onClose, entries, epsilon, actions, stateHeader }: QTableModalProps) {
@@ -21,7 +25,9 @@ export function QTableModal({ isOpen, onClose, entries, epsilon, actions, stateH
           <div className="flex items-center gap-4 text-xs font-mono text-neutral-400">
             <span>States: <strong className="text-white">{entries.length}</strong></span>
             <span>ε: <strong className="text-white">{(epsilon * 100).toFixed(1)}%</strong></span>
-            <button type="button" onClick={onClose} className="p-1 text-neutral-400 hover:text-white cursor-pointer"><X className="size-4" /></button>
+            <button type="button" onClick={onClose} className="p-1 text-neutral-400 hover:text-white cursor-pointer">
+              <X className="size-4" />
+            </button>
           </div>
         </div>
 

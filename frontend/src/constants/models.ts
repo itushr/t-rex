@@ -1,6 +1,7 @@
 import { ComponentType, lazy, LazyExoticComponent } from "react";
 
 export type ModelLearningType = "supervised" | "unsupervised" | "reinforcement";
+export type VisualizerType = "page" | "modal";
 
 export interface ModelDefinition {
   id: string;
@@ -9,6 +10,7 @@ export interface ModelDefinition {
   category: "tree" | "ensemble" | "neural" | "reinforcement";
   description: string;
   supportsVisualization: boolean;
+  visualizerType: VisualizerType;
   defaultParams: Record<string, number | string | boolean>;
   modelVisualizer?: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
   playbackVisualizer?: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
@@ -31,6 +33,7 @@ export const GLOBAL_MODELS: ModelDefinition[] = [
     category: "tree",
     description: "Interpretable single tree decision model with SVG path extraction",
     supportsVisualization: true,
+    visualizerType: "page",
     defaultParams: { max_depth: 5, criterion: "gini" },
     modelVisualizer: lazy(() => import("../models/decision-tree/visualizers/model")),
     playbackVisualizer: lazy(() => import("../models/decision-tree/visualizers/playback")),
@@ -42,6 +45,7 @@ export const GLOBAL_MODELS: ModelDefinition[] = [
     category: "ensemble",
     description: "Ensemble of decision trees voting on predictions",
     supportsVisualization: true,
+    visualizerType: "page",
     defaultParams: { n_estimators: 10, max_depth: 5 },
     modelVisualizer: lazy(() => import("../models/random-forest/visualizers/model")),
     playbackVisualizer: lazy(() => import("../models/random-forest/visualizers/playback")),
@@ -53,6 +57,7 @@ export const GLOBAL_MODELS: ModelDefinition[] = [
     category: "reinforcement",
     description: "Tabular reinforcement learning policy",
     supportsVisualization: true,
+    visualizerType: "modal",
     defaultParams: { alpha: 0.1, gamma: 0.95, epsilon: 0.1 },
     modelVisualizer: lazy(() => import("../models/q-learning/visualizers/model")),
     playbackVisualizer: lazy(() => import("../models/q-learning/visualizers/playback")),
@@ -62,6 +67,14 @@ export const GLOBAL_MODELS: ModelDefinition[] = [
 export function getModelDefinition(id?: string): ModelDefinition | undefined {
   const norm = normalizeModelId(id);
   return GLOBAL_MODELS.find((m) => m.id === norm) || GLOBAL_MODELS[0];
+}
+
+export function getModelVisualizerType(id?: string): VisualizerType {
+  return getModelDefinition(id)?.visualizerType || "page";
+}
+
+export function isModalVisualizer(id?: string): boolean {
+  return getModelVisualizerType(id) === "modal";
 }
 
 export function getModelVisualizer(id?: string): LazyExoticComponent<ComponentType<any>> | ComponentType<any> | undefined {

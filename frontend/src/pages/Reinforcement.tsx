@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, Suspense, useMemo } from "react";
 import { getGameDefinition } from "../constants/games";
+import { getModelVisualizerType } from "../constants/models";
 import { ActionPanel } from "../components/ActionPanel";
-import { QTableModal } from "../components/actionpanel/QTableModal";
+import { QTableModal } from "../models/q-learning";
 import { GameNotFound } from "../components/GameNotFound";
 import { savePrivateQTableModel } from "../services/privateApi";
 import { navigateTo } from "../utils/navigation";
@@ -43,6 +44,11 @@ export function Reinforcement({ gameId = "t-rex" }: { gameId?: string }) {
     } catch (err: any) { alert(`Save failed: ${err.message}`); }
   }, [rl, def, gameId]);
 
+  const handleVisualize = useCallback(() => {
+    if (getModelVisualizerType(selectedModel) === "modal") setIsQTableOpen(true);
+    else navigateTo(`/visualize/model/${selectedModel}`);
+  }, [selectedModel]);
+
   if (!def) return <GameNotFound />;
   const GameComponent = def.gameComponent;
 
@@ -59,7 +65,7 @@ export function Reinforcement({ gameId = "t-rex" }: { gameId?: string }) {
         gameStatus={gameStatus} onTogglePlayPause={handlePlayToggle} onRestart={handleRestart}
         soundDisabled={!def.hasSound} tries={rl?.tries ?? 1} repeat={rl?.repeat ?? true}
         onToggleRepeat={() => rl?.setRepeat((p: boolean) => !p)} rlConfig={rl?.config}
-        onSaveRLConfig={rl?.updateConfig} showVisualize={true} onVisualize={() => setIsQTableOpen(true)}
+        onSaveRLConfig={rl?.updateConfig} showVisualize={true} onVisualize={handleVisualize}
         selectedModel={selectedModel} onSelectModel={setSelectedModel} onForward={handleSaveQTable} />
       {isQTableOpen && rl && (
         <QTableModal isOpen={isQTableOpen} onClose={() => setIsQTableOpen(false)}
