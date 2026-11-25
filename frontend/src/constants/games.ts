@@ -24,7 +24,7 @@ export const SUPPORTED_GAMES: GameDefinition[] = [
     aliases: ["trex", "dino"], availableModels: ["decision_tree", "random_forest", "q_learning"],
     supportedModels: ["decision_tree", "random_forest", "q_learning"],
     default_model: "decision_tree",
-    default_features: ["obstacle1_x", "obstacle1_y", "obstacle1_size", "obstacle1_type", "speed"],
+    default_features: ["obstacle1_x", "obstacle1_y", "obstacle1_size", "obstacle1_type", "speed", "time_to_impact"],
     gameComponent: lazy(() => import("../games/t-rex/game")), adapter: trexAdapter, features: TREX_FEATURES,
     useRL: (_ref, status, restart) => {
       const dino = useDinoRL(status, restart);
