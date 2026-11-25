@@ -5,6 +5,7 @@ import { ActionPanel } from "../components/ActionPanel";
 import { QTableModal } from "../models/q-learning";
 import { GameNotFound } from "../components/GameNotFound";
 import { savePrivateQTableModel } from "../services/privateApi";
+import { useDashboardStore } from "../stores/dashboardStore";
 import { navigateTo } from "../utils/navigation";
 import type { GameStatus } from "../game/useGameRunnerControls";
 
@@ -40,6 +41,7 @@ export function Reinforcement({ gameId = "t-rex" }: { gameId?: string }) {
       await savePrivateQTableModel({
         game_id: def?.id || gameId, q_table: rl.getRawQTable(), actions: rl.actions, tries: rl.tries,
       });
+      useDashboardStore.getState().invalidate();
       navigateTo("/dashboard");
     } catch (err: any) { alert(`Save failed: ${err.message}`); }
   }, [rl, def, gameId]);
