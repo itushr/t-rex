@@ -1,4 +1,4 @@
-import { DiagramFlowVertical, Pause, Play, Repeat, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { CpuAi, Pause, Play, Repeat2, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Kbd } from "@/components/ui/kbd";
 import { TriesCounter } from "./TriesCounter";
@@ -42,7 +42,7 @@ export function ReinforcementActionBar({
       <Tooltip>
         <TooltipTrigger asChild>
           <button type="button" onClick={onToggleRepeat} className={`cursor-pointer transition-colors p-0 m-0 bg-transparent flex items-center ${repeat ? "text-white opacity-100" : "text-neutral-500 opacity-40 hover:opacity-75"}`}>
-            <Repeat strokeWidth={1.75} className="size-6" />
+            <Repeat2 strokeWidth={2} className="size-8" />
           </button>
         </TooltipTrigger>
         <TooltipContent side="top">Auto Retry: {repeat ? "ON" : "OFF"}</TooltipContent>
@@ -51,7 +51,7 @@ export function ReinforcementActionBar({
         <Tooltip>
           <TooltipTrigger asChild>
             <button type="button" onClick={onVisualize} className="cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent text-white flex items-center">
-              <DiagramFlowVertical strokeWidth={1.5} fill="white" className="size-6" />
+              <CpuAi strokeWidth={1.5} className="size-7" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="top">Inspect Q-Table <Kbd>V</Kbd></TooltipContent>

@@ -1,6 +1,8 @@
 export { QLearningModelVisualizer } from "./visualizers/model";
 export { QLearningPlaybackVisualizer } from "./visualizers/playback";
 export { QTableModal } from "./visualizers/QTableModal";
+export { QTableContent } from "./visualizers/QTableContent";
+export { QConfigContent } from "./config/QConfigContent";
 export { QLearningAgent, summarizeQTable } from "./model";
 export { NStepBuffer } from "./model/nStepBuffer";
 export type { Transition } from "./model/nStepBuffer";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Aperture, SlidersHorizontal, X } from "lucide-react";
+import { Aperture, Cog, SlidersHorizontal, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { Kbd } from "@/components/ui/kbd";
@@ -54,7 +54,7 @@ export function ActionPanel({
               <div className="p-2">
                 {isRL ? (
                   <button type="button" onClick={() => setIsConfigOpen(true)} className="rounded-full border border-border/20 p-3 hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center">
-                    <div className="size-8 flex items-center justify-center"><SlidersHorizontal strokeWidth={1.5} className="size-5 text-white" /></div>
+                    <div className="size-8 flex items-center justify-center"><Cog strokeWidth={1.5} className="size-7 text-white" /></div>
                   </button>
                 ) : (
                   <button type="button" disabled={recordDisabled} onClick={recordDisabled ? undefined : onToggleRecord} className={`rounded-full border border-border/20 p-3 transition-colors ${recordDisabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}>

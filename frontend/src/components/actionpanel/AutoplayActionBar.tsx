@@ -1,4 +1,4 @@
-import { DiagramFlowVertical, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { CpuAi, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Kbd } from "@/components/ui/kbd";
 import { StopwatchTimer } from "../StopwatchTimer";
@@ -40,7 +40,7 @@ export function AutoplayActionBar({
         <Tooltip>
           <TooltipTrigger asChild>
             <button type="button" onClick={onVisualize} className="cursor-pointer hover:opacity-80 p-0 m-0 bg-transparent text-white flex items-center">
-              <DiagramFlowVertical strokeWidth={1.5} fill="white" className="size-6" />
+              <CpuAi strokeWidth={1.5} className="size-7" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="top">Visualize Playback <Kbd>V</Kbd></TooltipContent>
