@@ -47,7 +47,7 @@ export function Reinforcement({ gameId = "t-rex" }: { gameId?: string }) {
   }, [rl, def, gameId]);
 
   const handleVisualize = useCallback(() => {
-    if (getModelVisualizerType(selectedModel) === "modal") setIsQTableOpen(true);
+    if (getModelVisualizerType(selectedModel) === "modal") setIsQTableOpen((v) => !v);
     else navigateTo(`/visualize/model/${selectedModel}`);
   }, [selectedModel]);
 

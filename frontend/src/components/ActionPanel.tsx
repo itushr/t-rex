@@ -35,15 +35,16 @@ export function ActionPanel({
   const [hidden, setHidden] = useState(false), [isConfigOpen, setIsConfigOpen] = useState(false);
   const timer = useActionPanelTimer(isRecording, isRecordingPaused);
   const handlePlayToggle = () => (gameStatus === "crashed" ? onRestart ?? onTogglePlayPause : onTogglePlayPause)?.();
+  const isRotating = isRecording && !isRecordingPaused, isRL = mode === "reinforcement";
 
   useActionPanelShortcuts({
-    onToggleRecord: recordDisabled ? undefined : onToggleRecord, onTogglePlayPause: handlePlayToggle,
+    onToggleRecord: isRL ? () => setIsConfigOpen((v) => !v) : (recordDisabled ? undefined : onToggleRecord),
+    onTogglePlayPause: handlePlayToggle,
     onToggleSound: soundDisabled ? undefined : onToggleSound, onForward: trainDisabled ? undefined : onForward,
     onToggleCollapse: () => setHidden((h) => !h), onVisualize, showVisualize,
   });
 
   if (hidden) return null;
-  const isRotating = isRecording && !isRecordingPaused, isRL = mode === "reinforcement";
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -53,7 +54,7 @@ export function ActionPanel({
             <TooltipTrigger asChild>
               <div className="p-2">
                 {isRL ? (
-                  <button type="button" onClick={() => setIsConfigOpen(true)} className="rounded-full border border-border/20 p-3 hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center">
+                  <button type="button" onClick={() => setIsConfigOpen((v) => !v)} className="rounded-full border border-border/20 p-3 hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center">
                     <div className="size-8 flex items-center justify-center"><Cog strokeWidth={1.5} className="size-7 text-white" /></div>
                   </button>
                 ) : (
@@ -65,7 +66,7 @@ export function ActionPanel({
                 )}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top">{isRL ? "Configure RL Parameters" : recordDisabled ? "Recording unavailable" : isRecording ? "Pause" : "Record"} {!isRL && <Kbd>R</Kbd>}</TooltipContent>
+            <TooltipContent side="top">{isRL ? "Configure RL Parameters" : recordDisabled ? "Recording unavailable" : isRecording ? "Pause" : "Record"} <Kbd>R</Kbd></TooltipContent>
           </Tooltip>
           {isRL ? (
             <ReinforcementActionBar gameStatus={gameStatus} soundEnabled={soundEnabled} soundDisabled={soundDisabled} tries={tries} repeat={repeat} selectedModel={selectedModel} onSelectModel={onSelectModel} onPlayToggle={handlePlayToggle} onToggleSound={onToggleSound} onToggleRepeat={onToggleRepeat} onVisualize={onVisualize} onForward={onForward} />
