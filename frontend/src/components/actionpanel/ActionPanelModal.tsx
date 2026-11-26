@@ -11,12 +11,12 @@ function DragTab({ onPointerDown }: { onPointerDown: (e: PointerEvent) => void }
   return (
     <div
       onPointerDown={onPointerDown}
-      className="absolute -left-5 top-7 w-5 h-16 bg-[#0f0f11] border-l border-t border-b border-neutral-700/80 rounded-l-md flex items-center justify-center cursor-grab active:cursor-grabbing select-none touch-none hover:bg-neutral-800 transition-colors shadow-lg z-10"
+      className="absolute -left-10 top-12 w-10 h-[104px] bg-[#0c0c0e] border-l border-t border-b border-neutral-700/80 rounded-l-2xl flex items-center justify-center cursor-grab active:cursor-grabbing select-none touch-none hover:bg-neutral-900 transition-colors shadow-2xl z-10"
       title="Drag to move"
     >
-      <div className="grid grid-cols-2 gap-x-1 gap-y-1 p-0.5">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="size-1 rounded-full bg-neutral-500/80" />
+      <div className="grid grid-cols-2 gap-x-2.5 gap-y-3.5">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="size-1.5 rounded-full bg-neutral-400/80" />
         ))}
       </div>
     </div>
@@ -51,7 +51,7 @@ export function ActionPanelModal({
     window.addEventListener("pointerup", onUp);
   };
 
-  const boxCard = className ?? "bg-[#0f0f11] text-white border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden";
+  const boxCard = className ?? "bg-[#0f0f11] text-white border border-neutral-800 rounded-3xl shadow-2xl overflow-hidden";
   const posStyle = pos ? { position: "fixed" as const, left: `${pos.x}px`, top: `${pos.y}px`, zIndex: 40, transform: "none", bottom: "auto" } : undefined;
   const containerClass = pos ? `fixed z-40 w-full ${maxWidth} pointer-events-auto` : `fixed bottom-28 left-1/2 -translate-x-1/2 z-40 w-full ${maxWidth} pointer-events-auto`;
 
